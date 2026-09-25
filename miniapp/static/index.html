@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>KURILKA SIGARKI</title>
+<meta name="theme-color" content="#0f1114">
+<link rel="preload" href="/static/fonts/manrope-cyrillic-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/static/fonts/unbounded-cyrillic-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="stylesheet" href="/static/styles.css?v=6">
+<link rel="stylesheet" href="/static/features/cup.css?v=1">
+<link rel="stylesheet" href="/static/features/transfers.css?v=1">
+<link rel="stylesheet" href="/static/features/progress.css?v=1">
+<link rel="stylesheet" href="/static/features/leagues.css?v=1">
+<link rel="stylesheet" href="/static/features/cards.css?v=1">
+</head>
+<body>
+<div id="app">
+  <!-- ХЕДЕР -->
+  <header class="app-header">
+    <div class="brand">KURILKA <b>SIGARKI</b></div>
+    <div class="header-right">
+      <button id="bell-btn" class="bell" aria-label="Уведомления"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><span id="bell-badge" class="badge" hidden>0</span></button>
+      <div class="balance-chip" id="balance-chip">🚬 <span id="balance-value">…</span></div>
+    </div>
+  </header>
+
+  <!-- ЭКРАНЫ -->
+  <main class="views-container">
+    <!-- ЛИНИЯ -->
+    <section id="view-line" class="view active">
+      <div class="section-title">Линия</div>
+      <div id="line-tours" class="chips"></div>
+      <div id="line-matches" class="match-list"></div>
+    </section>
+
+    <!-- ТАБЛИЦЫ -->
+    <section id="view-tables" class="view">
+      <div class="section-title">Таблицы</div>
+      <div class="tabs" id="tabs-tables">
+        <button class="tab active" data-tab="standings">Турнирная</button>
+        <button class="tab" data-tab="results">Результаты</button>
+      </div>
+      <div id="division-chips" class="chips"></div>
+      <div id="standings-wrap"></div>
+      <div id="results-wrap" hidden></div>
+    </section>
+
+    <!-- КУПОН -->
+    <section id="view-coupon" class="view">
+      <div class="section-title">Купон</div>
+      <div id="coupon-body"></div>
+    </section>
+
+    <!-- КАБИНЕТ -->
+    <section id="view-profile" class="view">
+      <div class="section-title">Кабинет</div>
+      <div id="profile-body"></div>
+    </section>
+
+    <!-- МОЙ КЛУБ -->
+    <section id="view-club" class="view">
+      <div class="section-title">Мой клуб</div>
+      <div id="club-body"></div>
+    </section>
+
+    <!-- ТРАНСФЕРЫ -->
+    <section id="view-transfers" class="view">
+      <div class="transfers-header">
+        <div>
+          <div class="sub">Бюджет клуба</div>
+          <div class="transfers-budget" id="tr-budget">—</div>
+        </div>
+        <div class="sub" id="tr-rules">порог <span id="tr-threshold">—</span> · комиссия <span id="tr-comm">—</span>%</div>
+      </div>
+      <div class="tabs" id="tabs-transfers">
+        <button class="tab active" data-tab="market">Маркет</button>
+        <button class="tab" data-tab="lots">Мои лоты</button>
+        <button class="tab" data-tab="offers">Обмены</button>
+        <button class="tab" data-tab="history">История</button>
+      </div>
+      <div id="tr-filters" class="chips"></div>
+      <div id="transfers-body"></div>
+    </section>
+  </main>
+
+  <!-- КУПОН-ПЛАВАЮЩАЯ КНОПКА -->
+  <button id="betbar" class="betbar" hidden>
+    <span class="bb-count" id="betbar-count">0</span><span>Купон · кэф <span id="betbar-odds">—</span></span>
+  </button>
+
+  <!-- МОДАЛКА МАТЧА -->
+  <div id="match-sheet" class="sheet-backdrop" hidden>
+    <div class="sheet">
+      <button class="sheet-close" id="match-close">✕</button>
+      <div id="match-detail"></div>
+    </div>
+  </div>
+
+  <!-- УВЕДОМЛЕНИЯ -->
+  <div id="notif-sheet" class="sheet-backdrop" hidden>
+    <div class="sheet">
+      <button class="sheet-close" id="notif-close">✕</button>
+      <div class="section-title">Уведомления</div>
+      <div id="notif-list"></div>
+    </div>
+  </div>
+
+  <!-- АДМИН-ПАНЕЛЬ -->
+  <div id="admin-sheet" class="sheet-backdrop" hidden>
+    <div class="sheet">
+      <button class="sheet-close" id="admin-close">✕</button>
+      <div class="section-title">👮 Админ-панель</div>
+      <div id="admin-dashboard" class="stat-grid"></div>
+      <div class="card">
+        <div class="card-title">⏸ Пауза приёма ставок</div>
+        <div id="admin-pause"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">💸 Последние купоны (void)</div>
+        <div id="admin-bets"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">👥 Игроки</div>
+        <div id="admin-players"></div>
+      </div>
+      <div class="card" id="admin-ocr-card" hidden>
+        <div class="card-title">🧠 OCR-провайдеры</div>
+        <div id="admin-ocr"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">📜 Журнал</div>
+        <div id="admin-audit"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- НИЖНЯЯ НАВИГАЦИЯ -->
+  <nav class="bottom-nav">
+    <button class="nav-btn active" data-view="line"><span class="nav-ico"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-.22-4.05 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.43-2.29 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg></span><span class="nav-lbl">Линия</span></button>
+    <button class="nav-btn" data-view="tables"><span class="nav-ico"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg></span><span class="nav-lbl">Таблицы</span></button>
+    <button class="nav-btn" data-view="coupon"><span class="nav-ico"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/></svg></span><span class="nav-lbl">Купон</span></button>
+    <button class="nav-btn" data-view="profile"><span class="nav-ico"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/></svg></span><span class="nav-lbl">Кабинет</span></button>
+    <button class="nav-btn" data-view="club"><span class="nav-ico"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg></span><span class="nav-lbl">Клуб</span></button>
+    <button class="nav-btn" data-view="transfers"><span class="nav-ico"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/></svg></span><span class="nav-lbl">Рынок</span></button>
+  </nav>
+
+  <!-- ЛОК-ЭКРАН -->
+  <div id="app-lockdown-screen" class="lockdown" hidden>
+    <div class="lockdown-inner">
+      <div class="lockdown-icon">🚭</div>
+      <div class="lockdown-title">Доступ закрыт</div>
+      <div class="lockdown-reason" id="lockdown-reason"></div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" hidden></div>
+</div>
+<script type="module" src="/static/app.js?v=7"></script>
+</body>
+</html>

@@ -1,0 +1,69 @@
+/* ===== кубки: вкладка «Кубки» в «Таблицах» ===== */
+
+/* в режиме кубков чипы дивизионов не нужны (.chips задаёт display — hidden не сработает) */
+#view-tables.cup-mode #division-chips { display: none; }
+#view-tables.cup-mode #standings-wrap,
+#view-tables.cup-mode #results-wrap { display: none; }
+
+.cup-head { margin: 2px 2px 12px; }
+.cup-title { font-family: var(--font-display); font-weight: 700; font-size: 17px; letter-spacing: -.01em; }
+.cup-meta { color: var(--muted); font-size: 12.5px; font-weight: 600; margin-top: 5px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.cup-badge {
+  background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--accent2);
+  border-radius: 7px; padding: 2px 8px; font-size: 11px; font-weight: 800; letter-spacing: .04em;
+}
+
+.cup-champion {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 14px; padding: 12px 14px;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 22%, var(--bg2)), var(--bg2) 70%);
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--line)); border-radius: var(--radius);
+  box-shadow: 0 6px 24px var(--glow);
+}
+.cup-champion-label { color: var(--muted); font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; }
+.cup-champion-name { font-family: var(--font-display); font-weight: 700; font-size: 16px; margin-top: 2px; }
+.cup-trophy { margin-left: auto; font-size: 26px; }
+.cup-logo-lg { width: 38px; height: 38px; object-fit: contain; flex: 0 0 38px; font-size: 26px; display: inline-flex; align-items: center; justify-content: center; }
+
+/* сетка: колонки стадий, горизонтальный скролл */
+.cup-bracket {
+  display: flex; gap: 10px; overflow-x: auto; padding: 2px 2px 10px; margin: 0 -2px;
+  scroll-snap-type: x proximity; scrollbar-width: thin;
+}
+/* на телефоне ровно две стадии в экран, дальше — свайп */
+.cup-col { flex: 0 0 max(160px, calc(50% - 5px)); display: flex; flex-direction: column; scroll-snap-align: start; }
+.cup-col-title {
+  color: var(--muted); font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .07em;
+  text-align: center; padding: 6px 0 8px; position: sticky; top: 0;
+}
+.cup-col.final .cup-col-title { color: var(--accent2); }
+.cup-col-body { flex: 1; display: flex; flex-direction: column; justify-content: space-around; gap: 10px; }
+
+.cup-tie {
+  background: var(--bg2); border: 1px solid var(--line); border-radius: var(--radius-sm, 11px);
+  padding: 4px 0; box-shadow: var(--shadow); position: relative;
+}
+.cup-tie.done { border-color: var(--line2, var(--line)); }
+.cup-col.final .cup-tie:not(.tbd) { border-color: color-mix(in srgb, var(--accent) 50%, var(--line)); }
+.cup-tie.tbd { background: transparent; border-style: dashed; box-shadow: none; }
+.cup-row { display: flex; align-items: center; gap: 8px; padding: 5px 10px; font-size: 13px; font-weight: 700; min-height: 30px; }
+.cup-row + .cup-row { border-top: 1px solid var(--line); }
+.cup-logo { width: 20px; height: 20px; object-fit: contain; flex: 0 0 20px; font-size: 14px; display: inline-flex; align-items: center; justify-content: center; }
+.cup-name { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cup-wins { font-family: var(--font-display); font-weight: 700; font-size: 14px; min-width: 16px; text-align: right; color: var(--muted); }
+.cup-row.win { color: var(--text); }
+.cup-row.win .cup-wins { color: var(--accent); }
+.cup-row.win .cup-name::after { content: ' ✓'; color: var(--accent); font-weight: 800; }
+.cup-row.lose { color: var(--muted); }
+.cup-row.lose .cup-logo { opacity: .55; }
+.cup-row.tbd { color: var(--muted2, var(--muted)); font-weight: 600; font-size: 12px; }
+.cup-tie.bye .cup-row.tbd { font-style: italic; }
+
+.cup-games { display: flex; flex-wrap: wrap; gap: 5px; padding: 5px 10px 4px; border-top: 1px solid var(--line); }
+.cup-game {
+  background: var(--bg3); border: 1px solid var(--line); border-radius: 7px; padding: 2px 7px;
+  font-size: 11.5px; font-weight: 800; cursor: pointer; font-variant-numeric: tabular-nums;
+}
+.cup-game small { color: var(--muted); font-weight: 700; margin-left: 4px; }
+.cup-game.pending { color: var(--muted); font-weight: 700; }
+.cup-game.disputed { border-color: var(--red); }
+.cup-game:active { background: var(--bg4, var(--bg3)); }

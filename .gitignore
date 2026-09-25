@@ -1,0 +1,7 @@
+venv/
+__pycache__/
+*.pyc
+bot/.env
+backups/
+.hoplite/
+data/

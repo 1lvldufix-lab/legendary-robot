@@ -1,0 +1,30 @@
+# systemd-юнит KURILKA SIGARKI: бот + мини-апп одним процессом.
+# Ставится deploy/install.sh → /etc/systemd/system/kurilka.service
+# Логи: journalctl -u kurilka -f
+[Unit]
+Description=KURILKA SIGARKI — Telegram-бот турнира FC27 + мини-апп
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=kurilka
+Group=kurilka
+WorkingDirectory=/opt/kurilka
+EnvironmentFile=/opt/kurilka/bot/.env
+Environment=PYTHONUNBUFFERED=1
+Environment=PLAYWRIGHT_BROWSERS_PATH=/opt/kurilka/.cache/ms-playwright
+ExecStart=/opt/kurilka/venv/bin/python bot/main.py
+Restart=always
+RestartSec=5
+TimeoutStopSec=20
+
+# Изоляция: писать можно только в /opt/kurilka (БД, backups/, кэш браузера)
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+ReadWritePaths=/opt/kurilka
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,23 @@
+# Caddy на VPS с доменом: автоматический HTTPS (Let's Encrypt) → мини-апп на 127.0.0.1:9542.
+# 1) DNS: A-запись bot.example.com → IP VPS; порты 80 и 443 открыты.
+# 2) Замени bot.example.com на свой домен, положи файл в /etc/caddy/Caddyfile,
+#    sudo systemctl reload caddy
+# 3) bot/.env: WEBAPP_PUBLIC_URL=https://bot.example.com  → sudo systemctl restart kurilka
+
+bot.example.com {
+	encode zstd gzip
+	reverse_proxy 127.0.0.1:9542
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options nosniff
+		-Server
+	}
+
+	log {
+		output file /var/log/caddy/kurilka.log {
+			roll_size 10mb
+			roll_keep 5
+		}
+	}
+}
