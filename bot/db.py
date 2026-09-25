@@ -5,6 +5,7 @@
 Схема — план 00 + решения 09 + план 10 (блоки 1, 4–10).
 """
 import os
+from pathlib import Path
 
 import config
 from db_backend import connect  # адаптер SQLite⇄Postgres из елобота
@@ -311,8 +312,20 @@ def init_db() -> None:
     CREATE INDEX IF NOT EXISTS idx_odds_history_match ON odds_history(match_id, market_code);
     """)
     _migrate(c)
+    _schema_extensions(c)
     c.commit()
     c.close()
+
+
+def _schema_extensions(c) -> None:
+    """Фичи держат схему рядом с собой: bot/schema_<фича>.py с SCHEMA (SQL) и опц. migrate(c)."""
+    import importlib
+    for path in sorted(Path(__file__).resolve().parent.glob("schema_*.py")):
+        mod = importlib.import_module(path.stem)
+        if getattr(mod, "SCHEMA", None):
+            c.executescript(mod.SCHEMA)
+        if hasattr(mod, "migrate"):
+            mod.migrate(c)
 
 
 def _migrate(c) -> None:

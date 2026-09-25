@@ -45,6 +45,13 @@ async def index(request):
     return web.FileResponse(STATIC_DIR / "index.html")
 
 
+def _setup_feature_routes(app: web.Application) -> None:
+    """Фичи держат API рядом с собой: miniapp/routes_<фича>.py с setup(app)."""
+    import importlib
+    for path in sorted(Path(__file__).resolve().parent.glob("routes_*.py")):
+        importlib.import_module(f"{__package__}.{path.stem}").setup(app)
+
+
 def build_app() -> web.Application:
     app = web.Application()
     app.router.add_get("/", index)
@@ -52,6 +59,7 @@ def build_app() -> web.Application:
     app.router.add_get("/api/bootstrap", api_bootstrap)
     app.router.add_get("/api/wallet", api_wallet)
     setup_routes(app)
+    _setup_feature_routes(app)
     app.router.add_static("/static/", STATIC_DIR)
     if LOGO_DIR.exists():
         app.router.add_static("/assets/logos/", LOGO_DIR)

@@ -1,84 +1,9 @@
-/* KURILKA SIGARKI — SPA ядра (блоки 6–7). Валюта «дым», только русский. */
+/* KURILKA SIGARKI — SPA ядра: линия, таблицы, купон, кабинет, клуб. Валюта «дым». */
 
-const tg = window.Telegram?.WebApp;
-tg?.ready();
-tg?.expand();
-tg?.setHeaderColor?.('#0f1114');
-tg?.setBackgroundColor?.('#0f1114');
-
-const state = {
-  user: null,
-  divisions: [],
-  lineMatches: [],
-  favorites: new Set(JSON.parse(localStorage.getItem('favorites') || '[]')),
-  coupon: JSON.parse(localStorage.getItem('coupon') || '[]'),
-  currentDivision: null,
-  currentTour: null,
-  matchDetail: null,
-  placing: false,
-  idemKey: null,
-};
-
-/* ===== API ===== */
-
-async function api(endpoint, options = {}) {
-  // dev-фолбэк для браузерных тестов вне Telegram: localStorage 'dev_initdata'
-  // хранит заранее подписанную строку — сервер всё равно проверяет подпись и окно 24 ч.
-  const initData = tg?.initData || localStorage.getItem('dev_initdata') || '';
-  const res = await fetch(endpoint, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Telegram-Init-Data': initData,
-      ...(options.headers || {}),
-    },
-  });
-  let data = null;
-  try { data = await res.json(); } catch (_) { /* proxy/html */ }
-  if (!res.ok || !data || typeof data !== 'object') {
-    data = data && typeof data === 'object' ? data : {};
-    if (res.status === 403) {
-      showLockdown(data.reason);
-    }
-    const err = new Error(data.error || data.message || `Ошибка сервера (${res.status})`);
-    err.code = data.code;
-    err.status = res.status;
-    throw err;
-  }
-  return data;
-}
-
-/* ===== утилиты ===== */
-
-const $ = (sel) => document.querySelector(sel);
-const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-
-function toast(text, ms = 2600) {
-  const el = $('#toast');
-  el.textContent = text;
-  el.hidden = false;
-  clearTimeout(toast._t);
-  toast._t = setTimeout(() => { el.hidden = true; }, ms);
-}
-
-function logoHtml(club, cls = '') {
-  if (club?.logo) return `<img src="${esc(club.logo)}" alt="" class="${cls}">`;
-  return `<span class="mc-fallback ${cls}">🛡️</span>`;
-}
-
-function fmt(n) { return Number(n ?? 0).toLocaleString('ru-RU'); }
-function odds(o) { return Number(o ?? 0).toFixed(2); }
-function haptic(kind = 'light') { try { tg?.HapticFeedback?.impactOccurred(kind); } catch (_) { /* вне Telegram */ } }
-
-function setBadge(unread) {
-  const b = $('#bell-badge');
-  b.textContent = unread > 99 ? '99+' : String(unread || 0);
-  b.hidden = !unread;
-}
-
-function formLetters(form) {
-  return (form || '').split('').map((f) => `<span class="${esc(f)}">${esc(f)}</span>`).join('');
-}
+import {
+  $, api, esc, fmt, fmtTime, formLetters, haptic, hooks, logoHtml, odds, setBadge, showLockdown, state, tg, toast,
+} from './lib.js';
+import './features/index.js';
 
 const MARKET_GROUPS = [
   ['Исход', ['1x2_p1', '1x2_x', '1x2_p2']],
@@ -88,15 +13,6 @@ const MARKET_GROUPS = [
   ['Фора', ['ah_h15', 'ah_a15']],
   ['Серия', ['tie_2_0', 'tie_2_1', 'tie_1_2', 'tie_0_2']],
 ];
-
-function showLockdown(reason) {
-  $('#lockdown-reason').textContent = reason || '';
-  $('#app-lockdown-screen').hidden = false;
-  document.querySelector('.bottom-nav').style.display = 'none';
-  document.querySelector('.views-container').style.display = 'none';
-  document.querySelector('.app-header').style.display = 'none';
-  $('#betbar').hidden = true;
-}
 
 /* ===== купон (локальное состояние) ===== */
 
@@ -314,15 +230,7 @@ function renderProfile() {
       </div>`;
     $('#streak-btn').onclick = () => claimStreak();
     $('#promo-btn').onclick = () => applyPromo();
-    if (state.user.is_admin && !document.getElementById('admin-btn')) {
-      const btn = document.createElement('button');
-      btn.id = 'admin-btn';
-      btn.className = 'bonus-btn';
-      btn.style.marginBottom = '12px';
-      btn.textContent = '👮 Админ-панель';
-      btn.onclick = openAdmin;
-      $('#profile-body').prepend(btn);
-    }
+    hooks.profileCards.forEach((fn) => { try { fn($('#profile-body'), p); } catch (e) { console.error(e); } });
     api('/api/predictions?limit=10').then(({ predictions }) => {
       const el = $('#bets-history-card');
       el.querySelector('.empty-note')?.remove();
@@ -367,6 +275,7 @@ function renderClub() {
         <div class="stat-box"><div class="v">${cl.squad_size}</div><div class="k">карт в составе</div></div>
       </div></div>
       <div class="card" id="squad-card"><div class="card-title">Состав</div><div class="empty-note">Загрузка…</div></div>`;
+    hooks.clubCards.forEach((fn) => { try { fn(el, data); } catch (e) { console.error(e); } });
     api('/api/cabinet/squad').then(({ squad }) => {
       const sc = $('#squad-card');
       sc.querySelector('.empty-note')?.remove();
@@ -562,13 +471,6 @@ async function openNotifications() {
   api('/api/notifications/read', { method: 'POST' }).then(() => setBadge(0)).catch(() => {});
 }
 
-function fmtTime(s, local = false) {
-  // сервер пишет время в UTC без зоны (datetime('now'), utcnow().isoformat())
-  const d = s ? new Date(s.replace(' ', 'T') + (local ? '' : 'Z')) : null;
-  if (!d || isNaN(d)) return s || '';
-  return d.toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
-}
-
 /* ===== betbar ===== */
 
 function updateBetbar() {
@@ -593,7 +495,7 @@ function showView(name) {
   if (name === 'coupon') renderCoupon();
   if (name === 'profile') renderProfile();
   if (name === 'club') renderClub();
-  if (name === 'transfers') renderTransfers();
+  hooks.views[name]?.();
 }
 
 function renderAll() {
@@ -740,362 +642,3 @@ $('#tabs-tables')?.addEventListener('click', (ev) => {
 });
 
 init();
-
-/* ===== трансферы (блок 8) ===== */
-
-const trState = { data: null, market: null, tab: 'market', filterPos: null };
-
-async function renderTransfers() {
-  try {
-    trState.data = await api('/api/transfers/view');
-  } catch (e) {
-    $('#transfers-body').innerHTML = `<div class="empty-note">${esc(e.message)}</div>`;
-    return;
-  }
-  if (trState.data.no_club) {
-    $('#tr-budget').textContent = '—';
-    $('#transfers-body').innerHTML = '<div class="empty-note">Клуба нет — рынок недоступен. Запроси клуб во вкладке «Клуб».</div>';
-    return;
-  }
-  $('#tr-budget').textContent = fmt(trState.data.budget) + ' ₼';
-  $('#tr-threshold').textContent = fmt(trState.data.threshold);
-  $('#tr-comm').textContent = trState.data.commission_pct;
-
-  if (trState.tab === 'market') return renderTransferMarket();
-  if (trState.tab === 'lots') return renderMyLots();
-  if (trState.tab === 'offers') return renderOffers();
-  return renderTransferHistory();
-}
-
-async function renderTransferMarket() {
-  $('#tr-filters').hidden = false;
-  $('#tr-filters').innerHTML = ['', 'ВРТ', 'ЦЗ', 'ЛЗ', 'ЦП', 'ЛП', 'ФРВ', 'ПВ']
-    .map((p) => `<button class="chip ${trState.filterPos === p || (!p && !trState.filterPos) ? 'active' : ''}" data-pos="${p}">${p || 'Все'}</button>`).join('');
-  const q = trState.filterPos ? `?position=${encodeURIComponent(trState.filterPos)}` : '';
-  const { lots, free_agents } = await api(`/api/transfers/market${q}`);
-  const row = (name, sub, price, actionHtml) => `<div class="lot-card">
-    <div class="lot-main"><div class="lot-name">${esc(name)}</div><div class="lot-sub">${sub}</div></div>
-    <div class="lot-price">${fmt(price)} ₼</div>${actionHtml}</div>`;
-  $('#transfers-body').innerHTML =
-    (free_agents.length ? '<div class="sub" style="margin:4px 0 8px">Свободные агенты (рейтинг² × K)</div>' +
-      free_agents.map((a) => row(a.name, `${a.position || '—'} · рейтинг ${a.rating} · свободен`,
-        a.effective_price,
-        `<button class="lot-btn" data-sign="${a.id}">Купить</button>`)).join('') : '') +
-    '<div class="sub" style="margin:12px 0 8px">Лоты клубов</div>' +
-    (lots.length ? lots.map((l) => row(l.name,
-      `${l.position || '—'} · рейтинг ${l.rating} · ${esc(l.seller_name || '')} · ${l.kind === 'auction' ? 'аукцион' : 'фикс'}`,
-      l.effective_price,
-      `<button class="lot-btn" data-buy="${l.id}">Купить</button>`)).join('')
-      : '<div class="empty-note">Лотов пока нет.</div>');
-}
-
-function renderMyLots() {
-  $('#tr-filters').hidden = true;
-  const d = trState.data;
-  $('#transfers-body').innerHTML =
-    '<div class="sub" style="margin:4px 0 8px">Выставить на рынок</div>' +
-    (d.squad.length ? d.squad.map((s) => `<div class="lot-card">
-        <div class="lot-main"><div class="lot-name">${esc(s.name)}</div>
-        <div class="lot-sub">${s.position || '—'} · рейтинг ${s.rating}</div></div>
-        <button class="lot-btn" data-sell="${s.id}" data-name="${esc(s.name)}">Продать</button>
-      </div>`).join('') : '<div class="empty-note">Состав пуст.</div>') +
-    '<div class="sub" style="margin:12px 0 8px">Мои открытые лоты</div>' +
-    (d.lots.length ? d.lots.map((l) => `<div class="lot-card">
-        <div class="lot-main"><div class="lot-name">${esc(l.name)}</div>
-        <div class="lot-sub">${l.kind === 'auction' ? 'аукцион' : 'фикс'} · ${fmt(l.buyout_price || l.price)} ₼</div></div>
-        <button class="lot-btn secondary" data-unlot="${l.id}">Снять</button>
-      </div>`).join('') : '<div class="empty-note">Активных лотов нет.</div>');
-}
-
-function renderOffers() {
-  $('#tr-filters').hidden = true;
-  const d = trState.data;
-  $('#transfers-body').innerHTML = d.offers_in.length ? d.offers_in.map((o) => `<div class="lot-card">
-      <div class="lot-main"><div class="lot-name">Обмен от ${esc(o.from_name || 'клуба')}</div>
-      <div class="lot-sub">отдают: ${esc(o.give_name)}${o.amount ? ` + ${fmt(Math.abs(o.amount))} ₼` : ''} · просят: ${esc(o.want_name || '—')}</div></div>
-      <button class="lot-btn" data-accept="${o.id}">Принять</button>
-    </div>`).join('') : '<div class="empty-note">Входящих предложений нет.</div>';
-}
-
-function renderTransferHistory() {
-  $('#tr-filters').hidden = true;
-  const d = trState.data;
-  $('#transfers-body').innerHTML = d.history.length ? d.history.map((h) => `<div class="bet-history-item">
-      <div><div>${esc(h.player_name)}</div>
-      <div class="sub">${h.from_club_id ? 'переход' : 'агент'} · ${fmt(h.amount)} ₼</div></div>
-      <div class="bh-status ${h.status === 'approved' ? 'won' : 'lost'}">${({approved: 'состоялся', rejected: 'отклонён', needs_judge: 'у судьи', pending: 'ждёт'})[h.status] || h.status}</div>
-    </div>`).join('') : '<div class="empty-note">Сделок ещё не было.</div>';
-}
-
-async function sellCard(cardId, name) {
-  const price = Number(prompt(`Цена продажи ${name} (₼):`, '1000000'));
-  if (!price) return;
-  try {
-    await api('/api/transfers/lots', { method: 'POST', body: JSON.stringify({ card_id: cardId, kind: 'fix', price }) });
-    toast(`${name} выставлен за ${fmt(price)} ₼`);
-    renderTransfers();
-  } catch (e) { toast(e.message); }
-}
-
-document.addEventListener('click', async (ev) => {
-  const sign = ev.target.closest('[data-sign]');
-  if (sign) {
-    try {
-      const r = await api(`/api/transfers/free-agent/${sign.dataset.sign}/sign`, { method: 'POST' });
-      toast(`Агент подписан за ${fmt(r.price)} ₼`);
-      renderTransfers();
-    } catch (e) { toast(e.message); }
-    return;
-  }
-  const buy = ev.target.closest('[data-buy]');
-  if (buy) {
-    try {
-      const r = await api(`/api/transfers/lots/${buy.dataset.buy}/buy`, { method: 'POST' });
-      toast(r.status === 'needs_judge' ? 'Крупная сделка ушла судье на одобрение' : 'Сделка состоялась!');
-      renderTransfers();
-    } catch (e) { toast(e.message); }
-    return;
-  }
-  const sell = ev.target.closest('[data-sell]');
-  if (sell) { sellCard(Number(sell.dataset.sell), sell.dataset.name); return; }
-  const unlot = ev.target.closest('[data-unlot]');
-  if (unlot) {
-    try {
-      await api(`/api/transfers/lots/${unlot.dataset.unlot}`, { method: 'DELETE' });
-      toast('Лот снят');
-      renderTransfers();
-    } catch (e) { toast(e.message); }
-    return;
-  }
-  const accept = ev.target.closest('[data-accept]');
-  if (accept) {
-    try {
-      const r = await api(`/api/transfers/exchange/${accept.dataset.accept}/accept`, { method: 'POST' });
-      toast(r.status === 'needs_judge' ? 'Обмен ушёл судье (сумма выше порога)' : 'Обмен состоялся!');
-      renderTransfers();
-    } catch (e) { toast(e.message); }
-    return;
-  }
-  const pos = ev.target.closest('[data-pos]');
-  if (pos) {
-    trState.filterPos = pos.dataset.pos || null;
-    if (trState.tab === 'market') renderTransferMarket();
-    return;
-  }
-  const trTab = ev.target.closest('#tabs-transfers .tab');
-  if (trTab) {
-    document.querySelectorAll('#tabs-transfers .tab').forEach((t) => t.classList.remove('active'));
-    trTab.classList.add('active');
-    trState.tab = trTab.dataset.tab;
-    renderTransfers();
-  }
-});
-
-
-/* ===== админ-панель (блок 10) ===== */
-
-async function openAdmin() {
-  try {
-    const { dashboard } = await api('/api/admin/dashboard');
-    $('#admin-dashboard').innerHTML = [
-      ['Юзеров', dashboard.users], ['Купонов', dashboard.open_bets],
-      ['Экспозиция', fmt(dashboard.exposure)], ['Долгов', fmt(dashboard.open_debts)],
-      ['Спорных', dashboard.disputed_matches], ['Ожидают', dashboard.pending_matches],
-    ].map(([k, v]) => `<div class="stat-box"><div class="v">${v}</div><div class="k">${k}</div></div>`).join('');
-    renderAdminPause(dashboard);
-    renderAdminSeason();
-    renderAdminBets();
-    renderAdminPlayers();
-    renderAdminAudit();
-    renderAdminOcr();
-    $('#admin-sheet').hidden = false;
-  } catch (e) { toast(e.message); }
-}
-
-function renderAdminSeason() {
-  const old = document.getElementById('admin-season');
-  if (old) old.remove();
-  const card = document.createElement('div');
-  card.className = 'card';
-  card.id = 'admin-season';
-  card.innerHTML = `<div class="card-title">🏁 Финал сезона</div>
-    <div class="sub" style="margin-bottom:8px">Призовые в бюджеты, 3↑/3↓, турнир → архив. Сначала покажу превью.</div>
-    <button class="bonus-btn" id="season-btn">Показать итоги сезона</button>
-    <div id="season-preview" style="margin-top:8px"></div>`;
-  const pauseCard = $('#admin-pause')?.parentElement;
-  if (pauseCard) pauseCard.parentElement.insertBefore(card, pauseCard);
-  $('#season-btn').onclick = async () => {
-    try {
-      const r = await api('/api/admin/season/finalize', {
-        method: 'POST', body: JSON.stringify({ tournament_id: Number(prompt('ID турнира (лиги):', '1')), confirm: false }) });
-      if (r.status === 'preview') {
-        $('#season-preview').innerHTML = (r.rows || []).filter((x) => x.prize || x.move).map((x) =>
-          `<div class="bet-history-item"><div>${esc(x.club)}</div>
-           <div class="sub">${x.prize ? fmt(x.prize) + ' ₼' : ''} ${x.move ? '· ' + esc(x.move) : ''}</div></div>`).join('')
-          + '<button class="bonus-btn" id="season-confirm" style="margin-top:8px">✅ Подтвердить финализацию</button>';
-        $('#season-confirm').onclick = async () => {
-          const tid = Number(prompt('ID турнира ещё раз — подтверди:', '1'));
-          const done = await api('/api/admin/season/finalize', {
-            method: 'POST', body: JSON.stringify({ tournament_id: tid, confirm: true }) });
-          toast(`Сезон закрыт: призовых ${done.prize_rows?.length || 0}, перемещений ${done.moves?.length || 0}`);
-          $('#season-preview').innerHTML = '';
-        };
-      } else { toast('Не лига или не найдена'); }
-    } catch (e) { toast(e.message); }
-  };
-}
-
-function renderAdminPause(dashboard) {
-  const el = $('#admin-pause');
-  el.innerHTML = `<div class="sub" style="margin-bottom:8px">${dashboard.paused ? '⏸ На паузе: ' + esc(dashboard.paused_reason || '—') : '▶️ Приём ставок активен'}</div>
-    <button class="bonus-btn" id="pause-toggle">${dashboard.paused ? 'Снять паузу' : 'Включить паузу'}</button>`;
-  $('#pause-toggle').onclick = async () => {
-    try {
-      await api('/api/admin/pause', { method: 'POST', body: JSON.stringify({ scope: 'global', on: !dashboard.paused, reason: 'админ-панель' }) });
-      toast(!dashboard.paused ? 'Пауза включена' : 'Пауза снята');
-      openAdmin();
-    } catch (e) { toast(e.message); }
-  };
-}
-
-async function renderAdminBets() {
-  const { bets } = await api('/api/admin/bets?status=open');
-  $('#admin-bets').innerHTML = bets.length ? bets.slice(0, 10).map((b) => `<div class="bet-history-item">
-      <div><div>#${b.id} ${esc(b.username || b.first_name || '')} · ${fmt(b.amount)} × ${b.total_odds}</div>
-      <div class="sub">выплата ${fmt(b.potential_win)}</div></div>
-      <button class="lot-btn secondary" data-void="${b.id}">Void</button>
-    </div>`).join('') : '<div class="empty-note">Открытых купонов нет.</div>';
-}
-
-async function renderAdminPlayers() {
-  const { players } = await api('/api/admin/players');
-  $('#admin-players').innerHTML = players.slice(0, 10).map((p) => `<div class="bet-history-item">
-      <div><div>${esc(p.username || p.first_name || p.telegram_id)} ${p.is_frozen ? '🧊' : ''} ${p.is_admin ? '👑' : ''}</div>
-      <div class="sub">${fmt(p.balance)} дыма · ур. ${p.level}</div></div>
-      <div style="display:flex;gap:4px">
-        <button class="lot-btn secondary" data-ban="${p.telegram_id}">${p.is_frozen ? 'Разбан' : 'Бан'}</button>
-        <button class="lot-btn secondary" data-adjust="${p.telegram_id}">+дым</button>
-      </div>
-    </div>`).join('');
-}
-
-async function renderAdminAudit() {
-  const { audit } = await api('/api/admin/audit');
-  $('#admin-audit').innerHTML = audit.length ? audit.slice(0, 12).map((a) => `<div class="bet-history-item">
-      <div>${esc(a.action)}</div><div class="sub">${esc((a.details || '').slice(0, 40))}</div></div>`).join('')
-    : '<div class="empty-note">Журнал пуст.</div>';
-}
-
-document.addEventListener('click', async (ev) => {
-  if (ev.target.id === 'admin-close') { $('#admin-sheet').hidden = true; return; }
-  const voidBtn = ev.target.closest('[data-void]');
-  if (voidBtn) {
-    const reason = prompt('Причина void:') || 'решение админа';
-    try {
-      await api(`/api/admin/bets/${voidBtn.dataset.void}/void`, { method: 'POST', body: JSON.stringify({ reason }) });
-      toast('Возврат выполнен');
-      openAdmin();
-    } catch (e) { toast(e.message); }
-    return;
-  }
-  const banBtn = ev.target.closest('[data-ban]');
-  if (banBtn) {
-    const tg = banBtn.dataset.ban;
-    const freeze = !banBtn.textContent.startsWith('Разбан');
-    const reason = freeze ? (prompt('Причина заморозки:') || 'нарушение правил') : '';
-    try {
-      await api(`/api/admin/players/${tg}`, { method: 'POST', body: JSON.stringify({ action: freeze ? 'ban' : 'unban', reason }) });
-      toast(freeze ? 'Заморожен (баланс цел)' : 'Разбанен');
-      openAdmin();
-    } catch (e) { toast(e.message); }
-    return;
-  }
-  const adjBtn = ev.target.closest('[data-adjust]');
-  if (adjBtn) {
-    const delta = Number(prompt('Дельта дыма (можно минус):', '100'));
-    if (!delta) return;
-    try {
-      await api(`/api/admin/players/${adjBtn.dataset.adjust}`, { method: 'POST', body: JSON.stringify({ action: 'adjust', delta, reason: 'админ-панель' }) });
-      toast('Баланс скорректирован');
-      openAdmin();
-    } catch (e) { toast(e.message); }
-  }
-});
-
-
-/* ===== свои OCR-провайдеры (только root) ===== */
-
-async function renderAdminOcr() {
-  const card = $('#admin-ocr-card');
-  if (!state.user?.is_root) { card.hidden = true; return; }
-  card.hidden = false;
-  const el = $('#admin-ocr');
-  let data;
-  try { data = await api('/api/admin/ocr-providers'); } catch (e) { el.innerHTML = `<div class="empty-note">${esc(e.message)}</div>`; return; }
-  const host = (u) => { try { return new URL(u).host; } catch (_) { return u; } };
-  el.innerHTML = `
-    <div class="sub" style="margin-bottom:10px">OpenAI-совместимые API (<code>/chat/completions</code> с картинкой). Порядок каскада:
-      <b>${data.cascade.length ? data.cascade.map(esc).join(' → ') : 'пусто — нет ни одного ключа'}</b></div>
-    ${data.providers.map((p) => `<div class="ocr-prov ${p.enabled ? '' : 'off'}">
-      <div class="lot-main">
-        <div class="lot-name">${esc(p.name)} <span class="sub">· ${p.position === 'first' ? 'первым' : 'после встроенных'}</span></div>
-        <div class="lot-sub">${esc(p.model)} · ${esc(host(p.base_url))} · ключ ${p.has_key ? esc(p.key_masked) : 'нет'}</div>
-        ${p.last_test ? `<div class="lot-sub">${esc(p.last_test)}</div>` : ''}
-      </div>
-      <div class="ocr-actions">
-        <button class="lot-btn secondary" data-ocr-test="${p.id}">Проверить</button>
-        <button class="lot-btn secondary" data-ocr-toggle="${p.id}" data-on="${p.enabled ? 1 : 0}">${p.enabled ? 'Выкл' : 'Вкл'}</button>
-        <button class="lot-btn secondary" data-ocr-pos="${p.id}" data-pos="${p.position}">${p.position === 'first' ? '↓' : '↑'}</button>
-        <button class="lot-btn secondary" data-ocr-key="${p.id}">Ключ</button>
-        <button class="lot-btn secondary" data-ocr-del="${p.id}">✕</button>
-      </div>
-    </div>`).join('') || '<div class="empty-note" style="padding:10px">Своих провайдеров нет.</div>'}
-    <form id="ocr-add" class="ocr-form" autocomplete="off">
-      <input class="amount-input" name="name" placeholder="Название (напр. AMD)" maxlength="40">
-      <input class="amount-input" name="base_url" placeholder="Base URL: https://…/v1" required>
-      <input class="amount-input" name="model" placeholder="Модель: DeepSeek-V4.1-Flash" required>
-      <input class="amount-input" name="api_key" type="password" placeholder="API-ключ">
-      <select class="amount-input" name="position">
-        <option value="first">Первым (до встроенных)</option>
-        <option value="last">Запасным (после встроенных)</option>
-      </select>
-      <button class="bonus-btn" type="submit">➕ Добавить провайдера</button>
-    </form>
-    <div class="sub" style="margin-top:12px">Встроенные (ключи в bot/.env):
-      ${data.builtin.map((b) => `${b.configured ? '✅' : '▫️'} ${esc(b.name)}`).join(' · ')}</div>`;
-  $('#ocr-add').onsubmit = async (ev) => {
-    ev.preventDefault();
-    const body = Object.fromEntries(new FormData(ev.target).entries());
-    try {
-      const r = await api('/api/admin/ocr-providers', { method: 'POST', body: JSON.stringify(body) });
-      toast(`Добавлен: ${r.provider.name}. Жми «Проверить»`);
-      renderAdminOcr();
-    } catch (e) { toast(e.message); }
-  };
-}
-
-document.addEventListener('click', async (ev) => {
-  const b = ev.target.closest('[data-ocr-test],[data-ocr-toggle],[data-ocr-pos],[data-ocr-key],[data-ocr-del]');
-  if (!b) return;
-  const d = b.dataset;
-  try {
-    if (d.ocrTest) {
-      b.disabled = true; b.textContent = '⏳…';
-      const r = await api(`/api/admin/ocr-providers/${d.ocrTest}/test`, { method: 'POST' });
-      toast(`${r.text} · ${(r.ms / 1000).toFixed(1)} с`, 6000);
-    } else if (d.ocrToggle) {
-      await api(`/api/admin/ocr-providers/${d.ocrToggle}`, { method: 'POST', body: JSON.stringify({ enabled: d.on !== '1' }) });
-    } else if (d.ocrPos) {
-      await api(`/api/admin/ocr-providers/${d.ocrPos}`, { method: 'POST', body: JSON.stringify({ position: d.pos === 'first' ? 'last' : 'first' }) });
-    } else if (d.ocrKey) {
-      const key = prompt('Новый API-ключ (пусто — не менять):');
-      if (!key) return;
-      await api(`/api/admin/ocr-providers/${d.ocrKey}`, { method: 'POST', body: JSON.stringify({ api_key: key }) });
-      toast('Ключ обновлён');
-    } else if (d.ocrDel) {
-      if (!confirm('Удалить провайдера?')) return;
-      await api(`/api/admin/ocr-providers/${d.ocrDel}`, { method: 'DELETE' });
-    }
-  } catch (e) { toast(e.message); }
-  renderAdminOcr();
-});
