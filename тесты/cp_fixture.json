@@ -1,0 +1,3147 @@
+{
+ "champions": [],
+ "competitors": [
+  {
+   "acronym": "ГЕРМ",
+   "id": "6ab25a40b0172d2575bdcb1f",
+   "img": "/2026/9/22/7/competitor/588f8afb-767a-4587-a92f-a03cb51f2397.jpg",
+   "name": "ГЕРМАНИЯ",
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "ПОРТ",
+   "id": "6ab25a40b0172d2575bdcb26",
+   "img": "/2026/9/22/7/competitor/8de255f3-57ca-477b-b5e3-a211342f33ca.jpg",
+   "name": "ПОРТУГАЛИЯ",
+   "stats": {
+    "draws": 3,
+    "losses": 0,
+    "wins": 3
+   }
+  },
+  {
+   "acronym": "ФРАН",
+   "id": "6ab25a40b0172d2575bdcb2f",
+   "img": "/2026/9/22/7/competitor/6366bde7-9292-4d78-872e-7ccdf531d58e.jpg",
+   "name": "ФРАНЦИЯ",
+   "stats": {
+    "draws": 1,
+    "losses": 1,
+    "wins": 6
+   }
+  },
+  {
+   "acronym": "ИСПА",
+   "id": "6ab25a40b0172d2575bdcb39",
+   "img": "/2026/9/22/7/competitor/c4ed5946-7dc3-4874-86e3-ca60a32daf3a.jpg",
+   "name": "ИСПАНИЯ",
+   "stats": {
+    "draws": 2,
+    "losses": 4,
+    "wins": 4
+   }
+  },
+  {
+   "acronym": "НИДЕ",
+   "id": "6ab25a40b0172d2575bdcb42",
+   "img": "/2026/9/22/7/competitor/5dcf37d7-3f34-492b-82c2-c6aa04e3ebc8.jpg",
+   "name": "НИДЕРЛАНДЫ",
+   "stats": {
+    "draws": 2,
+    "losses": 0,
+    "wins": 2
+   }
+  },
+  {
+   "acronym": "АНГЛ",
+   "id": "6ab25a40b0172d2575bdcb4b",
+   "img": "/2026/9/22/7/competitor/5d77f713-e162-4c22-9bd1-c4e3d5ba0336.jpg",
+   "name": "АНГЛИЯ",
+   "stats": {
+    "draws": 3,
+    "losses": 1,
+    "wins": 2
+   }
+  },
+  {
+   "acronym": "ИТАЛ",
+   "id": "6ab25a40b0172d2575bdcb55",
+   "img": "/2026/9/22/7/competitor/04e7aecd-8174-43e4-9420-f5fdf5b17125.jpg",
+   "name": "ИТАЛИЯ",
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "ХОРВ",
+   "id": "6ab25a40b0172d2575bdcb5e",
+   "img": "/2026/9/22/7/competitor/8addf9cc-de6a-4e85-80ea-06e9af37c908.jpg",
+   "name": "ХОРВАТИЯ",
+   "stats": {
+    "draws": 0,
+    "losses": 1,
+    "wins": 5
+   }
+  },
+  {
+   "acronym": "УЭЛЬ",
+   "id": "6ab25a40b0172d2575bdcb66",
+   "img": "/2026/9/22/7/competitor/8cee1705-c1d6-44f3-b703-8564569fb890.jpg",
+   "name": "УЭЛЬС",
+   "stats": {
+    "draws": 2,
+    "losses": 1,
+    "wins": 5
+   }
+  },
+  {
+   "acronym": "ЧЕХИ",
+   "id": "6ab25a40b0172d2575bdcb6a",
+   "img": "/2026/9/22/7/competitor/a9ddf738-5b35-4b9a-a358-180b7010ca31.jpg",
+   "name": "ЧЕХИЯ",
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "ФИНЛ",
+   "id": "6ab25a40b0172d2575bdcb70",
+   "img": "/2026/9/22/7/competitor/215b9cb1-9299-4a13-8c44-37c97ef49e20.jpg",
+   "name": "ФИНЛЯНДИЯ",
+   "stats": {
+    "draws": 2,
+    "losses": 5,
+    "wins": 1
+   }
+  },
+  {
+   "acronym": "ДАНИ",
+   "id": "6ab25a40b0172d2575bdcb75",
+   "img": "/2026/9/22/7/competitor/c7e7df67-c3d2-4055-9691-de5ab2b043ed.jpg",
+   "name": "ДАНИЯ",
+   "stats": {
+    "draws": 0,
+    "losses": 4,
+    "wins": 2
+   }
+  },
+  {
+   "acronym": "ПОЛЬ",
+   "id": "6ab25a40b0172d2575bdcb7a",
+   "img": "/2026/9/22/7/competitor/56dd4e69-8eda-495f-9247-90e2366dc1c2.jpg",
+   "name": "ПОЛЬША",
+   "stats": {
+    "draws": 0,
+    "losses": 4,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "УКР",
+   "id": "6ab25a744ae300b31b95e2cd",
+   "img": "/2026/9/22/7/competitor/e78699ba-2b42-431a-bc4b-fa839adac46b.jpg",
+   "name": "УКРАИНА",
+   "stats": {
+    "draws": 3,
+    "losses": 2,
+    "wins": 3
+   }
+  },
+  {
+   "acronym": "ШВЕЦ",
+   "id": "6ab25a744ae300b31b95e2d3",
+   "img": "/2026/9/22/7/competitor/e2a6a5c4-14c4-4053-92a3-98df0770665e.jpg",
+   "name": "ШВЕЦИЯ",
+   "stats": {
+    "draws": 1,
+    "losses": 5,
+    "wins": 2
+   }
+  },
+  {
+   "acronym": "НОРВ",
+   "id": "6ab25a744ae300b31b95e2de",
+   "img": "/2026/9/22/7/competitor/ca8c096e-d5b0-4a16-a4b2-4eff5395218a.jpg",
+   "name": "НОРВЕГИЯ",
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 2
+   }
+  },
+  {
+   "acronym": "ШОТЛ",
+   "id": "6ab25a744ae300b31b95e2e5",
+   "img": "/2026/9/22/7/competitor/421c3f80-83ee-4cf7-8267-8e7169c2c196.jpg",
+   "name": "ШОТЛАНДИЯ",
+   "stats": {
+    "draws": 1,
+    "losses": 1,
+    "wins": 2
+   }
+  },
+  {
+   "acronym": "ИСЛА",
+   "id": "6ab25a90838e500e48716036",
+   "img": "/2026/9/22/9/competitor/cd0d01d8-fb78-44b8-9a82-5fa22fc53146.jpg",
+   "name": "ИСЛАНДИЯ",
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "РУМЫ",
+   "id": "6ab25a938a93658caa4eb92c",
+   "img": "/2026/9/22/9/competitor/c111eeba-faaa-4b0c-8dde-f45a6f20c4f3.jpg",
+   "name": "РУМЫНИЯ",
+   "stats": {
+    "draws": 2,
+    "losses": 2,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "АРГЕ",
+   "id": "6ab25aee838e500e48722822",
+   "img": "/2026/9/22/7/competitor/00ee792f-b8a3-48b4-97d0-ef546b88d341.jpg",
+   "name": "АРГЕНТИНА",
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "БРАЗ",
+   "id": "6ab25aee838e500e4872282d",
+   "img": "/2026/9/22/7/competitor/124d1f29-7ba2-40fd-bc9b-ccfd26acf627.jpg",
+   "name": "БРАЗИЛИЯ",
+   "stats": {
+    "draws": 1,
+    "losses": 4,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "США",
+   "id": "6ab25aee838e500e48722835",
+   "img": "/2026/9/22/7/competitor/280698c3-7a7a-426b-bdb4-ce651da3396e.jpg",
+   "name": "США",
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "МЕКС",
+   "id": "6ab25aee838e500e48722843",
+   "img": "/2026/9/22/7/competitor/976409f0-1097-47c2-8e78-f9a9addd4f9a.jpg",
+   "name": "МЕКСИКА",
+   "stats": {
+    "draws": 0,
+    "losses": 2,
+    "wins": 5
+   }
+  },
+  {
+   "acronym": "ГАИТ",
+   "id": "6ab25b31d399cef69c99a6e3",
+   "img": "/2026/9/22/9/competitor/3f4e106c-4fdc-4d47-b376-47796c592021.jpg",
+   "name": "ГАИТИ",
+   "stats": {
+    "draws": 0,
+    "losses": 4,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "ГАНА",
+   "id": "6ab25b35e769ae73c5be7fcc",
+   "img": "/2026/9/22/9/competitor/b2113f1b-03d5-48e7-800c-9f9076fad168.jpg",
+   "name": "ГАНА",
+   "stats": {
+    "draws": 3,
+    "losses": 0,
+    "wins": 3
+   }
+  },
+  {
+   "acronym": "СЕВ",
+   "id": "6ab25b3b8a93658caa50a8e9",
+   "img": "/2026/9/22/9/competitor/9e6d58e1-0c11-4c13-ba6b-d19b1679d181.jpg",
+   "name": "СЕВ ИРЛАНДИЯ",
+   "stats": {
+    "draws": 0,
+    "losses": 5,
+    "wins": 1
+   }
+  },
+  {
+   "acronym": "МАРО",
+   "id": "6ab25b6ec2e1eaa414af4a82",
+   "img": "/2026/9/22/9/competitor/fa570b41-f330-49c1-9a0e-f89e5e400649.jpg",
+   "name": "МАРОККО",
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "ИНДО",
+   "id": "6ab25ba2a6d30d25611f2884",
+   "img": "/2026/9/22/9/competitor/06f27ef9-3844-459d-9cb7-b3027209d4a1.jpg",
+   "name": "ИНДОНЕЗИЯ",
+   "stats": {
+    "draws": 1,
+    "losses": 0,
+    "wins": 1
+   }
+  },
+  {
+   "acronym": "КАТА",
+   "id": "6ab25bb3e769ae73c5c0afb7",
+   "img": "/2026/9/22/9/competitor/4a5c70b5-d78c-41ad-9296-320812365e10.jpg",
+   "name": "КАТАР",
+   "stats": {
+    "draws": 1,
+    "losses": 1,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "ТУРЦ",
+   "id": "6ab25bc83127811d441a3749",
+   "img": "/2026/9/22/9/competitor/68982c48-40e5-46f1-9df4-409e480e1a23.jpg",
+   "name": "ТУРЦИЯ",
+   "stats": {
+    "draws": 3,
+    "losses": 1,
+    "wins": 2
+   }
+  },
+  {
+   "acronym": "САУА",
+   "id": "6ab25bf0961969a3509f5382",
+   "img": "/2026/9/22/9/competitor/0e8f8228-4326-4286-8198-e4cd117d8d12.jpg",
+   "name": "САУД АРАВИЯ",
+   "stats": {
+    "draws": 1,
+    "losses": 3,
+    "wins": 0
+   }
+  }
+ ],
+ "latestGrids": [],
+ "latestMatches": [
+  {
+   "awayCompetitor": "6ab25aee838e500e48722843",
+   "awayScore": 2,
+   "callbackMatchWinner": "customMatchWinner",
+   "date": 1790277300606,
+   "homeCompetitor": "6ab25a744ae300b31b95e2e5",
+   "homeScore": 1,
+   "id": "6ab3d7f8ab60372fbb8f827d",
+   "live": false,
+   "order": 1,
+   "roundId": "6ab3d7f8ab60372fbb8f81f6",
+   "seriesId": "6ab3d7f8ab60372fbb8f827c",
+   "stageId": "6ab25bd88a93658caa51e51e",
+   "timer": null,
+   "winnerSlot": "away"
+  },
+  {
+   "awayCompetitor": "6ab25a744ae300b31b95e2e5",
+   "awayScore": 3,
+   "callbackMatchWinner": "customMatchWinner",
+   "date": 1790277300320,
+   "homeCompetitor": "6ab25aee838e500e48722843",
+   "homeScore": 0,
+   "id": "6ab3d7f8ab60372fbb8f829b",
+   "live": false,
+   "order": 1,
+   "roundId": "6ab3d7f8ab60372fbb8f8219",
+   "seriesId": "6ab3d7f8ab60372fbb8f829a",
+   "stageId": "6ab25bd88a93658caa51e51e",
+   "timer": null,
+   "winnerSlot": "away"
+  },
+  {
+   "awayCompetitor": "6ab25a744ae300b31b95e2e5",
+   "awayScore": 1,
+   "callbackMatchWinner": "customMatchWinner",
+   "date": 1790268480571,
+   "homeCompetitor": "6ab25a40b0172d2575bdcb70",
+   "homeScore": 1,
+   "id": "6ab3d7f8ab60372fbb8f8287",
+   "live": false,
+   "order": 1,
+   "roundId": "6ab3d7f8ab60372fbb8f8204",
+   "seriesId": "6ab3d7f8ab60372fbb8f8286",
+   "stageId": "6ab25bd88a93658caa51e51e",
+   "timer": null,
+   "winnerSlot": "draw"
+  }
+ ],
+ "liveMatches": [],
+ "players": [
+  {
+   "acronym": "DRAX",
+   "competitorId": "6ab25a40b0172d2575bdcb1f",
+   "id": "6ab25a40b0172d2575bdcb20",
+   "name": "Draxler",
+   "order": 1,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "REUO",
+   "competitorId": "6ab25a40b0172d2575bdcb1f",
+   "id": "6ab25a40b0172d2575bdcb21",
+   "name": "Reus",
+   "order": 2,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "WERN",
+   "competitorId": "6ab25a40b0172d2575bdcb1f",
+   "id": "6ab25a40b0172d2575bdcb22",
+   "img": "/2026/9/22/7/player/916c1da3-b63f-463e-b548-11a15ffd987f.jpg",
+   "name": "Werner",
+   "order": 3,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "RUDI",
+   "competitorId": "6ab25a40b0172d2575bdcb1f",
+   "id": "6ab25a40b0172d2575bdcb23",
+   "name": "Rudiger",
+   "order": 4,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "SANÉ",
+   "competitorId": "6ab25a40b0172d2575bdcb1f",
+   "id": "6ab25a40b0172d2575bdcb24",
+   "name": "Sané",
+   "order": 5,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "FULL",
+   "competitorId": "6ab25a40b0172d2575bdcb1f",
+   "id": "6ab25a40b0172d2575bdcb25",
+   "name": "Fullkrug",
+   "order": 6,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "PIZZ",
+   "competitorId": "6ab25a40b0172d2575bdcb26",
+   "id": "6ab25a40b0172d2575bdcb28",
+   "name": "Pizzi",
+   "order": 1,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "R.",
+   "competitorId": "6ab25a40b0172d2575bdcb26",
+   "id": "6ab25a40b0172d2575bdcb29",
+   "name": "R. Horta",
+   "order": 2,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "JAOF",
+   "competitorId": "6ab25a40b0172d2575bdcb26",
+   "id": "6ab25a40b0172d2575bdcb2a",
+   "name": "Jaoa Felix",
+   "order": 3,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "JOSF",
+   "competitorId": "6ab25a40b0172d2575bdcb26",
+   "id": "6ab25a40b0172d2575bdcb2b",
+   "name": "Jose Fonte",
+   "order": 4,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "C.",
+   "competitorId": "6ab25a40b0172d2575bdcb26",
+   "id": "6ab25a40b0172d2575bdcb2c",
+   "name": "C. Ronaldo",
+   "order": 5,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "RUBN",
+   "competitorId": "6ab25a40b0172d2575bdcb26",
+   "id": "6ab25a40b0172d2575bdcb2d",
+   "name": "Ruben Neves",
+   "order": 6,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "NANI",
+   "competitorId": "6ab25a40b0172d2575bdcb26",
+   "id": "6ab25a40b0172d2575bdcb2e",
+   "name": "Nani",
+   "order": 7,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "WAHI",
+   "competitorId": "6ab25a40b0172d2575bdcb2f",
+   "id": "6ab25a40b0172d2575bdcb30",
+   "name": "Wahi",
+   "order": 1,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "COMA",
+   "competitorId": "6ab25a40b0172d2575bdcb2f",
+   "id": "6ab25a40b0172d2575bdcb31",
+   "name": "Coman",
+   "order": 2,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "GRIE",
+   "competitorId": "6ab25a40b0172d2575bdcb2f",
+   "id": "6ab25a40b0172d2575bdcb32",
+   "img": "/2026/9/22/7/player/334c6f0f-f1f6-40be-94ca-252c98c39367.jpg",
+   "name": "Griezmann",
+   "order": 3,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "LLOR",
+   "competitorId": "6ab25a40b0172d2575bdcb2f",
+   "id": "6ab25a40b0172d2575bdcb33",
+   "name": "Lloris",
+   "order": 4,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "DIAB",
+   "competitorId": "6ab25a40b0172d2575bdcb2f",
+   "id": "6ab25a40b0172d2575bdcb34",
+   "name": "Diaby",
+   "order": 5,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "TCHO",
+   "competitorId": "6ab25a40b0172d2575bdcb2f",
+   "id": "6ab25a40b0172d2575bdcb35",
+   "name": "Tchouaméni",
+   "order": 6,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "MBAP",
+   "competitorId": "6ab25a40b0172d2575bdcb2f",
+   "id": "6ab25a40b0172d2575bdcb36",
+   "name": "Mbappe",
+   "order": 7,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "DEMB",
+   "competitorId": "6ab25a40b0172d2575bdcb2f",
+   "id": "6ab25a40b0172d2575bdcb37",
+   "img": "/2026/9/22/7/player/cf60149b-da1e-47ae-b4d3-f67ae9617556.jpg",
+   "name": "Dembélé",
+   "order": 8,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "LAUR",
+   "competitorId": "6ab25a40b0172d2575bdcb2f",
+   "id": "6ab25a40b0172d2575bdcb38",
+   "name": "Lauriente",
+   "order": 9,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "DANO",
+   "competitorId": "6ab25a40b0172d2575bdcb39",
+   "id": "6ab25a40b0172d2575bdcb3a",
+   "name": "Dani Olmo",
+   "order": 1,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "ANSF",
+   "competitorId": "6ab25a40b0172d2575bdcb39",
+   "id": "6ab25a40b0172d2575bdcb3b",
+   "img": "/2026/9/22/7/player/fb39c4e7-6775-44cb-a3d6-78fa7314f243.jpg",
+   "name": "Ansu Fati",
+   "order": 2,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "GAVI",
+   "competitorId": "6ab25a40b0172d2575bdcb39",
+   "id": "6ab25a40b0172d2575bdcb3c",
+   "name": "Gavi",
+   "order": 3,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "I.",
+   "competitorId": "6ab25a40b0172d2575bdcb39",
+   "id": "6ab25a40b0172d2575bdcb3d",
+   "img": "/2026/9/22/7/player/f1f09e7e-ac48-4e2a-bab6-4b4352e3a5d5.jpg",
+   "name": "I. Aspas",
+   "order": 4,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "A.",
+   "competitorId": "6ab25a40b0172d2575bdcb39",
+   "id": "6ab25a40b0172d2575bdcb3e",
+   "name": "A. Morata",
+   "order": 5,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "NICW",
+   "competitorId": "6ab25a40b0172d2575bdcb39",
+   "id": "6ab25a40b0172d2575bdcb3f",
+   "name": "Nico Williams",
+   "order": 6,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "FERT",
+   "competitorId": "6ab25a40b0172d2575bdcb39",
+   "id": "6ab25a40b0172d2575bdcb40",
+   "name": "Ferran Torres",
+   "order": 7,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "PEDR",
+   "competitorId": "6ab25a40b0172d2575bdcb39",
+   "id": "6ab25a40b0172d2575bdcb41",
+   "name": "Pedri",
+   "order": 8,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "GRAV",
+   "competitorId": "6ab25a40b0172d2575bdcb42",
+   "id": "6ab25a40b0172d2575bdcb43",
+   "name": "Gravenberch",
+   "order": 1,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "DEPA",
+   "competitorId": "6ab25a40b0172d2575bdcb42",
+   "id": "6ab25a40b0172d2575bdcb44",
+   "name": "Depay",
+   "order": 2,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "MALE",
+   "competitorId": "6ab25a40b0172d2575bdcb42",
+   "id": "6ab25a40b0172d2575bdcb45",
+   "name": "Malen",
+   "order": 3,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "DANJ",
+   "competitorId": "6ab25a40b0172d2575bdcb42",
+   "id": "6ab25a40b0172d2575bdcb46",
+   "name": "Danjuma",
+   "order": 4,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "DE",
+   "competitorId": "6ab25a40b0172d2575bdcb42",
+   "id": "6ab25a40b0172d2575bdcb47",
+   "name": "de Jong",
+   "order": 5,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "WIJN",
+   "competitorId": "6ab25a40b0172d2575bdcb42",
+   "id": "6ab25a40b0172d2575bdcb48",
+   "name": "Wijnaldum",
+   "order": 6,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "VEER",
+   "competitorId": "6ab25a40b0172d2575bdcb42",
+   "id": "6ab25a40b0172d2575bdcb49",
+   "name": "Veerman",
+   "order": 7,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "MEND",
+   "competitorId": "6ab25a40b0172d2575bdcb42",
+   "id": "6ab25a40b0172d2575bdcb4a",
+   "name": "Mendy",
+   "order": 8,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "BARN",
+   "competitorId": "6ab25a40b0172d2575bdcb4b",
+   "id": "6ab25a40b0172d2575bdcb4c",
+   "name": "Barnes",
+   "order": 1,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "WARD",
+   "competitorId": "6ab25a40b0172d2575bdcb4b",
+   "id": "6ab25a40b0172d2575bdcb4d",
+   "name": "Ward-Prowse",
+   "order": 2,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "WILS",
+   "competitorId": "6ab25a40b0172d2575bdcb4b",
+   "id": "6ab25a40b0172d2575bdcb4e",
+   "name": "Wilson",
+   "order": 3,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "RASH",
+   "competitorId": "6ab25a40b0172d2575bdcb4b",
+   "id": "6ab25a40b0172d2575bdcb4f",
+   "img": "/2026/9/22/7/player/0b2b2bbb-d4cd-4737-b5d3-5bd70d8c9c0e.jpg",
+   "name": "Rashford",
+   "order": 4,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "MADD",
+   "competitorId": "6ab25a40b0172d2575bdcb4b",
+   "id": "6ab25a40b0172d2575bdcb50",
+   "name": "Maddison",
+   "order": 5,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "GREA",
+   "competitorId": "6ab25a40b0172d2575bdcb4b",
+   "id": "6ab25a40b0172d2575bdcb51",
+   "name": "Grealish",
+   "order": 6,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "SAKA",
+   "competitorId": "6ab25a40b0172d2575bdcb4b",
+   "id": "6ab25a40b0172d2575bdcb52",
+   "name": "Saka",
+   "order": 7,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "ALEX",
+   "competitorId": "6ab25a40b0172d2575bdcb4b",
+   "id": "6ab25a40b0172d2575bdcb53",
+   "name": "Alexandr-Arnold",
+   "order": 8,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "BELL",
+   "competitorId": "6ab25a40b0172d2575bdcb4b",
+   "id": "6ab25a40b0172d2575bdcb54",
+   "name": "Bellingham",
+   "order": 9,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "CHIE",
+   "competitorId": "6ab25a40b0172d2575bdcb55",
+   "id": "6ab25a40b0172d2575bdcb56",
+   "img": "/2026/9/22/7/player/11ec7f71-978e-4cfd-b894-19e569ad674d.jpg",
+   "name": "Chiesa",
+   "order": 1,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "IMMO",
+   "competitorId": "6ab25a40b0172d2575bdcb55",
+   "id": "6ab25a40b0172d2575bdcb57",
+   "img": "/2026/9/22/7/player/d531d5a0-e1a7-4414-9720-337a1737d3c2.jpg",
+   "name": "Immobile",
+   "order": 2,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "BARE",
+   "competitorId": "6ab25a40b0172d2575bdcb55",
+   "id": "6ab25a40b0172d2575bdcb58",
+   "name": "Barella",
+   "order": 3,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "INSI",
+   "competitorId": "6ab25a40b0172d2575bdcb55",
+   "id": "6ab25a40b0172d2575bdcb59",
+   "name": "Insigne",
+   "order": 4,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "PELL",
+   "competitorId": "6ab25a40b0172d2575bdcb55",
+   "id": "6ab25a40b0172d2575bdcb5a",
+   "name": "Pellegrini",
+   "order": 5,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "VERR",
+   "competitorId": "6ab25a40b0172d2575bdcb55",
+   "id": "6ab25a40b0172d2575bdcb5b",
+   "name": "Verratti",
+   "order": 6,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "BERA",
+   "competitorId": "6ab25a40b0172d2575bdcb55",
+   "id": "6ab25a40b0172d2575bdcb5c",
+   "name": "Berardi",
+   "order": 7,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "KEAN",
+   "competitorId": "6ab25a40b0172d2575bdcb55",
+   "id": "6ab25a40b0172d2575bdcb5d",
+   "name": "Kean",
+   "order": 8,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "PETK",
+   "competitorId": "6ab25a40b0172d2575bdcb5e",
+   "id": "6ab25a40b0172d2575bdcb5f",
+   "name": "Petkovic",
+   "order": 1,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "REBI",
+   "competitorId": "6ab25a40b0172d2575bdcb5e",
+   "id": "6ab25a40b0172d2575bdcb60",
+   "name": "Rebic",
+   "order": 2,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "JURA",
+   "competitorId": "6ab25a40b0172d2575bdcb5e",
+   "id": "6ab25a40b0172d2575bdcb61",
+   "name": "Juranovic",
+   "order": 3,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "KOVA",
+   "competitorId": "6ab25a40b0172d2575bdcb5e",
+   "id": "6ab25a40b0172d2575bdcb62",
+   "name": "Kovacic",
+   "order": 4,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "PERI",
+   "competitorId": "6ab25a40b0172d2575bdcb5e",
+   "id": "6ab25a40b0172d2575bdcb63",
+   "img": "/2026/9/22/7/player/6fa240fa-cb39-4b0f-acf9-0ba018418869.jpg",
+   "name": "Perisic",
+   "order": 5,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "RAKI",
+   "competitorId": "6ab25a40b0172d2575bdcb5e",
+   "id": "6ab25a40b0172d2575bdcb64",
+   "name": "Rakitic",
+   "order": 6,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "MODR",
+   "competitorId": "6ab25a40b0172d2575bdcb5e",
+   "id": "6ab25a40b0172d2575bdcb65",
+   "name": "Modric",
+   "order": 7,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "MATO",
+   "competitorId": "6ab25a40b0172d2575bdcb66",
+   "id": "6ab25a40b0172d2575bdcb67",
+   "name": "Matondo",
+   "order": 1,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "RAMS",
+   "competitorId": "6ab25a40b0172d2575bdcb66",
+   "id": "6ab25a40b0172d2575bdcb68",
+   "name": "Ramsey",
+   "order": 2,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "MOOR",
+   "competitorId": "6ab25a40b0172d2575bdcb66",
+   "id": "6ab25a40b0172d2575bdcb69",
+   "name": "Moore",
+   "order": 3,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "SCHI",
+   "competitorId": "6ab25a40b0172d2575bdcb6a",
+   "id": "6ab25a40b0172d2575bdcb6b",
+   "name": "Schick",
+   "order": 1,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "FALK",
+   "competitorId": "6ab25a40b0172d2575bdcb75",
+   "id": "6ab25a40b0172d2575bdcb76",
+   "name": "Falk",
+   "order": 1,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "HOJL",
+   "competitorId": "6ab25a40b0172d2575bdcb75",
+   "id": "6ab25a40b0172d2575bdcb77",
+   "name": "Hojlung",
+   "order": 2,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "O'RI",
+   "competitorId": "6ab25a40b0172d2575bdcb75",
+   "id": "6ab25a40b0172d2575bdcb78",
+   "name": "O'Rilely",
+   "order": 3,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "ERIK",
+   "competitorId": "6ab25a40b0172d2575bdcb75",
+   "id": "6ab25a40b0172d2575bdcb79",
+   "name": "Eriksen",
+   "order": 4,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "ZALE",
+   "competitorId": "6ab25a40b0172d2575bdcb7a",
+   "id": "6ab25a40b0172d2575bdcb7b",
+   "name": "Zalewski",
+   "order": 1,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "ZIEL",
+   "competitorId": "6ab25a40b0172d2575bdcb7a",
+   "id": "6ab25a40b0172d2575bdcb7c",
+   "name": "Zieliñski",
+   "order": 2,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "SZYM",
+   "competitorId": "6ab25a40b0172d2575bdcb7a",
+   "id": "6ab25a40b0172d2575bdcb7d",
+   "name": "Szymanski",
+   "order": 3,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "LEWA",
+   "competitorId": "6ab25a40b0172d2575bdcb7a",
+   "id": "6ab25a40b0172d2575bdcb7e",
+   "name": "Lewandowski",
+   "order": 4,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "MUDR",
+   "competitorId": "6ab25a744ae300b31b95e2cd",
+   "id": "6ab25a744ae300b31b95e2ce",
+   "img": "/2026/9/22/7/player/968a159e-a730-4f05-aa08-9d36c58000c0.jpg",
+   "name": "Mudryk",
+   "order": 1,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "SIKA",
+   "competitorId": "6ab25a744ae300b31b95e2cd",
+   "id": "6ab25a744ae300b31b95e2cf",
+   "name": "Sikan",
+   "order": 2,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "TSYG",
+   "competitorId": "6ab25a744ae300b31b95e2cd",
+   "id": "6ab25a744ae300b31b95e2d0",
+   "name": "Tsygankov",
+   "order": 3,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "SUDA",
+   "competitorId": "6ab25a744ae300b31b95e2cd",
+   "id": "6ab25a744ae300b31b95e2d1",
+   "name": "Sudakov",
+   "order": 4,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "BUYA",
+   "competitorId": "6ab25a744ae300b31b95e2cd",
+   "id": "6ab25a744ae300b31b95e2d2",
+   "name": "Buyalski",
+   "order": 5,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "ISAK",
+   "competitorId": "6ab25a744ae300b31b95e2d3",
+   "id": "6ab25a744ae300b31b95e2d4",
+   "img": "/2026/9/22/7/player/1eed4cc3-6b24-4139-81f0-afc7fcfbf3e8.jpg",
+   "name": "Isak",
+   "order": 1,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "GUDM",
+   "competitorId": "6ab25a744ae300b31b95e2d3",
+   "id": "6ab25a744ae300b31b95e2d5",
+   "name": "Gudmundsson",
+   "order": 2,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "KULU",
+   "competitorId": "6ab25a744ae300b31b95e2d3",
+   "id": "6ab25a744ae300b31b95e2d6",
+   "name": "Kulusevski",
+   "order": 3,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "GYÖK",
+   "competitorId": "6ab25a744ae300b31b95e2d3",
+   "id": "6ab25a744ae300b31b95e2d7",
+   "img": "/2026/9/22/7/player/bf153d82-9690-4b9b-a2b7-4635b71df92c.jpg",
+   "name": "Gyökeres",
+   "order": 4,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "CLAE",
+   "competitorId": "6ab25a744ae300b31b95e2d3",
+   "id": "6ab25a744ae300b31b95e2d8",
+   "name": "Claesson",
+   "order": 5,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "CAJU",
+   "competitorId": "6ab25a744ae300b31b95e2d3",
+   "id": "6ab25a744ae300b31b95e2d9",
+   "name": "Cajuste",
+   "order": 6,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "KARL",
+   "competitorId": "6ab25a744ae300b31b95e2d3",
+   "id": "6ab25a744ae300b31b95e2da",
+   "name": "Karlsson",
+   "order": 7,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "BAVI",
+   "competitorId": "6ab25a744ae300b31b95e2d3",
+   "id": "6ab25a744ae300b31b95e2db",
+   "name": "Bavindir",
+   "order": 8,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "OLSS",
+   "competitorId": "6ab25a744ae300b31b95e2d3",
+   "id": "6ab25a744ae300b31b95e2dc",
+   "name": "Olsson",
+   "order": 9,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "ELAN",
+   "competitorId": "6ab25a744ae300b31b95e2d3",
+   "id": "6ab25a744ae300b31b95e2dd",
+   "name": "Elanga",
+   "order": 10,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "HAAL",
+   "competitorId": "6ab25a744ae300b31b95e2de",
+   "id": "6ab25a744ae300b31b95e2df",
+   "img": "/2026/9/22/7/player/a0fe5504-1498-4b27-885f-6d86dc28fffb.jpg",
+   "name": "Haaland",
+   "order": 1,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "SØRL",
+   "competitorId": "6ab25a744ae300b31b95e2de",
+   "id": "6ab25a744ae300b31b95e2e0",
+   "img": "/2026/9/22/7/player/375df068-86f9-443a-897f-f875bb6dabce.jpg",
+   "name": "Sørloth",
+   "order": 2,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "ELYO",
+   "competitorId": "6ab25a744ae300b31b95e2de",
+   "id": "6ab25a744ae300b31b95e2e1",
+   "name": "Elyounoussi",
+   "order": 3,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "EVJE",
+   "competitorId": "6ab25a744ae300b31b95e2de",
+   "id": "6ab25a744ae300b31b95e2e2",
+   "name": "Evjen",
+   "order": 4,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "ØDEG",
+   "competitorId": "6ab25a744ae300b31b95e2de",
+   "id": "6ab25a744ae300b31b95e2e3",
+   "name": "Ødegaard",
+   "order": 5,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "KING",
+   "competitorId": "6ab25a744ae300b31b95e2de",
+   "id": "6ab25a744ae300b31b95e2e4",
+   "name": "King",
+   "order": 6,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "CHRI",
+   "competitorId": "6ab25a744ae300b31b95e2e5",
+   "id": "6ab25a744ae300b31b95e2e6",
+   "name": "Chriatie",
+   "order": 1,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "ADAM",
+   "competitorId": "6ab25a744ae300b31b95e2e5",
+   "id": "6ab25a744ae300b31b95e2e9",
+   "name": "Adams",
+   "order": 2,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "MCGI",
+   "competitorId": "6ab25a744ae300b31b95e2e5",
+   "id": "6ab25a744ae300b31b95e2eb",
+   "name": "McGinn",
+   "order": 3,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "LO",
+   "competitorId": "6ab25aee838e500e48722822",
+   "id": "6ab25aee838e500e48722823",
+   "img": "/2026/9/22/7/player/9fd07b84-961c-4f5b-8424-96fbec78a9fa.jpg",
+   "name": "Lo Celso",
+   "order": 1,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "L.",
+   "competitorId": "6ab25aee838e500e48722822",
+   "id": "6ab25aee838e500e48722824",
+   "img": "/2026/9/22/7/player/180da5d6-130c-4b25-ac67-4ac577adf9f3.jpg",
+   "name": "L. Martinez",
+   "order": 2,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "OTAM",
+   "competitorId": "6ab25aee838e500e48722822",
+   "id": "6ab25aee838e500e48722825",
+   "name": "Otamendi",
+   "order": 3,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "OCAM",
+   "competitorId": "6ab25aee838e500e48722822",
+   "id": "6ab25aee838e500e48722826",
+   "name": "Ocampos",
+   "order": 4,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "MAC",
+   "competitorId": "6ab25aee838e500e48722822",
+   "id": "6ab25aee838e500e48722827",
+   "name": "Mac Allister",
+   "order": 5,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "DE",
+   "competitorId": "6ab25aee838e500e48722822",
+   "id": "6ab25aee838e500e48722828",
+   "name": "De Paul",
+   "order": 6,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "GONZ",
+   "competitorId": "6ab25aee838e500e48722822",
+   "id": "6ab25aee838e500e48722829",
+   "name": "Gonzalez",
+   "order": 7,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "ALVA",
+   "competitorId": "6ab25aee838e500e48722822",
+   "id": "6ab25aee838e500e4872282a",
+   "name": "Alvarez",
+   "order": 8,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "CORR",
+   "competitorId": "6ab25aee838e500e48722822",
+   "id": "6ab25aee838e500e4872282b",
+   "name": "Correa",
+   "order": 9,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "AVIL",
+   "competitorId": "6ab25aee838e500e48722822",
+   "id": "6ab25aee838e500e4872282c",
+   "name": "Avilla",
+   "order": 10,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "G.",
+   "competitorId": "6ab25aee838e500e4872282d",
+   "id": "6ab25aee838e500e4872282e",
+   "name": "G. Jesus",
+   "order": 1,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "RAPH",
+   "competitorId": "6ab25aee838e500e4872282d",
+   "id": "6ab25aee838e500e4872282f",
+   "name": "Raphina",
+   "order": 2,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "FERN",
+   "competitorId": "6ab25aee838e500e4872282d",
+   "id": "6ab25aee838e500e48722830",
+   "name": "Fernando",
+   "order": 3,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "BREM",
+   "competitorId": "6ab25aee838e500e4872282d",
+   "id": "6ab25aee838e500e48722831",
+   "name": "Bremer",
+   "order": 4,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "FRED",
+   "competitorId": "6ab25aee838e500e4872282d",
+   "id": "6ab25aee838e500e48722832",
+   "name": "Fred",
+   "order": 5,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "M.",
+   "competitorId": "6ab25aee838e500e4872282d",
+   "id": "6ab25aee838e500e48722833",
+   "name": "M. Cunha",
+   "order": 6,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "OSCA",
+   "competitorId": "6ab25aee838e500e4872282d",
+   "id": "6ab25aee838e500e48722834",
+   "name": "Oscar",
+   "order": 7,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "WEAH",
+   "competitorId": "6ab25aee838e500e48722835",
+   "id": "6ab25aee838e500e48722836",
+   "name": "Weah",
+   "order": 1,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "REYN",
+   "competitorId": "6ab25aee838e500e48722835",
+   "id": "6ab25aee838e500e48722837",
+   "name": "Reyna",
+   "order": 2,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "PEPI",
+   "competitorId": "6ab25aee838e500e48722835",
+   "id": "6ab25aee838e500e48722838",
+   "name": "Pepi",
+   "order": 3,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "PULI",
+   "competitorId": "6ab25aee838e500e48722835",
+   "id": "6ab25aee838e500e48722839",
+   "img": "/2026/9/22/7/player/16956e03-0ca7-4c01-aa15-e76364801389.jpg",
+   "name": "Pulisic",
+   "order": 4,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "ADAM",
+   "competitorId": "6ab25aee838e500e48722835",
+   "id": "6ab25aee838e500e4872283a",
+   "name": "Adams",
+   "order": 5,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "ZARD",
+   "competitorId": "6ab25aee838e500e48722835",
+   "id": "6ab25aee838e500e4872283b",
+   "name": "Zardes",
+   "order": 6,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "MIHA",
+   "competitorId": "6ab25aee838e500e48722835",
+   "id": "6ab25aee838e500e4872283c",
+   "name": "Mihailovic",
+   "order": 7,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "RICH",
+   "competitorId": "6ab25aee838e500e48722835",
+   "id": "6ab25aee838e500e4872283d",
+   "name": "Richards",
+   "order": 8,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "FERR",
+   "competitorId": "6ab25aee838e500e48722835",
+   "id": "6ab25aee838e500e4872283e",
+   "name": "Ferreira",
+   "order": 9,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "MUSA",
+   "competitorId": "6ab25aee838e500e48722835",
+   "id": "6ab25aee838e500e4872283f",
+   "name": "Musah",
+   "order": 10,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "MCKE",
+   "competitorId": "6ab25aee838e500e48722835",
+   "id": "6ab25aee838e500e48722840",
+   "name": "McKennie",
+   "order": 11,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "RAGE",
+   "competitorId": "6ab25aee838e500e48722835",
+   "id": "6ab25aee838e500e48722841",
+   "name": "Ragen",
+   "order": 12,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "BROO",
+   "competitorId": "6ab25aee838e500e48722835",
+   "id": "6ab25aee838e500e48722842",
+   "name": "Brooks",
+   "order": 13,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "GIMÉ",
+   "competitorId": "6ab25aee838e500e48722843",
+   "id": "6ab25aee838e500e48722846",
+   "name": "Giménez",
+   "order": 1,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "VEGA",
+   "competitorId": "6ab25aee838e500e48722843",
+   "id": "6ab25aee838e500e48722848",
+   "name": "Vega",
+   "order": 2,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "YILD",
+   "competitorId": "6ab25bc83127811d441a3749",
+   "id": "6ab3d727d399cef69c6bfcfd",
+   "name": "Yildiz",
+   "order": 1,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "GÜLE",
+   "competitorId": "6ab25bc83127811d441a3749",
+   "id": "6ab3d72fab60372fbb864013",
+   "name": "Güler",
+   "order": 2,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "AKTÜ",
+   "competitorId": "6ab25bc83127811d441a3749",
+   "id": "6ab3d73f0915433f4b04f599",
+   "name": "Aktürkoglu",
+   "order": 3,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "ÇHAL",
+   "competitorId": "6ab25bc83127811d441a3749",
+   "id": "6ab3d76ab89d26eecde24230",
+   "name": "Çhalhanoǧlu",
+   "order": 4,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "JEAJ",
+   "competitorId": "6ab25b31d399cef69c99a6e3",
+   "id": "6ab3d7ab3d5ace533c12c1f2",
+   "name": "Jean Jacquez",
+   "order": 1,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "CASI",
+   "competitorId": "6ab25b31d399cef69c99a6e3",
+   "id": "6ab3d7b4e769ae73c5ef0bca",
+   "name": "Casimir",
+   "order": 2,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "BELL",
+   "competitorId": "6ab25b31d399cef69c99a6e3",
+   "id": "6ab3d7ccd399cef69c73d3b7",
+   "name": "Bellegarde",
+   "order": 3,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "PIER",
+   "competitorId": "6ab25b31d399cef69c99a6e3",
+   "id": "6ab3d7e3838e500e48907d0d",
+   "name": "Pierrot",
+   "order": 4,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "FRIM",
+   "competitorId": "6ab25a40b0172d2575bdcb42",
+   "id": "6ab3d9bae68fe1f689e0dd23",
+   "name": "Frimpong",
+   "order": 9,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "SEME",
+   "competitorId": "6ab25b35e769ae73c5be7fcc",
+   "id": "6ab3da208ced70d6ba8d1795",
+   "name": "Semenyo",
+   "order": 1,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "AYEW",
+   "competitorId": "6ab25b35e769ae73c5be7fcc",
+   "id": "6ab3da278ced70d6ba8d4626",
+   "name": "Ayew",
+   "order": 2,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "IÑAW",
+   "competitorId": "6ab25b35e769ae73c5be7fcc",
+   "id": "6ab3da36bb5905f46b218a9d",
+   "name": "Iñaki Williams",
+   "order": 3,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "FATA",
+   "competitorId": "6ab25b35e769ae73c5be7fcc",
+   "id": "6ab3da482959aa876a627bf8",
+   "name": "Fatawu",
+   "order": 4,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "KUDU",
+   "competitorId": "6ab25b35e769ae73c5be7fcc",
+   "id": "6ab3da4cb3044ea0a9d967cd",
+   "name": "Kudus",
+   "order": 5,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "PROV",
+   "competitorId": "6ab25b31d399cef69c99a6e3",
+   "id": "6ab3da67bb5905f46b2250ab",
+   "name": "Providence",
+   "order": 5,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "DOBR",
+   "competitorId": "6ab25a938a93658caa4eb92c",
+   "id": "6ab3db1fb3044ea0a9de4831",
+   "name": "Dobre",
+   "order": 1,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "BERG",
+   "competitorId": "6ab25a744ae300b31b95e2de",
+   "id": "6ab3dc25ab60372fbbac4924",
+   "name": "Berg",
+   "order": 7,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "BOBB",
+   "competitorId": "6ab25a744ae300b31b95e2de",
+   "id": "6ab3dc28961969a350dbd4cd",
+   "name": "Bobb",
+   "order": 8,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "NUSA",
+   "competitorId": "6ab25a744ae300b31b95e2de",
+   "id": "6ab3dc2b246dbe6cff970b8f",
+   "name": "Nusa",
+   "order": 9,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "AL",
+   "competitorId": "6ab25bf0961969a3509f5382",
+   "id": "6ab3dc4e2959aa876a719329",
+   "name": "Al Juwair",
+   "order": 1,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "AL",
+   "competitorId": "6ab25bf0961969a3509f5382",
+   "id": "6ab3dc668a93658caa721631",
+   "name": "Al Dawsari",
+   "order": 2,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "SANA",
+   "competitorId": "6ab25ba2a6d30d25611f2884",
+   "id": "6ab3dcd5083739e7ddf54016",
+   "name": "Sananta",
+   "order": 1,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "BUDI",
+   "competitorId": "6ab25a40b0172d2575bdcb5e",
+   "id": "6ab3de40b0172d2575ff33b5",
+   "name": "Budimir",
+   "order": 8,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "KRAM",
+   "competitorId": "6ab25a40b0172d2575bdcb5e",
+   "id": "6ab3de49bb5905f46b3aacec",
+   "name": "Kramaric",
+   "order": 9,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "SUČI",
+   "competitorId": "6ab25a40b0172d2575bdcb5e",
+   "id": "6ab3de66bb5905f46b3c399f",
+   "name": "Sučić",
+   "order": 10,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "IVAN",
+   "competitorId": "6ab25a40b0172d2575bdcb5e",
+   "id": "6ab3df0c2959aa876a875dcb",
+   "name": "Ivanović",
+   "order": 11,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "FIDA",
+   "competitorId": "6ab25aee838e500e48722843",
+   "id": "6ab3df2bd399cef69ca29a50",
+   "name": "Fidalgo",
+   "order": 3,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "RUIZ",
+   "competitorId": "6ab25aee838e500e48722843",
+   "id": "6ab3df2f3127811d443cac64",
+   "name": "Ruiz",
+   "order": 4,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "CALE",
+   "competitorId": "6ab25a40b0172d2575bdcb5e",
+   "id": "6ab3df533127811d443db502",
+   "name": "Caleta-Car",
+   "order": 12,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "ANTM",
+   "competitorId": "6ab25a40b0172d2575bdcb70",
+   "id": "6ab3dffd838e500e48bd4edc",
+   "name": "Antman",
+   "order": 1,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "WALT",
+   "competitorId": "6ab25a40b0172d2575bdcb70",
+   "id": "6ab3e000b0172d25750776cb",
+   "name": "Walta",
+   "order": 2,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "POHJ",
+   "competitorId": "6ab25a40b0172d2575bdcb70",
+   "id": "6ab3e020b3044ea0a901f86c",
+   "name": "Pohjanpalo",
+   "order": 3,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "JOÃP",
+   "competitorId": "6ab25aee838e500e4872282d",
+   "id": "6ab3e037838e500e48beeb03",
+   "name": "João Pedro",
+   "order": 8,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "VINJ",
+   "competitorId": "6ab25aee838e500e4872282d",
+   "id": "6ab3e03f246dbe6cffaee529",
+   "name": "Vini Jr.",
+   "order": 9,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "ALVA",
+   "competitorId": "6ab25aee838e500e48722843",
+   "id": "6ab3e0c74ae300b31bd1f531",
+   "name": "Alvarado",
+   "order": 5,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "SUHO",
+   "competitorId": "6ab25a40b0172d2575bdcb70",
+   "id": "6ab3e0edbb5905f46b4bc89e",
+   "name": "Suhonen",
+   "order": 4,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "KAIR",
+   "competitorId": "6ab25a40b0172d2575bdcb70",
+   "id": "6ab3e21e0915433f4b439793",
+   "name": "Kairinen",
+   "order": 5,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "MAN",
+   "competitorId": "6ab25a938a93658caa4eb92c",
+   "id": "6ab3e47a961969a350049b53",
+   "name": "Man",
+   "order": 2,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "HAGI",
+   "competitorId": "6ab25a938a93658caa4eb92c",
+   "id": "6ab3e47f8ced70d6bacbef74",
+   "name": "Hagi",
+   "order": 3,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "GAKP",
+   "competitorId": "6ab25a40b0172d2575bdcb42",
+   "id": "6ab3e494838e500e48d85be1",
+   "name": "Gakpo",
+   "order": 10,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "BIRL",
+   "competitorId": "6ab25a938a93658caa4eb92c",
+   "id": "6ab3e4abbb5905f46b60bcd6",
+   "name": "Birligea",
+   "order": 4,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "MIHA",
+   "competitorId": "6ab25a938a93658caa4eb92c",
+   "id": "6ab3e4dc838e500e48dab545",
+   "name": "Mihaila",
+   "order": 5,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "REIJ",
+   "competitorId": "6ab25a40b0172d2575bdcb42",
+   "id": "6ab3e4f9b3044ea0a91844d6",
+   "name": "Reijnders",
+   "order": 11,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "DUMF",
+   "competitorId": "6ab25a40b0172d2575bdcb42",
+   "id": "6ab3e5020915433f4b56095b",
+   "name": "Dumfries",
+   "order": 12,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "KLUI",
+   "competitorId": "6ab25a40b0172d2575bdcb42",
+   "id": "6ab3e51b053cd34f50568e2c",
+   "name": "Kluivert",
+   "order": 13,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "OLIS",
+   "competitorId": "6ab25a40b0172d2575bdcb2f",
+   "id": "6ab3e7ae246dbe6cffdaa9bb",
+   "name": "Olise",
+   "order": 10,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "RABI",
+   "competitorId": "6ab25a40b0172d2575bdcb2f",
+   "id": "6ab3e7b3838e500e48e948ae",
+   "name": "Rabiot",
+   "order": 11,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "AYAR",
+   "competitorId": "6ab25a744ae300b31b95e2d3",
+   "id": "6ab3e7f0246dbe6cffdcd9e8",
+   "name": "Ayari",
+   "order": 11,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "KARL",
+   "competitorId": "6ab25a744ae300b31b95e2d3",
+   "id": "6ab3e7fdb3044ea0a9265b21",
+   "name": "Karlstrøm",
+   "order": 12,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "BERG",
+   "competitorId": "6ab25a744ae300b31b95e2d3",
+   "id": "6ab3e831e769ae73c54d8001",
+   "name": "Bergvall",
+   "order": 13,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "HERN",
+   "competitorId": "6ab25a40b0172d2575bdcb2f",
+   "id": "6ab3ebd7b3044ea0a939e29e",
+   "name": "Hernandez",
+   "order": 12,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "DEVL",
+   "competitorId": "6ab25b3b8a93658caa50a8e9",
+   "id": "6ab3ee714ae300b31b1d6ea2",
+   "name": "Devlin",
+   "order": 1,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "PRIC",
+   "competitorId": "6ab25b3b8a93658caa50a8e9",
+   "id": "6ab3ee7be68fe1f6896ab471",
+   "name": "Price",
+   "order": 2,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "CHAR",
+   "competitorId": "6ab25b3b8a93658caa50a8e9",
+   "id": "6ab3ee803127811d448f13c5",
+   "name": "Charles",
+   "order": 3,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "DONL",
+   "competitorId": "6ab25b3b8a93658caa50a8e9",
+   "id": "6ab3eebab0172d25755fe61e",
+   "name": "Donley",
+   "order": 4,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "JOHN",
+   "competitorId": "6ab25a40b0172d2575bdcb66",
+   "id": "6ab3ef36c2e1eaa4145ae9a5",
+   "name": "Johnson",
+   "order": 4,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "AMPA",
+   "competitorId": "6ab25a40b0172d2575bdcb66",
+   "id": "6ab3ef47a6d30d2561535057",
+   "name": "Ampadu",
+   "order": 5,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "JAME",
+   "competitorId": "6ab25a40b0172d2575bdcb66",
+   "id": "6ab3ef8dbb5905f46ba131a1",
+   "name": "James",
+   "order": 6,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "ISAK",
+   "competitorId": "6ab25a40b0172d2575bdcb75",
+   "id": "6ab3f0c88a93658caae3e6be",
+   "name": "Isaksen",
+   "order": 5,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "FROH",
+   "competitorId": "6ab25a40b0172d2575bdcb75",
+   "id": "6ab3f0d5ab60372fbb276553",
+   "name": "Froholdt",
+   "order": 6,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "WILS",
+   "competitorId": "6ab25a40b0172d2575bdcb66",
+   "id": "6ab3f48de769ae73c59db49d",
+   "name": "Wilson",
+   "order": 7,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "LUND",
+   "competitorId": "6ab25a744ae300b31b95e2d3",
+   "id": "6ab3f4a2083739e7dd8ba840",
+   "name": "Lundgren",
+   "order": 14,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "THOM",
+   "competitorId": "6ab25a40b0172d2575bdcb66",
+   "id": "6ab3f510083739e7dd8f3434",
+   "name": "Thomas",
+   "order": 8,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "DAMS",
+   "competitorId": "6ab25a40b0172d2575bdcb75",
+   "id": "6ab3f56a3127811d44bf901c",
+   "name": "Damsgaard",
+   "order": 7,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "KANE",
+   "competitorId": "6ab25a40b0172d2575bdcb4b",
+   "id": "6ab3f857e68fe1f689b05569",
+   "name": "Kane",
+   "order": 10,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "PEDN",
+   "competitorId": "6ab25a40b0172d2575bdcb26",
+   "id": "6ab3f8943127811d44d65ca8",
+   "name": "Pedro Neto",
+   "order": 8,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "BERS",
+   "competitorId": "6ab25a40b0172d2575bdcb26",
+   "id": "6ab3f8a0b3044ea0a98c461c",
+   "name": "Bernardo Silva",
+   "order": 9,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "VITI",
+   "competitorId": "6ab25a40b0172d2575bdcb26",
+   "id": "6ab3f9158a93658caa1dc682",
+   "name": "Vitinha",
+   "order": 10,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "LAMY",
+   "competitorId": "6ab25a40b0172d2575bdcb39",
+   "id": "6ab3f96e8a93658caa1eaaaa",
+   "name": "Lamine Yamal",
+   "order": 9,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "ALAE",
+   "competitorId": "6ab25bb3e769ae73c5c0afb7",
+   "id": "6ab3f9b3838e500e48543e70",
+   "name": "Alaeeldin",
+   "order": 1,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "AL",
+   "competitorId": "6ab25bb3e769ae73c5c0afb7",
+   "id": "6ab3f9c7ab60372fbb68848d",
+   "name": "Al Mannai",
+   "order": 2,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "SHAP",
+   "competitorId": "6ab25a744ae300b31b95e2cd",
+   "id": "6ab3fa40ab60372fbb6bb466",
+   "name": "Shaparenko",
+   "order": 6,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "GORD",
+   "competitorId": "6ab25a40b0172d2575bdcb4b",
+   "id": "6ab3fa6cd399cef69c4932cf",
+   "name": "Gordon",
+   "order": 11,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "RICE",
+   "competitorId": "6ab25a40b0172d2575bdcb4b",
+   "id": "6ab3fb33e68fe1f689c11c53",
+   "name": "Rice",
+   "order": 12,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "OYAR",
+   "competitorId": "6ab25a40b0172d2575bdcb39",
+   "id": "6ab3fb44e68fe1f689c136f0",
+   "name": "Oyarzabal",
+   "order": 10,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "PART",
+   "competitorId": "6ab25b35e769ae73c5be7fcc",
+   "id": "6ab42d3c13fd7d28115c1785",
+   "name": "Partey",
+   "order": 6,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "UZUN",
+   "competitorId": "6ab25bc83127811d441a3749",
+   "id": "6ab42d70838e500e486bd5c7",
+   "name": "Uzun",
+   "order": 5,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "YILM",
+   "competitorId": "6ab25bc83127811d441a3749",
+   "id": "6ab42dca838e500e486dc39f",
+   "name": "Yilmaz",
+   "order": 6,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "KALI",
+   "competitorId": "6ab25a744ae300b31b95e2cd",
+   "id": "6ab42e97b3044ea0a9b245b5",
+   "name": "Kaliuzhnyi",
+   "order": 7,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "NAZA",
+   "competitorId": "6ab25a744ae300b31b95e2cd",
+   "id": "6ab42eb34f59e1ec42265e26",
+   "name": "Nazarenko",
+   "order": 8,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "DOVB",
+   "competitorId": "6ab25a744ae300b31b95e2cd",
+   "id": "6ab42ec14f59e1ec4226bc77",
+   "name": "Dovbyk",
+   "order": 9,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "SKYT",
+   "competitorId": "6ab25a40b0172d2575bdcb70",
+   "id": "6ab586873127811d44c4551c",
+   "name": "Skytta",
+   "order": 6,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "QUIÑ",
+   "competitorId": "6ab25aee838e500e48722843",
+   "id": "6ab5871cb0172d2575b4772d",
+   "name": "Quiñones",
+   "order": 6,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "DOAK",
+   "competitorId": "6ab25a744ae300b31b95e2e5",
+   "id": "6ab5876fd399cef69c1b29f6",
+   "name": "Doak",
+   "order": 4,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "MCTO",
+   "competitorId": "6ab25a744ae300b31b95e2e5",
+   "id": "6ab58774083739e7dd7e8720",
+   "name": "McTominay",
+   "order": 5,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "HRAN",
+   "competitorId": "6ab25a40b0172d2575bdcb6a",
+   "id": "6ab5892cb89d26eecddc4ca5",
+   "name": "Hranáč",
+   "order": 2,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "ŠULC",
+   "competitorId": "6ab25a40b0172d2575bdcb6a",
+   "id": "6ab58946961969a3505f838a",
+   "name": "Šulc",
+   "order": 3,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "JURÁ",
+   "competitorId": "6ab25a40b0172d2575bdcb6a",
+   "id": "6ab5896d0915433f4bc95f20",
+   "name": "Jurásek",
+   "order": 4,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "SADI",
+   "competitorId": "6ab25a40b0172d2575bdcb6a",
+   "id": "6ab5897b3127811d44d4291d",
+   "name": "Sadilek",
+   "order": 5,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "SOUČ",
+   "competitorId": "6ab25a40b0172d2575bdcb6a",
+   "id": "6ab5898bab60372fbb2b2133",
+   "name": "Souček",
+   "order": 6,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "HLOŽ",
+   "competitorId": "6ab25a40b0172d2575bdcb6a",
+   "id": "6ab589a93d5ace533cbb4b4a",
+   "name": "Hložek",
+   "order": 7,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  },
+  {
+   "acronym": "DOUD",
+   "competitorId": "6ab25a40b0172d2575bdcb6a",
+   "id": "6ab589d013fd7d28115a0cb4",
+   "name": "Douděra",
+   "order": 8,
+   "stats": {
+    "draws": 0,
+    "losses": 0,
+    "wins": 0
+   }
+  }
+ ],
+ "status": "progress",
+ "timeSettings": {
+  "display": {
+   "hours": "never",
+   "minutes": "always",
+   "seconds": "never",
+   "template": "prime"
+  },
+  "recap": {
+   "hours": "never",
+   "minutes": "always",
+   "seconds": "never",
+   "template": "prime"
+  },
+  "timeline": {
+   "hours": "never",
+   "minutes": "always",
+   "seconds": "never",
+   "template": "prime"
+  },
+  "timer": {
+   "hours": "never",
+   "minutes": "always",
+   "seconds": "always",
+   "template": "colon"
+  }
+ },
+ "upcomingGrids": [],
+ "upcomingMatches": [
+  {
+   "awayCompetitor": "6ab25aee838e500e48722822",
+   "callbackMatchWinner": "customMatchWinner",
+   "homeCompetitor": "6ab25b31d399cef69c99a6e3",
+   "id": "6ab3d7f8ab60372fbb8f81fc",
+   "live": false,
+   "order": 1,
+   "roundId": "6ab3d7f8ab60372fbb8f81f6",
+   "seriesId": "6ab3d7f8ab60372fbb8f81fb",
+   "stageId": "6ab25bd88a93658caa51e51e",
+   "timer": null
+  },
+  {
+   "awayCompetitor": "6ab25a40b0172d2575bdcb1f",
+   "callbackMatchWinner": "customMatchWinner",
+   "homeCompetitor": "6ab25a40b0172d2575bdcb6a",
+   "id": "6ab3d7f8ab60372fbb8f823f",
+   "live": false,
+   "order": 1,
+   "roundId": "6ab3d7f8ab60372fbb8f81f6",
+   "seriesId": "6ab3d7f8ab60372fbb8f823e",
+   "stageId": "6ab25bd88a93658caa51e51e",
+   "timer": null
+  },
+  {
+   "awayCompetitor": "6ab25a40b0172d2575bdcb55",
+   "callbackMatchWinner": "customMatchWinner",
+   "homeCompetitor": "6ab25ba2a6d30d25611f2884",
+   "id": "6ab3d7f8ab60372fbb8f8241",
+   "live": false,
+   "order": 1,
+   "roundId": "6ab3d7f8ab60372fbb8f81f6",
+   "seriesId": "6ab3d7f8ab60372fbb8f8240",
+   "stageId": "6ab25bd88a93658caa51e51e",
+   "timer": null
+  }
+ ]
+}

@@ -1,0 +1,262 @@
+/* KURILKA SIGARKI — тёмная тема. Дефолт (выбор владельца 25.09): ИЗУМРУД.
+   Пресеты: html[data-theme="coal"] (уголь+оранж) | html[data-theme="gold"] (золото). */
+
+:root {
+  --bg: #14161a;
+  --bg2: #1b1e24;
+  --bg3: #23272f;
+  --line: #2d323b;
+  --text: #e8e6e1;
+  --muted: #8a877f;
+  --accent: #2ecc8f;
+  --accent2: #6fe3b4;
+  --green: #57c26b;
+  --red: #e06c5a;
+  --radius: 14px;
+}
+html[data-theme="coal"] { --accent: #ff7a1a; --accent2: #ffa050; }
+html[data-theme="gold"] { --accent: #d9a521; --accent2: #f3cf6b; }
+
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body {
+  background: var(--bg); color: var(--text);
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-size: 15px; overscroll-behavior: none;
+}
+#app { max-width: 520px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; }
+button { font-family: inherit; color: inherit; background: none; border: none; cursor: pointer; }
+
+/* ===== хедер ===== */
+.app-header {
+  position: sticky; top: 0; z-index: 20;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 14px; background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: blur(10px); border-bottom: 1px solid var(--line);
+}
+.brand { font-weight: 800; letter-spacing: 2.5px; font-size: 15px; }
+.brand b { color: var(--accent); }
+.header-right { display: flex; align-items: center; gap: 10px; }
+.balance-chip {
+  background: var(--bg3); border: 1px solid var(--line); border-radius: 20px;
+  padding: 6px 12px; font-weight: 700; font-size: 14px; color: var(--accent);
+}
+.bell { position: relative; font-size: 18px; }
+.badge {
+  position: absolute; top: -6px; right: -8px; background: var(--red); color: #fff;
+  font-size: 10px; font-weight: 700; border-radius: 10px; padding: 1px 5px;
+}
+
+/* ===== основной контейнер ===== */
+.views-container { flex: 1; padding: 14px 14px 90px; }
+.view { display: none; }
+.view.active { display: block; }
+.section-title { font-size: 20px; font-weight: 800; margin-bottom: 12px; letter-spacing: 0.3px; }
+.sub { color: var(--muted); font-size: 12.5px; }
+
+/* ===== чипы туров/дивизионов ===== */
+.chips { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 6px; }
+.chip {
+  flex: 0 0 auto; background: var(--bg2); border: 1px solid var(--line);
+  color: var(--muted); border-radius: 18px; padding: 7px 13px; font-size: 13px; font-weight: 600;
+}
+.chip.active { background: var(--accent); border-color: var(--accent); color: #17130d; }
+
+/* ===== карточка матча ===== */
+.match-list { display: flex; flex-direction: column; gap: 10px; }
+.match-card {
+  background: var(--bg2); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 12px;
+}
+.match-card .mc-top {
+  display: flex; justify-content: space-between; align-items: center;
+  color: var(--muted); font-size: 11.5px; margin-bottom: 9px;
+}
+.mc-teams { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.mc-team { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; font-weight: 700; font-size: 14px; }
+.mc-team.right { justify-content: flex-end; text-align: right; }
+.mc-team img { width: 26px; height: 26px; object-fit: contain; }
+.mc-fallback { width: 26px; height: 26px; display: grid; place-items: center; opacity: .5; }
+.mc-score { font-weight: 800; font-size: 18px; white-space: nowrap; }
+.mc-score .pens { font-size: 12px; color: var(--muted); }
+.mc-markets { display: flex; gap: 6px; margin-top: 10px; }
+.odd-btn {
+  flex: 1; background: var(--bg3); border: 1px solid var(--line); border-radius: 9px;
+  padding: 7px 4px; display: flex; flex-direction: column; align-items: center; gap: 2px;
+  transition: transform .06s ease;
+}
+.odd-btn:active { transform: scale(.96); }
+.odd-btn .lbl { color: var(--muted); font-size: 11px; }
+.odd-btn .val { font-weight: 800; font-size: 14px; }
+.odd-btn.selected { background: var(--accent); border-color: var(--accent); }
+.odd-btn.selected .lbl, .odd-btn.selected .val { color: #17130d; }
+.mc-status { font-size: 11.5px; color: var(--muted); }
+.mc-status.won { color: var(--green); }
+.mc-status.lost { color: var(--red); }
+.fav-star { font-size: 17px; color: var(--muted); background: none; }
+.fav-star.on { color: var(--accent); }
+
+/* ===== таблица ===== */
+.standings { width: 100%; border-collapse: collapse; background: var(--bg2); border-radius: var(--radius); overflow: hidden; }
+.standings th {
+  color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .5px;
+  padding: 9px 6px; text-align: center; border-bottom: 1px solid var(--line);
+}
+.standings td { padding: 9px 6px; text-align: center; font-size: 13.5px; border-bottom: 1px solid var(--line); }
+.standings tr:last-child td { border-bottom: none; }
+.standings .team-cell { display: flex; align-items: center; gap: 7px; text-align: left; font-weight: 600; }
+.standings .team-cell img { width: 20px; height: 20px; object-fit: contain; }
+.standings .pos { color: var(--muted); font-weight: 700; width: 20px; }
+.standings trpromo td:first-child { box-shadow: inset 3px 0 0 var(--green); }
+.standings trreleg td:first-child { box-shadow: inset 3px 0 0 var(--red); }
+.standings .pts { font-weight: 800; color: var(--accent); }
+
+/* ===== купон ===== */
+.coupon-empty { text-align: center; color: var(--muted); padding: 40px 10px; }
+.coupon-leg {
+  background: var(--bg2); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 11px 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;
+}
+.coupon-leg .leg-main { font-weight: 700; }
+.coupon-leg .leg-sub { color: var(--muted); font-size: 12px; margin-top: 2px; }
+.coupon-leg .leg-odd { font-weight: 800; color: var(--accent); }
+.coupon-leg .leg-remove { color: var(--red); font-size: 17px; padding: 4px 6px; }
+.coupon-summary { background: var(--bg2); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; margin-top: 12px; }
+.coupon-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; }
+.coupon-row.total { font-weight: 800; font-size: 16px; }
+.coupon-row .trim { color: var(--red); font-size: 12px; }
+.amount-input {
+  width: 100%; background: var(--bg3); border: 1px solid var(--line); color: var(--text);
+  border-radius: 10px; padding: 12px; font-size: 17px; font-weight: 700; margin: 8px 0;
+}
+.place-btn {
+  width: 100%; background: var(--accent); color: #17130d; font-weight: 800; font-size: 16px;
+  border-radius: 12px; padding: 14px; margin-top: 6px;
+}
+.place-btn:disabled { opacity: .45; }
+
+/* ===== кабинет ===== */
+.profile-hero {
+  background: linear-gradient(135deg, var(--bg2), var(--bg3));
+  border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; margin-bottom: 12px;
+}
+.profile-hero .ph-top { display: flex; align-items: center; gap: 12px; }
+.avatar { width: 48px; height: 48px; border-radius: 50%; background: var(--bg); display: grid; place-items: center; font-size: 22px; border: 1px solid var(--line); }
+.ph-name { font-weight: 800; font-size: 17px; }
+.ph-rank { color: var(--accent); font-size: 13px; font-weight: 700; }
+.xp-bar { background: var(--bg); height: 9px; border-radius: 5px; margin-top: 12px; overflow: hidden; }
+.xp-fill { height: 100%; background: var(--accent); border-radius: 5px; transition: width .3s; }
+.xp-label { display: flex; justify-content: space-between; color: var(--muted); font-size: 12px; margin-top: 5px; }
+.stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; }
+.stat-box { background: var(--bg); border-radius: 10px; padding: 10px; text-align: center; }
+.stat-box .v { font-weight: 800; font-size: 16px; }
+.stat-box .k { color: var(--muted); font-size: 11px; margin-top: 2px; }
+.card { background: var(--bg2); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; margin-bottom: 10px; }
+.card-title { font-weight: 800; margin-bottom: 10px; font-size: 15px; }
+.bonus-btn {
+  width: 100%; background: var(--bg3); border: 1px dashed var(--accent); color: var(--accent);
+  border-radius: 10px; padding: 12px; font-weight: 700;
+}
+.bonus-btn:disabled { opacity: .5; border-color: var(--line); color: var(--muted); }
+.promo-row { display: flex; gap: 8px; }
+.promo-row input { flex: 1; }
+.bet-history-item { display: flex; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid var(--line); font-size: 13.5px; }
+.bet-history-item:last-child { border-bottom: none; }
+.bet-history-item .bh-status.won { color: var(--green); font-weight: 700; }
+.bet-history-item .bh-status.lost { color: var(--red); font-weight: 700; }
+.bet-history-item .bh-status.open { color: var(--accent); font-weight: 700; }
+
+/* ===== клуб ===== */
+.club-hero { text-align: center; padding: 22px 14px; }
+.club-hero img { width: 74px; height: 74px; object-fit: contain; }
+.club-hero .club-name { font-weight: 800; font-size: 21px; margin-top: 8px; }
+.club-hero .club-division { color: var(--muted); font-size: 13px; }
+.squad-item { display: flex; justify-content: space-between; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--line); }
+.squad-item:last-child { border-bottom: none; }
+.squad-pos { background: var(--bg3); color: var(--muted); border-radius: 6px; padding: 2px 7px; font-size: 11.5px; margin-right: 8px; }
+.squad-rating { font-weight: 800; color: var(--accent); }
+.req-btn {
+  width: 100%; background: var(--accent); color: #17130d; font-weight: 800;
+  border-radius: 12px; padding: 14px;
+}
+.req-btn:disabled { opacity: .6; }
+
+/* ===== модалки ===== */
+.sheet-backdrop {
+  position: fixed; inset: 0; background: rgba(0,0,0,.6); z-index: 50;
+  display: flex; align-items: flex-end; justify-content: center;
+}
+.sheet {
+  background: var(--bg2); width: 100%; max-width: 520px; max-height: 82vh;
+  border-radius: 18px 18px 0 0; padding: 18px 16px 26px; overflow-y: auto; position: relative;
+}
+.sheet-close { position: absolute; top: 12px; right: 14px; font-size: 17px; color: var(--muted); z-index: 2; }
+.form-letters { display: flex; gap: 4px; }
+.form-letters span {
+  width: 22px; height: 22px; border-radius: 6px; display: grid; place-items: center;
+  font-size: 11px; font-weight: 800; color: #17130d;
+}
+.form-letters .W { background: var(--green); } .form-letters .D { background: #c8c5bd; } .form-letters .L { background: var(--red); }
+
+/* ===== нижняя навигация ===== */
+.bottom-nav {
+  position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+  width: 100%; max-width: 520px; display: flex; z-index: 30;
+  background: color-mix(in srgb, var(--bg2) 94%, transparent); backdrop-filter: blur(10px);
+  border-top: 1px solid var(--line); padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+}
+.nav-btn { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 0; color: var(--muted); font-size: 10px; font-weight: 600; }
+.nav-btn span:first-child { font-size: 18px; }
+.nav-btn span:last-child { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nav-btn.active { color: var(--accent); }
+
+/* ===== betbar ===== */
+.betbar {
+  position: fixed; bottom: 74px; left: 50%; transform: translateX(-50%);
+  background: var(--accent); color: #17130d; font-weight: 800; font-size: 14px;
+  border-radius: 22px; padding: 11px 22px; z-index: 29; box-shadow: 0 6px 22px rgba(255,122,26,.35);
+}
+
+/* ===== прочее ===== */
+.toast {
+  position: fixed; bottom: 130px; left: 50%; transform: translateX(-50%);
+  background: var(--bg3); border: 1px solid var(--line); color: var(--text);
+  border-radius: 12px; padding: 11px 18px; font-size: 13.5px; z-index: 60; max-width: 86%;
+  text-align: center;
+}
+.lockdown { position: fixed; inset: 0; background: var(--bg); z-index: 100; display: flex; align-items: center; justify-content: center; }
+.lockdown-inner { text-align: center; padding: 20px; }
+.lockdown-icon { font-size: 44px; margin-bottom: 12px; }
+.lockdown-title { font-size: 22px; font-weight: 800; margin-bottom: 8px; }
+.lockdown-reason { color: var(--muted); }
+.empty-note { text-align: center; color: var(--muted); padding: 26px 8px; font-size: 13.5px; }
+.goal-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 13.5px; }
+
+/* ===== трансферы ===== */
+.transfers-header {
+  display: flex; justify-content: space-between; align-items: flex-end;
+  background: var(--bg2); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 13px 14px; margin-bottom: 12px;
+}
+.transfers-budget { font-size: 21px; font-weight: 800; color: var(--accent); }
+.tabs { display: flex; gap: 6px; margin-bottom: 10px; }
+.tabs .tab {
+  flex: 1; background: var(--bg2); border: 1px solid var(--line); color: var(--muted);
+  border-radius: 10px; padding: 9px 6px; font-size: 13px; font-weight: 700;
+}
+.tabs .tab.active { background: var(--accent); border-color: var(--accent); color: #17130d; }
+.lot-card {
+  background: var(--bg2); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 11px 12px; margin-bottom: 8px; display: flex; align-items: center; gap: 10px;
+}
+.lot-main { flex: 1; min-width: 0; }
+.lot-name { font-weight: 700; font-size: 14.5px; }
+.lot-sub { color: var(--muted); font-size: 12px; margin-top: 2px; }
+.lot-price { font-weight: 800; color: var(--accent); white-space: nowrap; }
+.lot-btn {
+  background: var(--accent); color: #17130d; font-weight: 800; font-size: 12.5px;
+  border-radius: 9px; padding: 8px 12px; white-space: nowrap;
+}
+.lot-btn.secondary { background: var(--bg3); color: var(--text); border: 1px solid var(--line); }
+.lot-btn:disabled { opacity: .45; }
