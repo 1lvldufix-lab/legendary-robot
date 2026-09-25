@@ -101,8 +101,15 @@ export function fmtTime(s, local = false) {
    views[name]      — рендер вкладки нижней навигации (data-view=name)
    profileCards     — fn(container) после рендера «Кабинета»
    clubCards        — fn(container, overview) после рендера «Клуба»
-   adminCards       — fn() при открытии админ-панели (сами находят/создают свою карточку) */
-export const hooks = { views: {}, profileCards: [], clubCards: [], adminCards: [] };
+   adminCards       — fn() при открытии админ-панели (сами находят/создают свою карточку)
+   couponCards      — fn(container) после рендера купона (и пустого — container = #coupon-body)
+   matchSheet       — fn(container, match) после рендера карточки матча (#match-detail)
+   lineCards        — fn(matchCardEl, match) для каждой карточки матча в линии */
+export const hooks = { views: {}, profileCards: [], clubCards: [], adminCards: [], couponCards: [], matchSheet: [], lineCards: [] };
+
+export function runHooks(list, ...args) {
+  for (const fn of list) { try { fn(...args); } catch (e) { console.error(e); } }
+}
 
 export function openSheet(title, html) {
   // универсальный лист поверх экрана (для фич без своей разметки в index.html)

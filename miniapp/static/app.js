@@ -1,7 +1,7 @@
 /* KURILKA SIGARKI — SPA ядра: линия, таблицы, купон, кабинет, клуб. Валюта «дым». */
 
 import {
-  $, api, esc, fmt, fmtTime, formLetters, haptic, hooks, logoHtml, odds, setBadge, showLockdown, state, tg, toast,
+  $, api, esc, fmt, fmtTime, formLetters, haptic, hooks, logoHtml, odds, runHooks, setBadge, showLockdown, state, tg, toast,
 } from './lib.js';
 import './features/index.js';
 
@@ -96,6 +96,12 @@ function renderLine() {
       </div>
     </div>`;
   }).join('');
+  if (hooks.lineCards.length) {
+    for (const el of wrap.querySelectorAll('[data-open]')) {
+      const m = visible.find((x) => x.id === Number(el.dataset.open));
+      if (m) runHooks(hooks.lineCards, el, m);
+    }
+  }
 }
 
 function renderTables() {
@@ -143,6 +149,7 @@ function renderCoupon() {
   const body = $('#coupon-body');
   if (!state.coupon.length) {
     body.innerHTML = '<div class="coupon-empty"><div class="big">🧾</div>Купон пуст.<br>Выбери исход на линии 🔥</div>';
+    runHooks(hooks.couponCards, body);
     return;
   }
   const limits = state.user?.bet_limits || {};
@@ -169,6 +176,7 @@ function renderCoupon() {
       <div class="coupon-row" id="coupon-trim" ${t.trimmed ? '' : 'hidden'}><span class="trim">Обрезано по лимиту выплаты (${fmt(limits.max_payout)})</span></div>
       <button class="place-btn" id="place-bet" ${state.placing ? 'disabled' : ''}>${state.placing ? 'Ставим…' : 'Поставить'}</button>
     </div>`;
+  runHooks(hooks.couponCards, body);
 }
 
 function legsWord(n) {
@@ -346,6 +354,7 @@ function renderMatchDetail() {
     </div>`).join('') : '<div class="empty-note">Рынков нет.</div>'}
     ${moves.length ? `<div class="odds-move" style="margin-top:14px">📈 Движение кэфов: ${moves.join(' · ')}</div>` : ''}
   `;
+  runHooks(hooks.matchSheet, md, data);
 }
 
 /* ===== действия ===== */
