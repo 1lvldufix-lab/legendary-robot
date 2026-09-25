@@ -436,3 +436,14 @@ svg.ico { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-wi
 .lot-btn.secondary { background: var(--bg3); color: var(--text); border: 1px solid var(--line2); }
 .lot-btn:disabled { opacity: .45; }
 #admin-dashboard { grid-template-columns: repeat(3, 1fr); margin: 0 0 12px; }
+
+/* ===== OCR-провайдеры (админка) ===== */
+.ocr-prov { border: 1px solid var(--line); border-radius: 12px; padding: 10px 11px; margin-bottom: 8px; background: var(--bg3); }
+.ocr-prov.off { opacity: .55; }
+.ocr-prov .lot-sub { word-break: break-word; }
+.ocr-actions { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+.ocr-actions .lot-btn { padding: 6px 10px; font-size: 12px; }
+.ocr-form { display: grid; gap: 0; margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--line2); }
+.ocr-form .amount-input { font-size: 14px; font-weight: 600; margin: 0 0 7px; padding: 10px 12px; }
+.ocr-form select.amount-input { appearance: none; }
+.sub code { font-size: 11.5px; background: var(--bg4); padding: 1px 5px; border-radius: 5px; }

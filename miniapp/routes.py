@@ -454,6 +454,7 @@ def setup_routes(app: web.Application) -> None:
     r.add_post("/api/admin/recalc", api_admin_recalc)
     r.add_post("/api/admin/markets/refresh", api_admin_markets_refresh)
     r.add_post("/api/admin/season/finalize", api_admin_season_finalize)
+    _setup_ocr_routes(app)
 
 
 # ===== блок 7: ставки, бонус-серия, промокоды =====
@@ -937,3 +938,102 @@ async def api_admin_season_finalize(request):
     if r.get("error"):
         return err(r["error"], 400)
     return j({"status": "finalized", **r})
+
+
+# ===== свои OCR-провайдеры (только root: ключи API) =====
+
+import asyncio  # noqa: E402
+
+import ocr  # noqa: E402
+import ocr_providers  # noqa: E402
+
+
+def _require_root(request) -> dict:
+    u = require_active_user(request)
+    me = _user_row(u)
+    if me["telegram_id"] not in config.ADMIN_IDS:
+        raise PermissionError("Только root (ADMIN_IDS)")
+    return me
+
+
+def _builtin_status() -> list[dict]:
+    """Встроенные провайдеры каскада и есть ли у них ключ — для экрана админки."""
+    import shutil
+    return [
+        {"name": "Gemini", "configured": bool(config.GEMINI_API_KEY), "hint": "GEMINI_API_KEY"},
+        {"name": "OpenRouter :free", "configured": bool(config.OPENROUTER_API_KEY), "hint": "OPENROUTER_API_KEY"},
+        {"name": "NVIDIA NIM", "configured": bool(config.NIM_API_KEY), "hint": "NIM_API_KEY"},
+        {"name": "Ollama (локально)", "configured": bool(config.OLLAMA_URL), "hint": "OLLAMA_URL"},
+        {"name": "OCR.space", "configured": bool(config.OCRSPACE_API_KEY), "hint": "OCRSPACE_API_KEY"},
+        {"name": "tesseract", "configured": bool(shutil.which("tesseract")), "hint": "apt install tesseract-ocr"},
+    ]
+
+
+async def api_admin_ocr_providers(request):
+    try:
+        me = _require_root(request)
+    except PermissionError as e:
+        return err(str(e), 403)
+    if request.method == "POST":
+        body = await request.json()
+        try:
+            prov = ocr_providers.create_provider(body.get("name"), body.get("base_url"), body.get("model"),
+                                                 body.get("api_key"), body.get("position", "first"))
+        except ocr_providers.ProviderError as e:
+            return err(str(e))
+        _audit_now(me["telegram_id"], "ocr_provider_add", f"{prov['name']} {prov['base_url']} {prov['model']}")
+        return j({"status": "ok", "provider": prov})
+    return j({"providers": ocr_providers.list_providers(),
+              "builtin": _builtin_status(),
+              "cascade": [n for n, _ in ocr.build_cascade()]})
+
+
+async def api_admin_ocr_provider(request):
+    try:
+        me = _require_root(request)
+    except PermissionError as e:
+        return err(str(e), 403)
+    try:
+        pid = int(request.match_info["pid"])
+    except ValueError:
+        return err("id провайдера — число")
+    if not ocr_providers.get_provider(pid):
+        return err("Провайдер не найден", 404)
+    if request.method == "DELETE":
+        ocr_providers.delete_provider(pid)
+        _audit_now(me["telegram_id"], "ocr_provider_delete", f"id={pid}")
+        return j({"status": "ok"})
+    body = await request.json()
+    try:
+        prov = ocr_providers.update_provider(
+            pid, name=body.get("name"), base_url=body.get("base_url"), model=body.get("model"),
+            api_key=body.get("api_key"), enabled=body.get("enabled"), position=body.get("position"))
+    except ocr_providers.ProviderError as e:
+        return err(str(e))
+    _audit_now(me["telegram_id"], "ocr_provider_update", f"id={pid} fields={sorted(k for k, v in body.items() if v is not None and k != 'api_key')}")
+    return j({"status": "ok", "provider": prov})
+
+
+async def api_admin_ocr_provider_test(request):
+    try:
+        _require_root(request)
+    except PermissionError as e:
+        return err(str(e), 403)
+    try:
+        row = ocr_providers.get_provider(int(request.match_info["pid"]))
+    except ValueError:
+        row = None
+    if not row:
+        return err("Провайдер не найден", 404)
+    r = await asyncio.to_thread(ocr.test_provider, row)
+    ocr_providers.save_test_result(row["id"], r["text"])
+    return j({"status": "ok", **r})
+
+
+def _setup_ocr_routes(app: web.Application) -> None:
+    r = app.router
+    r.add_get("/api/admin/ocr-providers", api_admin_ocr_providers)
+    r.add_post("/api/admin/ocr-providers", api_admin_ocr_providers)
+    r.add_post("/api/admin/ocr-providers/{pid}", api_admin_ocr_provider)
+    r.add_delete("/api/admin/ocr-providers/{pid}", api_admin_ocr_provider)
+    r.add_post("/api/admin/ocr-providers/{pid}/test", api_admin_ocr_provider_test)

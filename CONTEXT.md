@@ -58,6 +58,13 @@
   Порядок: Gemini → OpenRouter free → NIM → Ollama → OCR.space → tesseract.
 - Тесты: `gate11_fixes.py`, `gate12_bot.py` (+ все прежние) — зелёные.
 
+## Свои OCR-провайдеры (25.09)
+Мини-апп → Кабинет → 👮 → «🧠 OCR-провайдеры» (только root): любой OpenAI-совместимый API
+(base URL + модель + ключ), «первым» или «запасным», вкл/выкл, «Проверить» — прогон эталонного
+скрина (ожидается 2:3, temiyy/Rusli). Таблица `ocr_providers`, ключ только в БД, наружу маской.
+Проверено вживую: AMD `developer.amd.com.cn/radeon/api/v1` + `DeepSeek-V4.1-Flash` читает скрин верно.
+Тест: `tests/gate14_ocr_providers.py`.
+
 ## Английские имена (25.09)
 Папки/файлы/команды — латиницей: `bot/`, `miniapp/`, `tests/` (`gate*.py`, `seed_data.py`, `wipe.py`,
 `references.py`), `samples/fc27-screens/`, `docs/plans/`, `docs/sessions/`. Тексты игрокам — русские.

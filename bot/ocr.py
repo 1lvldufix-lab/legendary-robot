@@ -1,8 +1,8 @@
 """OCR-каскад результатов FC27 Mobile (план 06).
 
-Каскад только из бесплатных провайдеров: Gemini (free tier) → OpenRouter (только
-«:free»-модели с картинками) → NVIDIA NIM (free endpoint) → Ollama (локально) →
-OCR.space (free) → tesseract. Провайдер без ключа в .env пропускается.
+Каскад: свои провайдеры из мини-аппа (position=first) → Gemini (free tier) → OpenRouter
+(только «:free»-модели с картинками) → NVIDIA NIM (free endpoint) → свои (position=last) →
+Ollama (локально) → OCR.space (free) → tesseract. Провайдер без ключа пропускается.
 Счёт берём ТОЛЬКО из шапки; голы — дедупом по (имя, минута) со всех скринов;
 пенальти — в скобках у счёта, отдельным полем (кейс 120:00 обязателен).
 
@@ -216,9 +216,63 @@ def _openrouter_alive(models: list[str]) -> list[str]:
     return alive
 
 
+def _custom_providers() -> tuple[list, list]:
+    """Провайдеры из мини-аппа (таблица ocr_providers) → (раньше встроенных, после облачных)."""
+    try:
+        import ocr_providers
+        rows = ocr_providers.list_providers(public=False, enabled_only=True)
+    except Exception as e:  # БД не инициализирована (тесты/скрипты) — работаем без своих
+        log.debug("[ocr] свои провайдеры недоступны: %s", e)
+        return [], []
+    first, last = [], []
+    for r in rows:
+        item = (f"custom:{r['name'] or r['model']}", custom_call(r))
+        (first if r["position"] == "first" else last).append(item)
+    return first, last
+
+
+def custom_call(row: dict) -> callable:
+    return _openai_style_vl(f"{row['base_url']}/chat/completions", row["api_key"] or "", row["model"])
+
+
+TEST_SHOT = "photo_1_2026-09-24_19-49-40.jpg"   # эталон: temiyy 2:3 Rusli, 90:00
+TEST_EXPECT = {"score": (2, 3), "nicks": ("temiyy", "rusli")}
+
+
+def test_provider(row: dict) -> dict:
+    """Прогон эталонного скрина FC27 через провайдер → {ok, text, ms}. Для кнопки «Проверить»."""
+    import time
+    import urllib.error
+    shot = config.PROJECT_ROOT / "samples" / "fc27-screens" / TEST_SHOT
+    t0 = time.time()
+    try:
+        raw = custom_call(row)(shot.read_bytes())
+    except urllib.error.HTTPError as e:
+        body = e.read().decode("utf-8", "replace")[:160].replace(row.get("api_key") or "\0", "•••")
+        return {"ok": False, "text": f"HTTP {e.code}: {body}", "ms": int((time.time() - t0) * 1000)}
+    except Exception as e:
+        return {"ok": False, "text": f"Ошибка связи: {e}"[:200], "ms": int((time.time() - t0) * 1000)}
+    ms = int((time.time() - t0) * 1000)
+    data = extract_json(raw or "")
+    if not data or data.get("score_home") is None:
+        return {"ok": False, "text": "Ответ не JSON / нет счёта (модель без картинок?): " + (raw or "")[:120], "ms": ms}
+    n = normalize_result(data)
+    score = (n["score_home"], n["score_away"])
+    from report_match import NICK_OK, nick_similarity
+    nicks_ok = all(nick_similarity(got, want) >= NICK_OK for got, want in
+                   zip((n.get("player_home"), n.get("player_away")), TEST_EXPECT["nicks"]))
+    ok = score == TEST_EXPECT["score"]
+    text = (f"{'✅' if ok else '⚠️'} счёт {score[0]}:{score[1]} (ожидали 2:3), ники "
+            f"{n.get('player_home') or '?'} / {n.get('player_away') or '?'}"
+            f"{'' if nicks_ok else ' (ожидали temiyy / Rusli — ники не узнаются)'}")
+    return {"ok": ok, "text": text, "ms": ms}
+
+
 def build_cascade() -> list[tuple[str, callable]]:
     """Список (имя, callable(image_bytes)->str) доступных провайдеров по порядку."""
     cascade: list[tuple[str, callable]] = []
+    custom_first, custom_last = _custom_providers()
+    cascade += custom_first
     local = [(f"ollama:{config.OLLAMA_MODEL}", _ollama_call)] if config.OLLAMA_URL else []
     if config.OLLAMA_FIRST:
         cascade += local
@@ -232,6 +286,7 @@ def build_cascade() -> list[tuple[str, callable]]:
         cascade.append(("nim", _openai_style_vl(
             "https://integrate.api.nvidia.com/v1/chat/completions",
             config.NIM_API_KEY, NIM_MODEL)))
+    cascade += custom_last
     if not config.OLLAMA_FIRST:
         cascade += local
     if config.OCRSPACE_API_KEY:

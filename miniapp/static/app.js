@@ -907,6 +907,7 @@ async function openAdmin() {
     renderAdminBets();
     renderAdminPlayers();
     renderAdminAudit();
+    renderAdminOcr();
     $('#admin-sheet').hidden = false;
   } catch (e) { toast(e.message); }
 }
@@ -1019,4 +1020,82 @@ document.addEventListener('click', async (ev) => {
       openAdmin();
     } catch (e) { toast(e.message); }
   }
+});
+
+
+/* ===== свои OCR-провайдеры (только root) ===== */
+
+async function renderAdminOcr() {
+  const card = $('#admin-ocr-card');
+  if (!state.user?.is_root) { card.hidden = true; return; }
+  card.hidden = false;
+  const el = $('#admin-ocr');
+  let data;
+  try { data = await api('/api/admin/ocr-providers'); } catch (e) { el.innerHTML = `<div class="empty-note">${esc(e.message)}</div>`; return; }
+  const host = (u) => { try { return new URL(u).host; } catch (_) { return u; } };
+  el.innerHTML = `
+    <div class="sub" style="margin-bottom:10px">OpenAI-совместимые API (<code>/chat/completions</code> с картинкой). Порядок каскада:
+      <b>${data.cascade.length ? data.cascade.map(esc).join(' → ') : 'пусто — нет ни одного ключа'}</b></div>
+    ${data.providers.map((p) => `<div class="ocr-prov ${p.enabled ? '' : 'off'}">
+      <div class="lot-main">
+        <div class="lot-name">${esc(p.name)} <span class="sub">· ${p.position === 'first' ? 'первым' : 'после встроенных'}</span></div>
+        <div class="lot-sub">${esc(p.model)} · ${esc(host(p.base_url))} · ключ ${p.has_key ? esc(p.key_masked) : 'нет'}</div>
+        ${p.last_test ? `<div class="lot-sub">${esc(p.last_test)}</div>` : ''}
+      </div>
+      <div class="ocr-actions">
+        <button class="lot-btn secondary" data-ocr-test="${p.id}">Проверить</button>
+        <button class="lot-btn secondary" data-ocr-toggle="${p.id}" data-on="${p.enabled ? 1 : 0}">${p.enabled ? 'Выкл' : 'Вкл'}</button>
+        <button class="lot-btn secondary" data-ocr-pos="${p.id}" data-pos="${p.position}">${p.position === 'first' ? '↓' : '↑'}</button>
+        <button class="lot-btn secondary" data-ocr-key="${p.id}">Ключ</button>
+        <button class="lot-btn secondary" data-ocr-del="${p.id}">✕</button>
+      </div>
+    </div>`).join('') || '<div class="empty-note" style="padding:10px">Своих провайдеров нет.</div>'}
+    <form id="ocr-add" class="ocr-form" autocomplete="off">
+      <input class="amount-input" name="name" placeholder="Название (напр. AMD)" maxlength="40">
+      <input class="amount-input" name="base_url" placeholder="Base URL: https://…/v1" required>
+      <input class="amount-input" name="model" placeholder="Модель: DeepSeek-V4.1-Flash" required>
+      <input class="amount-input" name="api_key" type="password" placeholder="API-ключ">
+      <select class="amount-input" name="position">
+        <option value="first">Первым (до встроенных)</option>
+        <option value="last">Запасным (после встроенных)</option>
+      </select>
+      <button class="bonus-btn" type="submit">➕ Добавить провайдера</button>
+    </form>
+    <div class="sub" style="margin-top:12px">Встроенные (ключи в bot/.env):
+      ${data.builtin.map((b) => `${b.configured ? '✅' : '▫️'} ${esc(b.name)}`).join(' · ')}</div>`;
+  $('#ocr-add').onsubmit = async (ev) => {
+    ev.preventDefault();
+    const body = Object.fromEntries(new FormData(ev.target).entries());
+    try {
+      const r = await api('/api/admin/ocr-providers', { method: 'POST', body: JSON.stringify(body) });
+      toast(`Добавлен: ${r.provider.name}. Жми «Проверить»`);
+      renderAdminOcr();
+    } catch (e) { toast(e.message); }
+  };
+}
+
+document.addEventListener('click', async (ev) => {
+  const b = ev.target.closest('[data-ocr-test],[data-ocr-toggle],[data-ocr-pos],[data-ocr-key],[data-ocr-del]');
+  if (!b) return;
+  const d = b.dataset;
+  try {
+    if (d.ocrTest) {
+      b.disabled = true; b.textContent = '⏳…';
+      const r = await api(`/api/admin/ocr-providers/${d.ocrTest}/test`, { method: 'POST' });
+      toast(`${r.text} · ${(r.ms / 1000).toFixed(1)} с`, 6000);
+    } else if (d.ocrToggle) {
+      await api(`/api/admin/ocr-providers/${d.ocrToggle}`, { method: 'POST', body: JSON.stringify({ enabled: d.on !== '1' }) });
+    } else if (d.ocrPos) {
+      await api(`/api/admin/ocr-providers/${d.ocrPos}`, { method: 'POST', body: JSON.stringify({ position: d.pos === 'first' ? 'last' : 'first' }) });
+    } else if (d.ocrKey) {
+      const key = prompt('Новый API-ключ (пусто — не менять):');
+      if (!key) return;
+      await api(`/api/admin/ocr-providers/${d.ocrKey}`, { method: 'POST', body: JSON.stringify({ api_key: key }) });
+      toast('Ключ обновлён');
+    } else if (d.ocrDel) {
+      if (!confirm('Удалить провайдера?')) return;
+      await api(`/api/admin/ocr-providers/${d.ocrDel}`, { method: 'DELETE' });
+    }
+  } catch (e) { toast(e.message); }
+  renderAdminOcr();
 });

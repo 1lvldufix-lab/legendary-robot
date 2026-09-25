@@ -112,6 +112,7 @@ def user_payload(u: dict) -> dict:
         "xp": xp,
         "level": level,
         "is_admin": bool(u["is_admin"]),
+        "is_root": u["telegram_id"] in config.ADMIN_IDS,
         "is_frozen": bool(u["is_frozen"]),
         "freeze_reason": u.get("freeze_reason"),
         "bet_limits": bet_limits(),

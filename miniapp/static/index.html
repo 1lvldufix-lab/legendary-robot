@@ -8,7 +8,7 @@
 <link rel="preload" href="/static/fonts/manrope-cyrillic-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/static/fonts/unbounded-cyrillic-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
-<link rel="stylesheet" href="/static/styles.css?v=3">
+<link rel="stylesheet" href="/static/styles.css?v=4">
 </head>
 <body>
 <div id="app">
@@ -120,6 +120,10 @@
         <div class="card-title">👥 Игроки</div>
         <div id="admin-players"></div>
       </div>
+      <div class="card" id="admin-ocr-card" hidden>
+        <div class="card-title">🧠 OCR-провайдеры</div>
+        <div id="admin-ocr"></div>
+      </div>
       <div class="card">
         <div class="card-title">📜 Журнал</div>
         <div id="admin-audit"></div>
@@ -148,6 +152,6 @@
 
   <div id="toast" class="toast" hidden></div>
 </div>
-<script type="module" src="/static/app.js?v=3"></script>
+<script type="module" src="/static/app.js?v=4"></script>
 </body>
 </html>

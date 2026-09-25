@@ -285,6 +285,15 @@ def init_db() -> None:
     CREATE TABLE IF NOT EXISTS bot_settings (
         key TEXT PRIMARY KEY, value TEXT
     );
+    -- свои OCR-провайдеры (OpenAI-совместимые), добавляет root из мини-аппа; ключ только тут
+    CREATE TABLE IF NOT EXISTS ocr_providers (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT, base_url TEXT NOT NULL, model TEXT NOT NULL, api_key TEXT,
+        position TEXT DEFAULT 'first',          -- first/last относительно встроенных облачных
+        enabled INTEGER DEFAULT 1, sort_order INTEGER DEFAULT 0,
+        last_test TEXT, last_test_at TEXT,
+        created_at TEXT DEFAULT (datetime('now'))
+    );
 
     CREATE INDEX IF NOT EXISTS idx_matches_tour ON matches(tournament_id, tour_number);
     CREATE INDEX IF NOT EXISTS idx_matches_stage ON matches(tournament_id, stage);
