@@ -1,6 +1,6 @@
 venv/
 __pycache__/
 *.pyc
-бот/.env
+bot/.env
 backups/
 .hoplite/
