@@ -1,0 +1,25 @@
+{
+ "status": "ok",
+ "match_id": 4859,
+ "team1_name": "Лилль",
+ "team2_name": "Ницца",
+ "summary": {
+  "total_meetings": 1,
+  "team1_wins": 1,
+  "draws": 0,
+  "team2_wins": 0,
+  "avg_goals_per_match": 1.0
+ },
+ "meetings": [
+  {
+   "id": 4859,
+   "round_number": 1,
+   "player1_team": "Лилль",
+   "player2_team": "Ницца",
+   "player1_score": 1,
+   "player2_score": 0,
+   "status": "confirmed",
+   "played_at": "2026-09-21 19:21:31"
+  }
+ ]
+}

@@ -1,0 +1,343 @@
+{
+ "status": "ok",
+ "match_id": 4859,
+ "team1_name": "Лилль",
+ "team2_name": "Ницца",
+ "match_status": "confirmed",
+ "markets": [
+  {
+   "id": 6421,
+   "match_id": 4859,
+   "market_key": "1x2",
+   "market_name": "Исход матча",
+   "category": "main",
+   "status": "settled",
+   "sort_order": 1,
+   "selections": [
+    {
+     "id": 18343,
+     "market_id": 6421,
+     "selection_key": "p1",
+     "selection_name": "П1 (Лилль)",
+     "odds_value": 2.85,
+     "odds_version": 1,
+     "status": "locked",
+     "previous_odds": null,
+     "updated_at": "2026-09-19 12:59:34",
+     "current_odd": 2.85
+    },
+    {
+     "id": 18344,
+     "market_id": 6421,
+     "selection_key": "x",
+     "selection_name": "Ничья (X)",
+     "odds_value": 3.89,
+     "odds_version": 1,
+     "status": "locked",
+     "previous_odds": null,
+     "updated_at": "2026-09-19 12:59:34",
+     "current_odd": 3.89
+    },
+    {
+     "id": 18345,
+     "market_id": 6421,
+     "selection_key": "p2",
+     "selection_name": "П2 (Ницца)",
+     "odds_value": 2.14,
+     "odds_version": 1,
+     "status": "locked",
+     "previous_odds": null,
+     "updated_at": "2026-09-19 12:59:34",
+     "current_odd": 2.14
+    }
+   ]
+  },
+  {
+   "id": 6422,
+   "match_id": 4859,
+   "market_key": "double_chance",
+   "market_name": "Двойной шанс",
+   "category": "main",
+   "status": "settled",
+   "sort_order": 2,
+   "selections": [
+    {
+     "id": 18346,
+     "market_id": 6422,
+     "selection_key": "1x",
+     "selection_name": "1X (П1 или Х)",
+     "odds_value": 1.64,
+     "odds_version": 1,
+     "status": "locked",
+     "previous_odds": null,
+     "updated_at": "2026-09-19 12:59:34",
+     "current_odd": 1.64
+    },
+    {
+     "id": 18347,
+     "market_id": 6422,
+     "selection_key": "12",
+     "selection_name": "12 (П1 или П2)",
+     "odds_value": 1.22,
+     "odds_version": 1,
+     "status": "locked",
+     "previous_odds": null,
+     "updated_at": "2026-09-19 12:59:34",
+     "current_odd": 1.22
+    },
+    {
+     "id": 18348,
+     "market_id": 6422,
+     "selection_key": "x2",
+     "selection_name": "X2 (Х или П2)",
+     "odds_value": 1.38,
+     "odds_version": 1,
+     "status": "locked",
+     "previous_odds": null,
+     "updated_at": "2026-09-19 12:59:34",
+     "current_odd": 1.38
+    }
+   ]
+  },
+  {
+   "id": 6423,
+   "match_id": 4859,
+   "market_key": "total_goals",
+   "market_name": "Тотал голов",
+   "category": "goals",
+   "status": "settled",
+   "sort_order": 3,
+   "selections": [
+    {
+     "id": 18349,
+     "market_id": 6423,
+     "selection_key": "over_1.5",
+     "selection_name": "Тотал больше (1.5)",
+     "odds_value": 1.15,
+     "odds_version": 1,
+     "status": "locked",
+     "previous_odds": null,
+     "updated_at": "2026-09-19 12:59:34",
+     "current_odd": 1.15
+    },
+    {
+     "id": 18350,
+     "market_id": 6423,
+     "selection_key": "under_1.5",
+     "selection_name": "Тотал меньше (1.5)",
+     "odds_value": 4.81,
+     "odds_version": 1,
+     "status": "locked",
+     "previous_odds": null,
+     "updated_at": "2026-09-19 12:59:34",
+     "current_odd": 4.81
+    },
+    {
+     "id": 18351,
+     "market_id": 6423,
+     "selection_key": "over_2.5",
+     "selection_name": "Тотал больше (2.5)",
+     "odds_value": 1.59,
+     "odds_version": 1,
+     "status": "locked",
+     "previous_odds": null,
+     "updated_at": "2026-09-19 12:59:34",
+     "current_odd": 1.59
+    },
+    {
+     "id": 18352,
+     "market_id": 6423,
+     "selection_key": "under_2.5",
+     "selection_name": "Тотал меньше (2.5)",
+     "odds_value": 2.25,
+     "odds_version": 1,
+     "status": "locked",
+     "previous_odds": null,
+     "updated_at": "2026-09-19 12:59:34",
+     "current_odd": 2.25
+    },
+    {
+     "id": 18353,
+     "market_id": 6423,
+     "selection_key": "over_3.5",
+     "selection_name": "Тотал больше (3.5)",
+     "odds_value": 2.57,
+     "odds_version": 1,
+     "status": "locked",
+     "previous_odds": null,
+     "updated_at": "2026-09-19 12:59:34",
+     "current_odd": 2.57
+    },
+    {
+     "id": 18354,
+     "market_id": 6423,
+     "selection_key": "under_3.5",
+     "selection_name": "Тотал меньше (3.5)",
+     "odds_value": 1.46,
+     "odds_version": 1,
+     "status": "locked",
+     "previous_odds": null,
+     "updated_at": "2026-09-19 12:59:34",
+     "current_odd": 1.46
+    }
+   ]
+  },
+  {
+   "id": 6424,
+   "match_id": 4859,
+   "market_key": "btts",
+   "market_name": "Обе забьют",
+   "category": "goals",
+   "status": "settled",
+   "sort_order": 4,
+   "selections": [
+    {
+     "id": 18355,
+     "market_id": 6424,
+     "selection_key": "btts_yes",
+     "selection_name": "Обе забьют: Да",
+     "odds_value": 1.53,
+     "odds_version": 1,
+     "status": "locked",
+     "previous_odds": null,
+     "updated_at": "2026-09-19 12:59:34",
+     "current_odd": 1.53
+    },
+    {
+     "id": 18356,
+     "market_id": 6424,
+     "selection_key": "btts_no",
+     "selection_name": "Обе забьют: Нет",
+     "odds_value": 2.37,
+     "odds_version": 1,
+     "status": "locked",
+     "previous_odds": null,
+     "updated_at": "2026-09-19 12:59:34",
+     "current_odd": 2.37
+    }
+   ]
+  },
+  {
+   "id": 6425,
+   "match_id": 4859,
+   "market_key": "individual_total_1",
+   "market_name": "Инд. тотал: Лилль",
+   "category": "goals",
+   "status": "settled",
+   "sort_order": 5,
+   "selections": [
+    {
+     "id": 18357,
+     "market_id": 6425,
+     "selection_key": "it1_over_1.5",
+     "selection_name": "ИТБ1 (1.5)",
+     "odds_value": 2.29,
+     "odds_version": 1,
+     "status": "locked",
+     "previous_odds": null,
+     "updated_at": "2026-09-19 12:59:34",
+     "current_odd": 2.29
+    },
+    {
+     "id": 18358,
+     "market_id": 6425,
+     "selection_key": "it1_under_1.5",
+     "selection_name": "ИТМ1 (1.5)",
+     "odds_value": 1.57,
+     "odds_version": 1,
+     "status": "locked",
+     "previous_odds": null,
+     "updated_at": "2026-09-19 12:59:34",
+     "current_odd": 1.57
+    }
+   ]
+  },
+  {
+   "id": 6426,
+   "match_id": 4859,
+   "market_key": "individual_total_2",
+   "market_name": "Инд. тотал: Ницца",
+   "category": "goals",
+   "status": "settled",
+   "sort_order": 6,
+   "selections": [
+    {
+     "id": 18359,
+     "market_id": 6426,
+     "selection_key": "it2_over_1.5",
+     "selection_name": "ИТБ2 (1.5)",
+     "odds_value": 1.9,
+     "odds_version": 1,
+     "status": "locked",
+     "previous_odds": null,
+     "updated_at": "2026-09-19 12:59:34",
+     "current_odd": 1.9
+    },
+    {
+     "id": 18360,
+     "market_id": 6426,
+     "selection_key": "it2_under_1.5",
+     "selection_name": "ИТМ2 (1.5)",
+     "odds_value": 1.82,
+     "odds_version": 1,
+     "status": "locked",
+     "previous_odds": null,
+     "updated_at": "2026-09-19 12:59:34",
+     "current_odd": 1.82
+    }
+   ]
+  },
+  {
+   "id": 6427,
+   "match_id": 4859,
+   "market_key": "handicap",
+   "market_name": "Фора (1.5)",
+   "category": "main",
+   "status": "settled",
+   "sort_order": 7,
+   "selections": [
+    {
+     "id": 18361,
+     "market_id": 6427,
+     "selection_key": "h1_minus_1.5",
+     "selection_name": "Фора 1 (-1.5)",
+     "odds_value": 6.31,
+     "odds_version": 1,
+     "status": "locked",
+     "previous_odds": null,
+     "updated_at": "2026-09-19 12:59:34",
+     "current_odd": 6.31
+    },
+    {
+     "id": 18362,
+     "market_id": 6427,
+     "selection_key": "h2_plus_1.5",
+     "selection_name": "Фора 2 (+1.5)",
+     "odds_value": 1.09,
+     "odds_version": 1,
+     "status": "locked",
+     "previous_odds": null,
+     "updated_at": "2026-09-19 12:59:34",
+     "current_odd": 1.09
+    },
+    {
+     "id": 18363,
+     "market_id": 6427,
+     "selection_key": "h1_plus_1.5",
+     "selection_name": "Фора 1 (+1.5)",
+     "odds_value": 1.2,
+     "odds_version": 1,
+     "status": "locked",
+     "previous_odds": null,
+     "updated_at": "2026-09-19 12:59:34",
+     "current_odd": 1.2
+    },
+    {
+     "id": 18364,
+     "market_id": 6427,
+     "selection_key": "h2_minus_1.5",
+     "selection_name": "Фора 2 (-1.5)",
+     "odds_value": 4.16,
+     "odds_version": 1,
+     "status": "locked",
+     "p

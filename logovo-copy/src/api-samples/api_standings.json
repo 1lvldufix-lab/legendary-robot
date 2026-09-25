@@ -1,0 +1,298 @@
+{
+ "status": "ok",
+ "standings": [
+  {
+   "telegram_id": 701128826,
+   "team_name": "Ницца",
+   "username": "Maximilian4",
+   "played": 6,
+   "wins": 5,
+   "draws": 0,
+   "losses": 1,
+   "goals_scored": 17,
+   "goals_conceded": 5,
+   "points": 15
+  },
+  {
+   "telegram_id": 5542363060,
+   "team_name": "Айнтрахт",
+   "username": "Snikers2121",
+   "played": 6,
+   "wins": 3,
+   "draws": 3,
+   "losses": 0,
+   "goals_scored": 16,
+   "goals_conceded": 8,
+   "points": 12
+  },
+  {
+   "telegram_id": 1679968113,
+   "team_name": "Марсель",
+   "username": "",
+   "played": 5,
+   "wins": 4,
+   "draws": 0,
+   "losses": 1,
+   "goals_scored": 14,
+   "goals_conceded": 11,
+   "points": 12
+  },
+  {
+   "telegram_id": 1289226146,
+   "team_name": "Лацио",
+   "username": "TheFlakeSo",
+   "played": 5,
+   "wins": 3,
+   "draws": 1,
+   "losses": 1,
+   "goals_scored": 9,
+   "goals_conceded": 8,
+   "points": 10
+  },
+  {
+   "telegram_id": 779231445,
+   "team_name": "Майнц",
+   "username": "Nukolaich",
+   "played": 4,
+   "wins": 3,
+   "draws": 0,
+   "losses": 1,
+   "goals_scored": 10,
+   "goals_conceded": 4,
+   "points": 9
+  },
+  {
+   "telegram_id": 957513995,
+   "team_name": "Ренн",
+   "username": "curseedoeleo",
+   "played": 4,
+   "wins": 2,
+   "draws": 1,
+   "losses": 1,
+   "goals_scored": 9,
+   "goals_conceded": 7,
+   "points": 7
+  },
+  {
+   "telegram_id": 5393234397,
+   "team_name": "Порту",
+   "username": "brando055",
+   "played": 5,
+   "wins": 2,
+   "draws": 0,
+   "losses": 3,
+   "goals_scored": 12,
+   "goals_conceded": 9,
+   "points": 6
+  },
+  {
+   "telegram_id": 6156429530,
+   "team_name": "Бернли",
+   "username": "Doakkk",
+   "played": 4,
+   "wins": 1,
+   "draws": 2,
+   "losses": 1,
+   "goals_scored": 6,
+   "goals_conceded": 7,
+   "points": 5
+  },
+  {
+   "telegram_id": 5364379381,
+   "team_name": "Нэшвилл",
+   "username": "Rostyslav07",
+   "played": 2,
+   "wins": 1,
+   "draws": 1,
+   "losses": 0,
+   "goals_scored": 5,
+   "goals_conceded": 4,
+   "points": 4
+  },
+  {
+   "telegram_id": 5008695566,
+   "team_name": "Лилль",
+   "username": "typeuw",
+   "played": 2,
+   "wins": 1,
+   "draws": 1,
+   "losses": 0,
+   "goals_scored": 2,
+   "goals_conceded": 1,
+   "points": 4
+  },
+  {
+   "telegram_id": 1134278744,
+   "team_name": "Лидс",
+   "username": "Saharokk8830",
+   "played": 3,
+   "wins": 1,
+   "draws": 1,
+   "losses": 1,
+   "goals_scored": 6,
+   "goals_conceded": 8,
+   "points": 4
+  },
+  {
+   "telegram_id": 8286304917,
+   "team_name": "Вест Хэм",
+   "username": "ch1lyx",
+   "played": 6,
+   "wins": 1,
+   "draws": 1,
+   "losses": 4,
+   "goals_scored": 8,
+   "goals_conceded": 16,
+   "points": 4
+  },
+  {
+   "telegram_id": 766432194,
+   "team_name": "Вольфсбург",
+   "username": "ArtemPalagin",
+   "played": 4,
+   "wins": 0,
+   "draws": 3,
+   "losses": 1,
+   "goals_scored": 7,
+   "goals_conceded": 9,
+   "points": 3
+  },
+  {
+   "telegram_id": 5993183415,
+   "team_name": "Кельн",
+   "username": "Ya_Ebal_Temshika",
+   "played": 6,
+   "wins": 1,
+   "draws": 0,
+   "losses": 5,
+   "goals_scored": 11,
+   "goals_conceded": 17,
+   "points": 3
+  },
+  {
+   "telegram_id": 1383517937,
+   "team_name": "Фиорентина",
+   "username": "qweasdzxc22819",
+   "played": 6,
+   "wins": 1,
+   "draws": 0,
+   "losses": 5,
+   "goals_scored": 9,
+   "goals_conceded": 15,
+   "points": 3
+  },
+  {
+   "telegram_id": 693304510,
+   "team_name": "Будё Глимт",
+   "username": "Serghe1KO",
+   "played": 4,
+   "wins": 0,
+   "draws": 0,
+   "losses": 4,
+   "goals_scored": 3,
+   "goals_conceded": 15,
+   "points": 0
+  }
+ ],
+ "form": {
+  "будё глимт": [
+   "L",
+   "L",
+   "L",
+   "L"
+  ],
+  "ницца": [
+   "W",
+   "W",
+   "W",
+   "W",
+   "W"
+  ],
+  "вольфсбург": [
+   "D",
+   "D",
+   "L",
+   "D"
+  ],
+  "майнц": [
+   "W",
+   "W",
+   "L",
+   "W"
+  ],
+  "ренн": [
+   "W",
+   "L",
+   "W",
+   "D"
+  ],
+  "лидс": [
+   "D",
+   "W",
+   "L"
+  ],
+  "лацио": [
+   "L",
+   "W",
+   "D",
+   "W",
+   "W"
+  ],
+  "фиорентина": [
+   "L",
+   "L",
+   "L",
+   "W",
+   "L"
+  ],
+  "марсель": [
+   "W",
+   "L",
+   "W",
+   "W",
+   "W"
+  ],
+  "лилль": [
+   "W",
+   "D"
+  ],
+  "нэшвилл": [
+   "D",
+   "W"
+  ],
+  "порту": [
+   "W",
+   "L",
+   "L",
+   "L",
+   "W"
+  ],
+  "айнтрахт": [
+   "D",
+   "W",
+   "W",
+   "D",
+   "D"
+  ],
+  "кельн": [
+   "L",
+   "W",
+   "L",
+   "L",
+   "L"
+  ],
+  "бернли": [
+   "D",
+   "D",
+   "W",
+   "L"
+  ],
+  "вест хэм": [
+   "W",
+   "D",
+   "L",
+   "L",
+   "L"
+  ]
+ }
+}

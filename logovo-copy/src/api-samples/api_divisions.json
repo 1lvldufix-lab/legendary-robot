@@ -1,0 +1,65 @@
+{
+ "status": "ok",
+ "divisions": [
+  {
+   "id": 1,
+   "tournament_id": 1,
+   "name": "Дивизион 1",
+   "code": "DIV_1",
+   "topic_id": null,
+   "is_active": 1,
+   "sort_order": 0,
+   "created_at": "2026-09-03 23:07:44",
+   "season_id": 2,
+   "group_chat_id": -1004434161061
+  },
+  {
+   "id": 2,
+   "tournament_id": 1,
+   "name": "Дивизион 2",
+   "code": "DIV_2",
+   "topic_id": null,
+   "is_active": 1,
+   "sort_order": 0,
+   "created_at": "2026-09-03 23:09:27",
+   "season_id": 2,
+   "group_chat_id": -1004348175011
+  },
+  {
+   "id": 3,
+   "tournament_id": 1,
+   "name": "Дивизион 3",
+   "code": "DIV_3",
+   "topic_id": null,
+   "is_active": 1,
+   "sort_order": 0,
+   "created_at": "2026-09-03 23:10:26",
+   "season_id": 2,
+   "group_chat_id": -1004340241773
+  },
+  {
+   "id": 4,
+   "tournament_id": 1,
+   "name": "Дивизион 4",
+   "code": "DIV_4",
+   "topic_id": null,
+   "is_active": 1,
+   "sort_order": 0,
+   "created_at": "2026-09-03 23:11:43",
+   "season_id": 2,
+   "group_chat_id": -1004342764951
+  },
+  {
+   "id": 5,
+   "tournament_id": 1,
+   "name": "Дивизион 5",
+   "code": "DIV_5",
+   "topic_id": null,
+   "is_active": 1,
+   "sort_order": 0,
+   "created_at": "2026-09-03 23:11:55",
+   "season_id": 2,
+   "group_chat_id": -1003906959494
+  }
+ ]
+}

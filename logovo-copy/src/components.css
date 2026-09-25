@@ -1,0 +1,5074 @@
+/* ==========================================================================
+   LOGOVO.BET — Interactive UI Components & Micro-Animations
+   ========================================================================== */
+
+/* ─── 1b. Sticky Lobby Filter Bar (divisions / tours / markets) ─── */
+.lobby-filter-bar {
+  position: sticky;
+  /* Высота шапки: 8px+8px паддинги секции + компактные пилюли. */
+  top: 47px;
+  z-index: 30;
+  margin: -4px -16px 10px;
+  padding: 8px 16px 4px;
+  background: var(--bg-app, #0b0f18);
+  background: linear-gradient(180deg, var(--bg-app, #0b0f18) 82%, rgba(11, 15, 24, 0) 100%);
+}
+
+/* Горизонтальная прокрутка с видимой, но тонкой полосой. */
+.scroll-row {
+  overflow-x: auto;
+  overflow-y: hidden;
+  flex-wrap: nowrap;
+  scroll-snap-type: x proximity;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(245, 176, 39, 0.45) rgba(255, 255, 255, 0.08);
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+}
+.scroll-row > * {
+  scroll-snap-align: start;
+  flex: 0 0 auto;
+}
+.scroll-row::-webkit-scrollbar {
+  height: 5px;
+}
+.scroll-row::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+}
+.scroll-row::-webkit-scrollbar-thumb {
+  background: rgba(245, 176, 39, 0.45);
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+.scroll-row::-webkit-scrollbar-thumb:hover,
+.scroll-row::-webkit-scrollbar-thumb:active {
+  background: var(--accent-gold);
+}
+
+/* Внутри липкой панели строки компактнее — вся линия помещается в шапку. */
+.lobby-filter-bar .division-tabs {
+  margin-bottom: 6px;
+  padding-bottom: 6px;
+}
+/* Последняя строка панели не тянет за собой лишний отступ. */
+.lobby-filter-bar > *:last-child {
+  margin-bottom: 0;
+}
+
+/* ─── 2b. Division Selector Tabs ─── */
+.division-tabs {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  flex-wrap: nowrap;
+  padding-bottom: 8px;
+  margin-bottom: 12px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(245, 176, 39, 0.45) rgba(255, 255, 255, 0.08);
+}
+.division-tabs > * {
+  flex: 0 0 auto;
+}
+.division-tabs::-webkit-scrollbar {
+  height: 5px;
+}
+.division-tabs::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+}
+.division-tabs::-webkit-scrollbar-thumb {
+  background: rgba(245, 176, 39, 0.45);
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+.division-tabs::-webkit-scrollbar-thumb:hover,
+.division-tabs::-webkit-scrollbar-thumb:active {
+  background: var(--accent-gold);
+}
+.division-tab-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-secondary);
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.division-tab-btn:active {
+  transform: scale(0.96);
+}
+.division-tab-btn.active {
+  background: linear-gradient(135deg, rgba(245, 176, 39, 0.25) 0%, rgba(245, 176, 39, 0.1) 100%);
+  color: var(--accent-gold);
+  border-color: var(--accent-gold);
+  font-weight: 800;
+  box-shadow: 0 0 12px rgba(245, 176, 39, 0.2);
+}
+
+/* ─── 3. Match Card ─── */
+/* ─── 3. Match Card ─── */
+.match-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow-card);
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.match-card:hover {
+  border-color: rgba(245, 176, 39, 0.3);
+}
+
+.match-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.match-tour-tag {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.76rem;
+  font-weight: 800;
+  color: var(--accent-gold);
+  background: rgba(245, 176, 39, 0.12);
+  border: 1px solid rgba(245, 176, 39, 0.25);
+  padding: 3px 8px;
+  border-radius: var(--radius-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.match-teams-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 14px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.team-block-side {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 0;
+  min-width: 0; /* CRITICAL: allows flex child to shrink properly */
+  overflow: hidden;
+}
+
+.team-block-side.left {
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.team-block-side.right {
+  justify-content: flex-start;
+  text-align: left;
+}
+
+.team-meta-wrap {
+  display: flex;
+  flex-direction: column;
+  min-width: 0; /* CRITICAL: enables children text truncation */
+  flex: 1 1 0;
+  overflow: hidden;
+  justify-content: center;
+}
+
+.team-meta-wrap.left {
+  align-items: flex-end;
+  text-align: right;
+}
+
+.team-meta-wrap.right {
+  align-items: flex-start;
+  text-align: left;
+}
+
+.team-name {
+  font-family: 'Outfit', sans-serif;
+  font-size: clamp(0.80rem, 2.7vw, 0.90rem);
+  font-weight: 800;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+  max-width: 100%;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+  display: block;
+}
+
+.team-player-tag {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 0.70rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+  max-width: 100%;
+  line-height: 1.2;
+  margin-top: 2px;
+  display: block;
+  opacity: 0.85;
+}
+
+.team-player-tag:hover {
+  color: var(--accent-gold);
+  opacity: 1;
+}
+
+.match-vs-divider {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 900;
+  color: var(--accent-gold);
+  background: rgba(245, 176, 39, 0.1);
+  border: 1px solid rgba(245, 176, 39, 0.25);
+  padding: 3px 8px;
+  border-radius: var(--radius-xs);
+  flex-shrink: 0;
+}
+
+@media (max-width: 380px) {
+  .match-teams-row {
+    gap: 6px;
+  }
+  .team-block-side {
+    gap: 6px;
+  }
+  .team-name {
+    font-size: 0.80rem;
+  }
+  .team-player-tag {
+    font-size: 0.66rem;
+  }
+  .match-vs-divider {
+    padding: 2px 6px;
+    font-size: 0.70rem;
+  }
+}
+
+/* Odds Grid & Buttons */
+.odds-grid-3col, .odds-grid-main {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.odds-grid-2col {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.odds-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.odd-btn, .odds-btn {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 8px 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  cursor: pointer;
+  transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+  user-select: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.odd-btn:active, .odds-btn:active {
+  transform: scale(0.95);
+}
+
+.odd-btn.selected, .odds-btn.selected {
+  background: linear-gradient(135deg, var(--accent-gold) 0%, #ffc83b 100%) !important;
+  border-color: var(--accent-gold) !important;
+  box-shadow: 0 0 16px var(--accent-gold-glow);
+}
+
+.odd-btn.selected .odd-label, .odd-btn.selected .odd-val,
+.odds-btn.selected .odds-btn-label, .odds-btn.selected .odds-btn-val {
+  color: #000 !important;
+  font-weight: 900 !important;
+}
+
+.odd-label, .odds-btn-label {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.odd-val, .odds-btn-val {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.02rem;
+  font-weight: 800;
+  color: var(--accent-gold);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Match Action Buttons Row */
+.match-card-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.btn-match-action {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.btn-match-action:hover, .btn-match-action:active {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(245, 176, 39, 0.4);
+  color: #fff;
+}
+
+.btn-match-action.accent {
+  background: rgba(245, 176, 39, 0.08);
+  border-color: rgba(245, 176, 39, 0.25);
+  color: var(--accent-gold);
+}
+
+@keyframes expandPanel {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── 4. Bet Coupon — see css/coupon.css ─── */
+
+/* ─── 5. Leaderboard View ─── */
+.podium-container {
+  display: grid;
+  grid-template-columns: 1fr 1.15fr 1fr;
+  align-items: flex-end;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.podium-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 14px 8px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  box-shadow: var(--shadow-card);
+}
+.podium-card.first {
+  border-color: var(--accent-gold);
+  background: linear-gradient(180deg, rgba(245, 176, 39, 0.2) 0%, var(--bg-card) 100%);
+  padding-bottom: 24px;
+  box-shadow: 0 0 24px rgba(245, 176, 39, 0.25);
+}
+
+.podium-medal {
+  font-size: 2rem;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.4));
+}
+.podium-card.first .podium-medal {
+  font-size: 2.5rem;
+  /* Свечение статичное: анимируется только transform, он не перерисовывает слой. */
+  filter: drop-shadow(0 0 14px rgba(245, 176, 39, 0.75));
+  animation: crownGlow 2.5s infinite ease-in-out;
+}
+
+@keyframes crownGlow {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+.podium-name {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.86rem;
+  font-weight: 800;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.podium-bal {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: var(--accent-gold);
+}
+
+.leader-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  margin-bottom: 8px;
+  transition: var(--transition-fast);
+}
+
+.leader-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.leader-rank {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: var(--text-muted);
+  min-width: 20px;
+}
+
+.leader-name {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: #fff;
+}
+
+.leader-stats {
+  font-size: 0.76rem;
+  color: var(--text-secondary);
+}
+
+.leader-bal {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--accent-gold);
+}
+
+/* ─── 6. Modals ─── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(0, 0, 0, 0.85);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.modal-overlay.open,
+.modal-overlay.active {
+  display: flex !important;
+}
+
+.modal-content {
+  background: var(--bg-card);
+  border: 1px solid var(--border-active);
+  border-radius: var(--radius-lg);
+  padding: 26px;
+  max-width: 420px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.8);
+  animation: modalPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes modalPop {
+  from { opacity: 0; transform: scale(0.85); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.modal-icon {
+  font-size: 3.5rem;
+  margin-bottom: 12px;
+  filter: drop-shadow(0 0 16px var(--accent-gold-glow));
+}
+
+.modal-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.35rem;
+  font-weight: 900;
+  margin-bottom: 8px;
+  color: #fff;
+}
+
+.modal-desc {
+  font-size: 0.92rem;
+  color: var(--text-secondary);
+  margin-bottom: 22px;
+  line-height: 1.5;
+}
+
+.btn-modal-close {
+  width: 100%;
+  background: linear-gradient(135deg, var(--accent-gold) 0%, var(--accent-gold-hover) 100%);
+  color: #000;
+  font-family: 'Outfit', sans-serif;
+  font-size: 1rem;
+  font-weight: 800;
+  border: none;
+  padding: 13px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  box-shadow: var(--shadow-gold);
+}
+
+/* The header ✕ of a modal: a compact icon, not the full-width button above. */
+.btn-modal-close.btn-modal-x {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  margin-left: 12px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  box-shadow: none;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+.btn-modal-close.btn-modal-x:active {
+  transform: scale(0.9);
+}
+
+/* ─── 7. Level & XP Pill (Header) ─── */
+.level-pill {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(0, 210, 255, 0.10);
+  border: 1px solid rgba(0, 210, 255, 0.28);
+  padding: 4px 9px;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: var(--transition-fast);
+  /* Пилюля не переносится на две строки и не сжимается. */
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.level-pill:active {
+  transform: scale(0.95);
+}
+
+.level-badge-icon {
+  font-size: 0.82rem;
+  line-height: 1;
+}
+
+.level-number {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--accent-cyan);
+  line-height: 1.1;
+}
+
+/* ─── 8. 7-Day Login Streak Card ─── */
+.streak-card {
+  background: linear-gradient(135deg, rgba(245, 176, 39, 0.18) 0%, rgba(19, 24, 36, 0.95) 100%);
+  border: 1px solid var(--border-active);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow-card);
+}
+
+.streak-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.streak-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.streak-flame-icon {
+  font-size: 1.6rem;
+  filter: drop-shadow(0 0 12px rgba(245, 176, 39, 0.75));
+  animation: flameFlicker 1.8s infinite alternate;
+}
+
+@keyframes flameFlicker {
+  0% { transform: scale(1) rotate(-3deg); }
+  100% { transform: scale(1.15) rotate(3deg); }
+}
+
+.streak-days-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+}
+
+.streak-day-item {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xs);
+  padding: 8px 4px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+.streak-day-item.active {
+  background: rgba(245, 176, 39, 0.2);
+  border-color: var(--accent-gold);
+  color: #fff;
+}
+.streak-day-item.current {
+  border-color: var(--accent-gold);
+  box-shadow: 0 0 12px var(--accent-gold-glow);
+  transform: scale(1.05);
+}
+
+.streak-day-reward {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.76rem;
+  font-weight: 800;
+  color: var(--accent-gold);
+}
+
+/* ─── 9. Quests Cards ─── */
+.quest-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.quest-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.quest-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #fff;
+}
+
+.quest-desc {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+.quest-rewards-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: var(--accent-gold);
+  background: rgba(245, 176, 39, 0.1);
+  padding: 4px 8px;
+  border-radius: var(--radius-xs);
+  white-space: nowrap;
+}
+
+.quest-progress-bar-wrap {
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+.quest-progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-gold) 0%, #00d2ff 100%);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.quest-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 4px;
+}
+
+.quest-count-label {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.btn-claim-quest {
+  background: linear-gradient(135deg, var(--accent-gold) 0%, var(--accent-gold-hover) 100%);
+  color: #000;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 900;
+  border: none;
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  box-shadow: 0 0 8px rgba(245, 176, 39, 0.4);
+  position: relative;
+}
+/* Пульс свечения — через opacity псевдоэлемента: анимация box-shadow перерисовывает кадр целиком. */
+.btn-claim-quest::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: 0 0 18px rgba(245, 176, 39, 0.8);
+  opacity: 0;
+  pointer-events: none;
+  animation: pulseGold 2s infinite alternate;
+}
+.btn-claim-quest:active {
+  transform: scale(0.94);
+}
+
+@keyframes pulseGold {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+/* ─── 10. Esports Gamer Profile Card ─── */
+.gamer-profile-card {
+  background: linear-gradient(180deg, rgba(26, 34, 48, 0.9) 0%, var(--bg-card) 100%);
+  border: 1px solid var(--border-active);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  box-shadow: 0 10px 36px rgba(0, 0, 0, 0.5);
+  margin-bottom: 16px;
+}
+
+.gamer-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.gamer-avatar-wrap, .user-profile-avatar-container {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  background: var(--bg-tertiary);
+  border: 2px solid var(--accent-gold);
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 16px var(--accent-gold-glow);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.user-profile-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.user-profile-avatar-fallback {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.6rem;
+  font-weight: 900;
+  color: var(--accent-gold);
+}
+
+.gamer-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.gamer-username {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: #fff;
+}
+
+.gamer-title-badge {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: var(--accent-gold);
+  background: rgba(245, 176, 39, 0.12);
+  border: 1px solid rgba(245, 176, 39, 0.25);
+  padding: 2px 8px;
+  border-radius: var(--radius-xs);
+  display: inline-block;
+  width: fit-content;
+}
+
+.gamer-xp-bar-wrap {
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  overflow: hidden;
+  margin: 10px 0 6px;
+}
+
+.gamer-xp-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #00d2ff 0%, var(--accent-gold) 100%);
+  border-radius: 6px;
+}
+
+.gamer-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  margin-top: 14px;
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 14px;
+}
+
+.gamer-stat-item {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 10px 6px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.gamer-stat-val {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #fff;
+}
+
+.gamer-stat-lbl {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+/* ─── 11. Achievements Showcase ─── */
+.achievements-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.achievement-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  position: relative;
+  overflow: hidden;
+  opacity: 0.55;
+  filter: grayscale(0.6);
+  transition: var(--transition-fast);
+}
+
+.achievement-card.unlocked {
+  opacity: 1;
+  filter: grayscale(0);
+  border-color: rgba(245, 176, 39, 0.4);
+  background: linear-gradient(135deg, rgba(245, 176, 39, 0.1) 0%, var(--bg-card) 100%);
+}
+
+.achievement-card.rarity-rare.unlocked {
+  border-color: rgba(0, 210, 255, 0.5);
+  box-shadow: 0 0 14px rgba(0, 210, 255, 0.15);
+}
+.achievement-card.rarity-epic.unlocked {
+  border-color: rgba(168, 85, 247, 0.6);
+  box-shadow: 0 0 16px rgba(168, 85, 247, 0.2);
+}
+.achievement-card.rarity-legendary.unlocked {
+  border-color: var(--accent-gold);
+  box-shadow: 0 0 20px rgba(245, 176, 39, 0.35);
+}
+
+.ach-icon-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ach-icon {
+  font-size: 1.5rem;
+}
+
+.ach-name {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.2;
+}
+
+.ach-desc {
+  font-size: 0.74rem;
+  color: var(--text-secondary);
+  line-height: 1.3;
+}
+
+.btn-claim-achievement {
+  background: var(--accent-gold);
+  color: #000;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 800;
+  border: none;
+  padding: 5px;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  margin-top: 4px;
+}
+
+/* ─── 12. PvP Duels Arena ─── */
+.duels-header-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(19, 24, 36, 0.95) 100%);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  padding: 16px;
+  border-radius: var(--radius-md);
+  margin-bottom: 16px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
+}
+
+.btn-create-duel {
+  background: linear-gradient(135deg, var(--color-danger) 0%, #dc2626 100%);
+  color: #fff;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 800;
+  border: none;
+  padding: 9px 14px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  box-shadow: 0 0 14px rgba(239, 68, 68, 0.4);
+  white-space: nowrap;
+}
+.btn-create-duel:active {
+  transform: scale(0.94);
+}
+
+.duel-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  margin-bottom: 10px;
+  box-shadow: var(--shadow-card);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.duel-players {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.btn-accept-duel {
+  background: var(--accent-gold);
+  color: #000;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 800;
+  border: none;
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  box-shadow: var(--shadow-gold);
+}
+
+.btn-open-leaderboard {
+  width: 100%;
+  background: var(--bg-card);
+  border: 1px solid var(--border-active);
+  color: var(--accent-gold);
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 800;
+  padding: 14px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+/* ─── 13. Category Filter Pills & Search ─── */
+.category-pills {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 10px;
+  margin-bottom: 12px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.category-pill {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+.category-pill.active {
+  background: rgba(245, 176, 39, 0.18);
+  border-color: var(--accent-gold);
+  color: var(--accent-gold);
+}
+
+.search-box-container {
+  margin-bottom: 14px;
+  position: relative;
+}
+
+.match-search-input {
+  width: 100%;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: #fff;
+  padding: 10px 14px 10px 38px;
+  font-size: 0.9rem;
+  outline: none;
+  transition: var(--transition-fast);
+}
+.match-search-input:focus {
+  border-color: var(--accent-gold);
+  box-shadow: 0 0 12px var(--accent-gold-glow);
+}
+.search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+/* ─── 14. Live Match Indicator ─── */
+.live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid var(--color-danger);
+  color: #ef4444;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #ef4444;
+  box-shadow: 0 0 8px #ef4444;
+  animation: pulseDot 1.4s infinite;
+}
+
+@keyframes pulseDot {
+  0% { transform: scale(0.9); opacity: 1; }
+  50% { transform: scale(1.4); opacity: 0.4; }
+  100% { transform: scale(0.9); opacity: 1; }
+}
+
+/* ─── 15. Match Center & Analytics View ─── */
+.match-center-header {
+  background: linear-gradient(180deg, rgba(24, 32, 48, 0.9) 0%, rgba(13, 17, 26, 0.95) 100%);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow-card);
+}
+
+.team-vs-display {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.team-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+}
+
+.team-crest-container {
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 50%;
+  padding: 6px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.team-crest-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.6));
+}
+
+.team-name-lg {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1rem;
+  font-weight: 800;
+  color: #fff;
+  text-align: center;
+}
+
+.score-center-badge {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.8rem;
+  font-weight: 900;
+  color: var(--accent-gold);
+  background: rgba(0, 0, 0, 0.4);
+  padding: 6px 18px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-active);
+  letter-spacing: 0.06em;
+}
+
+.form-badges-row {
+  display: flex;
+  gap: 4px;
+}
+
+.form-dot {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  font-size: 0.65rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}
+.form-dot.w { background: var(--color-success); }
+.form-dot.d { background: var(--color-warning); }
+.form-dot.l { background: var(--color-danger); }
+
+/* Sub-tabs for Match Center */
+.mc-tabs {
+  display: flex;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+  padding: 3px;
+  margin-bottom: 14px;
+  gap: 3px;
+}
+
+.mc-tab-btn, .mc-subtab-btn {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  padding: 8px 3px;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-sizing: border-box;
+}
+.mc-tab-btn.active, .mc-subtab-btn.active {
+  background: var(--accent-gold);
+  color: #000;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(245, 176, 39, 0.3);
+}
+
+.market-group-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  margin-bottom: 10px;
+}
+
+.market-group-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Insight Cards */
+.insight-card {
+  background: rgba(245, 176, 39, 0.08);
+  border: 1px solid rgba(245, 176, 39, 0.25);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 0.85rem;
+  color: #fff;
+  line-height: 1.4;
+}
+
+/* H2H Bar */
+.h2h-progress-bar {
+  display: flex;
+  height: 8px;
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  margin: 8px 0;
+}
+.h2h-bar-p1 { background: var(--accent-gold); }
+.h2h-bar-x { background: #64748b; }
+.h2h-bar-p2 { background: var(--accent-cyan); }
+
+/* ─── 16. Standings Table ─── */
+.standings-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+.standings-table th {
+  color: var(--text-muted);
+  font-weight: 700;
+  text-align: center;
+  padding: 8px 6px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.standings-table th:first-child {
+  text-align: left;
+}
+.standings-table td {
+  padding: 10px 6px;
+  text-align: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+.standings-table td:first-child {
+  text-align: left;
+  font-weight: 700;
+  color: #fff;
+}
+.standings-pos-pill {
+  display: inline-block;
+  width: 22px;
+  height: 22px;
+  line-height: 22px;
+  border-radius: 50%;
+  font-size: 0.75rem;
+  font-weight: 800;
+  margin-right: 6px;
+  text-align: center;
+}
+.standings-pos-pill.top { background: rgba(245, 176, 39, 0.2); color: var(--accent-gold); }
+.standings-pos-pill.mid { background: rgba(255, 255, 255, 0.06); color: var(--text-secondary); }
+
+/* Кликабельная шапка таблицы: сортировка по любой колонке */
+.standings-table th.sortable {
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  white-space: nowrap;
+  transition: color 0.15s ease;
+}
+.standings-table th.sortable:active {
+  color: var(--accent-gold);
+}
+.standings-table th.sorted {
+  color: var(--accent-gold);
+}
+.standings-table th .sort-arrow {
+  font-size: 0.6rem;
+  margin-left: 3px;
+  vertical-align: middle;
+}
+
+/* С десятью колонками таблица на телефоне скроллится вбок —
+   колонка клуба остаётся приклеенной, иначе непонятно, чья это строка. */
+.standings-table th:first-child,
+.standings-table td:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  /* --bg-card полупрозрачный: сквозь приклеенную колонку просвечивали бы цифры */
+  background: var(--bg-tertiary);
+}
+
+/* Полоска формы: последние 5 матчей */
+.form-strip {
+  display: flex;
+  gap: 3px;
+  justify-content: center;
+}
+.form-dot {
+  display: inline-block;
+  width: 15px;
+  height: 15px;
+  line-height: 15px;
+  border-radius: 4px;
+  font-size: 0.58rem;
+  font-weight: 800;
+  text-align: center;
+  color: #fff;
+}
+.form-dot.form-w { background: var(--color-success); }
+.form-dot.form-d { background: rgba(255, 255, 255, 0.18); color: var(--text-secondary); }
+.form-dot.form-l { background: var(--color-danger); }
+
+/* ─── 17. User KPI Analytics Grid ─── */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.kpi-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+}
+.kpi-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.kpi-value {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: #fff;
+}
+.kpi-value.green { color: var(--color-success); }
+.kpi-value.gold { color: var(--accent-gold); }
+.kpi-value.red { color: var(--color-danger); }
+
+/* ─── 18. Saved Draft Coupons ─── */
+.saved-coupon-card {
+  background: var(--bg-card);
+  border: 1px dashed var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.btn-restore-coupon {
+  background: rgba(245, 176, 39, 0.15);
+  border: 1px solid var(--accent-gold);
+  color: var(--accent-gold);
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+/* ─── 19. LIVE-центр удалён: стили секции и пункта навигации убраны.
+   Бейдж «LIVE» на карточке матча (.live-badge / .live-dot) остаётся —
+   он используется в линии и в купонах. ─── */
+
+/* ==========================================================================
+   15. LOGOVO.BET — Premium Sportsbook Coupons & Club Logos Design System
+   ========================================================================== */
+
+/* ─── Coupons Page Header ─── */
+.coupons-page-header {
+  margin-bottom: 12px;
+}
+
+.coupons-page-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.01em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  line-height: 1.2;
+}
+
+.coupons-page-subtitle {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-top: 3px;
+  font-weight: 500;
+}
+
+/* ─── Horizontal Filter Chips ─── */
+.coupons-filter-chips {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 10px;
+  margin-bottom: 12px;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.coupons-filter-chips::-webkit-scrollbar {
+  display: none;
+}
+
+.coupons-filter-chips .category-pill {
+  background: rgba(19, 24, 36, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text-secondary);
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.coupons-filter-chips .category-pill:hover {
+  border-color: rgba(245, 176, 39, 0.4);
+  color: #fff;
+}
+
+.coupons-filter-chips .category-pill.active {
+  background: rgba(245, 176, 39, 0.12);
+  border-color: var(--accent-gold);
+  color: var(--accent-gold);
+  box-shadow: 0 0 12px rgba(245, 176, 39, 0.2);
+}
+
+/* ─── Unified Team Logo Wrapper ─── */
+.team-logo-wrapper {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  max-width: 44px;
+  max-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 4px;
+  box-sizing: border-box;
+  transition: var(--transition-fast);
+}
+
+.team-logo-wrapper img {
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  display: block;
+  filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.45));
+}
+
+.team-logo-wrapper .team-logo-fallback {
+  font-size: 20px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+}
+
+.team-logo-wrapper img + .team-logo-fallback,
+img.team-logo-img + .team-logo-fallback {
+  display: none;
+}
+
+/* ─── Coupon Card (Root Container) ─── */
+.coupon-card {
+  background: rgba(14, 18, 27, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 16px;
+  padding: 14px 16px;
+  margin-bottom: 14px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.coupon-card:active {
+  transform: scale(0.995);
+}
+
+/* ─── Level 1: Header ─── */
+.coupon-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  margin-bottom: 10px;
+}
+
+.coupon-header-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.coupon-badge-express {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: rgba(245, 176, 39, 0.12);
+  color: var(--accent-gold);
+  border: 1px solid rgba(245, 176, 39, 0.28);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.coupon-id {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #fff;
+}
+
+.coupon-meta-dot {
+  color: var(--text-muted);
+  font-size: 0.68rem;
+}
+
+.coupon-date {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.coupon-header-right {
+  display: flex;
+  align-items: center;
+}
+
+.coupon-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.coupon-status-badge .status-indicator-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.coupon-status-badge.badge-won {
+  background: rgba(16, 185, 129, 0.12);
+  color: var(--color-success);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.coupon-status-badge.badge-lost {
+  background: rgba(239, 68, 68, 0.12);
+  color: var(--color-danger);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}
+
+.coupon-status-badge.badge-pending {
+  background: rgba(56, 189, 248, 0.12);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.25);
+}
+
+.coupon-status-badge.badge-cashout {
+  background: rgba(0, 210, 255, 0.12);
+  color: var(--accent-cyan);
+  border: 1px solid rgba(0, 210, 255, 0.25);
+}
+
+.coupon-status-badge.badge-refunded {
+  background: rgba(245, 158, 11, 0.12);
+  color: var(--color-warning);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+}
+
+.coupon-status-badge.badge-cancelled {
+  background: rgba(148, 163, 184, 0.12);
+  color: var(--text-muted);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+/* ─── Level 2: Matches List & MatchRow ─── */
+.coupon-matches-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.coupon-match-row {
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.coupon-match-row:first-child {
+  padding-top: 2px;
+}
+
+.coupon-match-row:last-child {
+  border-bottom: none;
+  padding-bottom: 6px;
+}
+
+.coupon-teams-layout {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.coupon-team {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+.coupon-team.home {
+  justify-content: flex-start;
+  text-align: left;
+}
+
+.coupon-team.away {
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.coupon-team-name {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #fff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.25;
+}
+
+.coupon-match-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0 6px;
+  min-width: 58px;
+  flex-shrink: 0;
+}
+
+.coupon-score {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: 0.02em;
+  line-height: 1.1;
+}
+
+.coupon-score.live {
+  color: #ff4757;
+}
+
+.coupon-vs {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+  line-height: 1.1;
+}
+
+.coupon-match-sub {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  margin-top: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.coupon-match-sub.live {
+  color: #ff4757;
+  font-weight: 700;
+}
+
+/* ─── Prediction Bar ─── */
+.coupon-prediction-subrow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+  padding: 0 2px;
+}
+
+.coupon-market-label {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 55%;
+}
+
+.coupon-prediction-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.coupon-prediction-pill.won {
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: var(--color-success);
+}
+
+.coupon-prediction-pill.lost {
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: var(--color-danger);
+}
+
+.coupon-prediction-pill.pending {
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  color: #38bdf8;
+}
+
+.coupon-prediction-pill.refunded {
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: var(--color-warning);
+}
+
+.coupon-pred-outcome {
+  font-weight: 800;
+  color: #fff;
+}
+
+.coupon-pred-at {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  margin: 0 1px;
+}
+
+.coupon-pred-odd {
+  font-weight: 800;
+}
+
+.coupon-pred-icon {
+  font-size: 0.82rem;
+  font-weight: 900;
+  margin-left: 2px;
+}
+
+/* ─── Level 3: Summary ─── */
+.coupon-summary {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.2fr;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-top: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.coupon-summary-col {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.coupon-summary-col:last-child {
+  text-align: right;
+}
+
+.coupon-summary-label {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.coupon-summary-val {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.98rem;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.coupon-summary-val.gold {
+  color: var(--accent-gold);
+}
+
+.coupon-summary-val.val-won {
+  color: var(--color-success);
+  font-weight: 900;
+}
+
+.coupon-summary-val.val-lost {
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.coupon-summary-val.val-cashout {
+  color: #38bdf8;
+  font-weight: 900;
+}
+
+.coupon-summary-val.val-refund {
+  color: var(--color-warning);
+  font-weight: 800;
+}
+
+.coupon-summary-val.val-pending {
+  color: var(--accent-gold);
+  font-weight: 800;
+}
+
+/* ─── Level 4: Actions ─── */
+.coupon-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.coupon-btn-repeat {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text-secondary);
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 9px 14px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: var(--transition-fast);
+  text-align: center;
+}
+
+.coupon-btn-repeat:hover {
+  background: rgba(245, 176, 39, 0.08);
+  border-color: rgba(245, 176, 39, 0.3);
+  color: var(--accent-gold);
+}
+
+.coupon-btn-repeat:active {
+  transform: scale(0.98);
+}
+
+.coupon-btn-cashout {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  color: #38bdf8;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 800;
+  padding: 9px 14px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.coupon-btn-cashout:hover {
+  background: rgba(56, 189, 248, 0.2);
+}
+
+.coupon-btn-cashout:active {
+  transform: scale(0.98);
+}
+
+/* ─── Coupons Empty State ─── */
+.coupons-empty-state {
+  text-align: center;
+  padding: 48px 20px;
+  background: rgba(14, 18, 27, 0.5);
+  border-radius: 16px;
+  border: 1px dashed rgba(255, 255, 255, 0.08);
+}
+
+.coupons-empty-state .empty-icon {
+  font-size: 2.2rem;
+  margin-bottom: 10px;
+}
+
+.coupons-empty-state .empty-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 4px;
+}
+
+.coupons-empty-state .empty-subtitle {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  max-width: 280px;
+  margin: 0 auto;
+  line-height: 1.4;
+}
+
+/* ─── Mobile Responsiveness (360px – 430px) ─── */
+@media (max-width: 390px) {
+  .coupon-card {
+    padding: 12px;
+    border-radius: 14px;
+  }
+  .team-logo-wrapper {
+    width: 38px;
+    height: 38px;
+    min-width: 38px;
+    min-height: 38px;
+    max-width: 38px;
+    max-height: 38px;
+    padding: 3px;
+  }
+  .coupon-team-name {
+    font-size: 0.82rem;
+  }
+  .coupon-score {
+    font-size: 0.95rem;
+  }
+  .coupon-summary-val {
+    font-size: 0.88rem;
+  }
+  .coupon-header-left {
+    gap: 4px;
+  }
+  .coupon-summary {
+    padding: 8px 10px;
+    gap: 6px;
+  }
+}
+
+@media (max-width: 360px) {
+  .team-logo-wrapper {
+    width: 34px;
+    height: 34px;
+    min-width: 34px;
+    min-height: 34px;
+    max-width: 34px;
+    max-height: 34px;
+    padding: 2px;
+  }
+  .coupon-team {
+    gap: 6px;
+  }
+  .coupon-team-name {
+    font-size: 0.78rem;
+  }
+  .coupon-summary {
+    padding: 8px;
+    gap: 4px;
+  }
+  .coupon-summary-val {
+    font-size: 0.82rem;
+  }
+  .coupon-summary-label {
+    font-size: 0.64rem;
+  }
+  .coupon-btn-repeat, .coupon-btn-cashout {
+    font-size: 0.75rem;
+    padding: 8px 10px;
+  }
+}
+
+/* ==========================================================================
+   MY CLUB («Мой Клуб») — личный кабинет игрока
+   Премиальный тёмный киберспортивный стиль: glassmorphism, золото + неон,
+   строгая адаптивность 320–430px без горизонтального скролла.
+   ========================================================================== */
+
+#view-my_club {
+  /* Ни один блок вкладки не должен растягивать страницу по ширине. */
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+#view-my_club * {
+  min-width: 0;
+}
+
+/* --- Hero-баннер клуба --- */
+.club-hero {
+  background: linear-gradient(160deg, rgba(245, 176, 39, 0.10) 0%, rgba(14, 18, 27, 0.86) 45%),
+              var(--bg-glass);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 14px;
+  box-shadow: var(--shadow-card);
+  position: relative;
+  overflow: hidden;
+}
+
+.club-hero::after {
+  /* Неоновая подсветка в углу — фирменный акцент Logovo.bet. */
+  content: '';
+  position: absolute;
+  top: -60px;
+  right: -50px;
+  width: 160px;
+  height: 160px;
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.18) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.club-hero-skeleton {
+  background: var(--bg-glass);
+  opacity: 0.7;
+}
+
+.club-hero-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: relative;
+  z-index: 1;
+}
+
+/* Обёртка логотипа приходит с инлайновыми размерами — переопределяем точечно. */
+.club-hero-crest {
+  width: 54px !important;
+  height: 54px !important;
+  min-width: 54px !important;
+  min-height: 54px !important;
+  max-width: 54px !important;
+  max-height: 54px !important;
+  border-radius: 12px !important;
+  border: 1px solid rgba(245, 176, 39, 0.25) !important;
+  box-shadow: 0 0 18px rgba(245, 176, 39, 0.12);
+}
+
+.club-hero-id {
+  flex: 1;
+  min-width: 0;
+}
+
+.club-hero-name {
+  font-family: 'Outfit', 'Inter', sans-serif;
+  font-size: 1.06rem;
+  font-weight: 900;
+  color: #fff;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.club-hero-division {
+  margin-top: 3px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.club-place-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  min-width: 58px;
+  padding: 6px 8px;
+  border-radius: 12px;
+  background: rgba(245, 176, 39, 0.12);
+  border: 1px solid rgba(245, 176, 39, 0.3);
+}
+
+.club-place-value {
+  font-family: 'Outfit', 'Inter', sans-serif;
+  font-size: 1.3rem;
+  font-weight: 900;
+  color: var(--accent-gold);
+  line-height: 1;
+  text-shadow: 0 0 12px var(--accent-gold-glow);
+}
+
+.club-place-label {
+  margin-top: 2px;
+  font-size: 0.58rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
+/* --- KPI-строка --- */
+.club-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  margin-top: 14px;
+  position: relative;
+  z-index: 1;
+}
+
+.club-kpi {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 8px 4px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  text-align: center;
+}
+
+.club-kpi-label {
+  font-size: 0.58rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.club-kpi-value {
+  font-size: 0.84rem;
+  font-weight: 900;
+  color: #fff;
+  white-space: nowrap;
+}
+
+.club-kpi-value.gold {
+  color: var(--accent-gold);
+}
+
+.club-kpi-sub {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+/* --- Форма последних матчей --- */
+.club-form-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+  position: relative;
+  z-index: 1;
+}
+
+.club-form-caption {
+  font-size: 0.62rem;
+  font-weight: 800;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.club-form-dots {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.club-form-dot {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.62rem;
+  font-weight: 900;
+  color: #fff;
+}
+
+.club-form-dot.win {
+  background: var(--color-success-bg);
+  color: var(--color-success);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+}
+
+.club-form-dot.draw {
+  background: rgba(148, 163, 184, 0.15);
+  color: var(--text-secondary);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+}
+
+.club-form-dot.loss {
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+}
+
+/* --- Дисциплина (предупреждения) --- */
+.club-discipline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 9px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  position: relative;
+  z-index: 1;
+}
+
+.club-discipline-label {
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.club-discipline-value {
+  font-size: 0.86rem;
+  font-weight: 900;
+  color: #fff;
+  white-space: nowrap;
+}
+
+.club-discipline.ok {
+  border-color: rgba(16, 185, 129, 0.28);
+}
+.club-discipline.ok .club-discipline-value {
+  color: var(--color-success);
+}
+
+.club-discipline.warning {
+  background: var(--color-warning-bg);
+  border-color: rgba(245, 158, 11, 0.35);
+}
+.club-discipline.warning .club-discipline-value {
+  color: var(--color-warning);
+}
+
+.club-discipline.danger {
+  background: var(--color-danger-bg);
+  border-color: rgba(239, 68, 68, 0.45);
+}
+.club-discipline.danger .club-discipline-value {
+  color: var(--color-danger);
+}
+
+/* --- Панели под-вкладок --- */
+.club-subtabs {
+  /* На 320px три подписи не помещаются в ряд — разрешаем горизонтальную
+     прокрутку внутри самой полосы, страница при этом не едет. */
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.club-subtabs::-webkit-scrollbar {
+  display: none;
+}
+
+.club-subtabs .mc-subtab-btn {
+  white-space: nowrap;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 380px) {
+  .mc-tab-btn, .mc-subtab-btn {
+    font-size: 0.74rem;
+    padding: 7px 2px;
+  }
+}
+
+.club-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.club-placeholder {
+  padding: 26px 16px;
+  border-radius: 14px;
+  background: var(--bg-glass);
+  border: 1px dashed rgba(255, 255, 255, 0.1);
+  text-align: center;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+/* --- Карточка матча --- */
+.club-match-card {
+  background: var(--bg-glass);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 12px;
+  box-shadow: var(--shadow-card);
+  transition: var(--transition-fast);
+}
+
+.club-match-card:active {
+  transform: scale(0.995);
+}
+
+.club-match-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.club-match-round {
+  font-size: 0.66rem;
+  font-weight: 800;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.club-badge {
+  font-size: 0.62rem;
+  font-weight: 800;
+  padding: 4px 8px;
+  border-radius: var(--radius-full);
+  border: 1px solid transparent;
+  text-align: right;
+  line-height: 1.25;
+  /* Длинный текст «Согласовано время: 19:30» переносим, а не растягиваем. */
+  max-width: 62%;
+}
+
+.club-badge.pending {
+  background: rgba(148, 163, 184, 0.12);
+  border-color: rgba(148, 163, 184, 0.28);
+  color: var(--text-secondary);
+}
+
+.club-badge.proposed {
+  background: rgba(245, 176, 39, 0.12);
+  border-color: rgba(245, 176, 39, 0.35);
+  color: var(--accent-gold);
+}
+
+.club-badge.incoming {
+  background: rgba(56, 189, 248, 0.14);
+  border-color: rgba(56, 189, 248, 0.4);
+  color: #38bdf8;
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.18);
+}
+
+.club-badge.accepted {
+  background: var(--color-success-bg);
+  border-color: rgba(16, 185, 129, 0.4);
+  color: var(--color-success);
+}
+
+.club-badge.reported {
+  background: var(--color-warning-bg);
+  border-color: rgba(245, 158, 11, 0.4);
+  color: var(--color-warning);
+}
+
+.club-badge.disputed {
+  background: var(--color-danger-bg);
+  border-color: rgba(239, 68, 68, 0.45);
+  color: var(--color-danger);
+}
+
+.club-badge.finished {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: var(--text-muted);
+}
+
+.club-match-body {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.club-match-crest {
+  border-radius: 10px !important;
+}
+
+.club-match-opponent {
+  flex: 1;
+  min-width: 0;
+}
+
+.club-match-team {
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: #fff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.club-match-user {
+  margin-top: 2px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.club-match-score {
+  font-family: 'Outfit', 'Inter', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 900;
+  color: var(--accent-gold);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.club-match-deadline {
+  margin-top: 10px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.club-match-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.btn-club-primary,
+.btn-club-secondary {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 8px;
+  border-radius: 12px;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.btn-club-primary {
+  background: linear-gradient(135deg, var(--accent-gold) 0%, var(--accent-gold-hover) 100%);
+  border: none;
+  color: #0b0d12;
+  box-shadow: 0 4px 16px var(--accent-gold-glow);
+}
+
+.btn-club-secondary {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--text-primary);
+}
+
+.btn-club-primary:active,
+.btn-club-secondary:active {
+  transform: scale(0.97);
+}
+
+.btn-club-primary:disabled,
+.btn-club-secondary:disabled {
+  opacity: 0.5;
+  cursor: default;
+  transform: none;
+}
+
+/* --- Состав клуба --- */
+.club-leaders {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.club-leader-card {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: linear-gradient(140deg, rgba(245, 176, 39, 0.12) 0%, rgba(14, 18, 27, 0.85) 60%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  position: relative;
+}
+
+.club-leader-label {
+  font-size: 0.6rem;
+  font-weight: 800;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.club-leader-name {
+  font-size: 0.86rem;
+  font-weight: 800;
+  color: #fff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding-right: 26px;
+}
+
+.club-leader-value {
+  position: absolute;
+  right: 12px;
+  bottom: 10px;
+  font-family: 'Outfit', 'Inter', sans-serif;
+  font-size: 1.2rem;
+  font-weight: 900;
+  color: var(--accent-gold);
+  line-height: 1;
+  text-shadow: 0 0 12px var(--accent-gold-glow);
+}
+
+.club-squad-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--bg-glass);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 8px;
+}
+
+.club-player-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 6px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid transparent;
+}
+
+.club-player-row.leader {
+  background: rgba(245, 176, 39, 0.08);
+  border-color: rgba(245, 176, 39, 0.28);
+}
+
+.club-player-num {
+  width: 20px;
+  flex-shrink: 0;
+  text-align: center;
+  font-size: 0.68rem;
+  font-weight: 900;
+  color: var(--text-muted);
+}
+
+.club-player-id {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.club-player-name {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #fff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.club-player-pos {
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.club-stat-badge {
+  flex-shrink: 0;
+  padding: 3px 7px;
+  border-radius: var(--radius-full);
+  font-size: 0.68rem;
+  font-weight: 800;
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+
+.club-stat-badge.goals {
+  background: rgba(245, 176, 39, 0.12);
+  border-color: rgba(245, 176, 39, 0.3);
+  color: var(--accent-gold);
+}
+
+.club-stat-badge.assists {
+  background: rgba(56, 189, 248, 0.12);
+  border-color: rgba(56, 189, 248, 0.32);
+  color: #38bdf8;
+}
+
+/* 👑 Награда «Игрок матча»: фиолетовый, чтобы не спорить с золотом голов. */
+.club-stat-badge.mvp {
+  background: rgba(167, 139, 250, 0.14);
+  border-color: rgba(167, 139, 250, 0.34);
+  color: #a78bfa;
+}
+
+.club-squad-note {
+  padding: 0 4px;
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+  text-align: center;
+}
+
+/* --- Пустое состояние (игрок не заявлен за клуб) --- */
+.club-empty-state {
+  background: var(--bg-glass);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 26px 18px;
+  text-align: center;
+  box-shadow: var(--shadow-card);
+}
+
+.club-empty-icon {
+  font-size: 2.4rem;
+  line-height: 1;
+  filter: drop-shadow(0 0 18px var(--accent-gold-glow));
+}
+
+.club-empty-title {
+  margin-top: 12px;
+  font-family: 'Outfit', 'Inter', sans-serif;
+  font-size: 1.02rem;
+  font-weight: 900;
+  color: #fff;
+}
+
+.club-empty-text {
+  margin-top: 8px;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.club-empty-steps {
+  margin: 16px 0 0;
+  padding: 12px 12px 12px 30px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  text-align: left;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.club-empty-steps li + li {
+  margin-top: 6px;
+}
+
+.club-empty-steps b {
+  color: var(--accent-gold);
+}
+
+/* --- Модалка выбора времени матча --- */
+.time-modal-opponent {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+}
+
+.time-modal-label {
+  display: block;
+  margin: 10px 0 5px;
+  font-size: 0.66rem;
+  font-weight: 800;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.time-modal-input {
+  width: 100%;
+  padding: 11px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #fff;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.92rem;
+  font-weight: 700;
+  /* Нативные пикеры iOS/Android дают удобный ввод даты и времени. */
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.time-modal-input:focus {
+  outline: none;
+  border-color: var(--border-active);
+  box-shadow: 0 0 0 3px var(--accent-gold-light);
+}
+
+.time-modal-input::-webkit-calendar-picker-indicator {
+  filter: invert(1) opacity(0.55);
+  cursor: pointer;
+}
+
+.time-modal-presets {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.time-preset-btn {
+  padding: 8px 2px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-secondary);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.76rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.time-preset-btn.active,
+.time-preset-btn:active {
+  background: rgba(245, 176, 39, 0.16);
+  border-color: rgba(245, 176, 39, 0.5);
+  color: var(--accent-gold);
+}
+
+.time-modal-error {
+  margin-top: 12px;
+  padding: 9px 11px;
+  border-radius: 10px;
+  background: var(--color-danger-bg);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #fca5a5;
+  font-size: 0.76rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+/* --- Адаптивность 320-430px --- */
+@media (max-width: 400px) {
+  /* В нижней навигации теперь 6 вкладок — ужимаем, чтобы не появился скролл. */
+  .nav-item {
+    padding: 6px 6px;
+    font-size: 0.62rem;
+  }
+  .nav-item .nav-icon {
+    font-size: 1.15rem;
+    width: 20px;
+    height: 20px;
+  }
+  .nav-club-logo {
+    width: 20px;
+    height: 20px;
+  }
+  .nav-badge {
+    right: 2px;
+  }
+
+  .club-hero {
+    padding: 12px;
+  }
+  .club-hero-name {
+    font-size: 0.98rem;
+  }
+  .club-kpi-row {
+    gap: 5px;
+  }
+  .club-kpi {
+    padding: 7px 2px;
+  }
+  .club-kpi-value {
+    font-size: 0.76rem;
+  }
+  .club-kpi-label {
+    font-size: 0.54rem;
+  }
+  .club-badge {
+    font-size: 0.58rem;
+    max-width: 58%;
+  }
+  .btn-club-primary,
+  .btn-club-secondary {
+    font-size: 0.72rem;
+    padding: 9px 6px;
+  }
+}
+
+@media (max-width: 345px) {
+  .nav-item {
+    padding: 6px 3px;
+    font-size: 0.56rem;
+  }
+  .nav-item .nav-icon {
+    font-size: 1.05rem;
+    width: 18px;
+    height: 18px;
+  }
+  .nav-club-logo {
+    width: 18px;
+    height: 18px;
+  }
+
+  .club-hero-crest {
+    width: 46px !important;
+    height: 46px !important;
+    min-width: 46px !important;
+    min-height: 46px !important;
+    max-width: 46px !important;
+    max-height: 46px !important;
+  }
+  .club-hero-name {
+    font-size: 0.9rem;
+  }
+  .club-place-badge {
+    min-width: 50px;
+    padding: 5px 6px;
+  }
+  .club-place-value {
+    font-size: 1.1rem;
+  }
+  .club-kpi-value {
+    font-size: 0.7rem;
+  }
+  .club-kpi-sub {
+    display: none;
+  }
+  .club-match-team {
+    font-size: 0.84rem;
+  }
+  .club-player-name {
+    font-size: 0.78rem;
+  }
+  .club-stat-badge {
+    font-size: 0.62rem;
+    padding: 3px 5px;
+  }
+  .time-preset-btn {
+    font-size: 0.7rem;
+  }
+}
+
+/* ─── Общий кубок (режим лобби «🏆 Кубок») ─── */
+.cup-tab-btn {
+  border-color: rgba(245, 176, 39, 0.35);
+}
+.cup-stage-chips {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 2px 0 10px;
+  scrollbar-width: none;
+}
+.cup-stage-chips::-webkit-scrollbar {
+  display: none;
+}
+.cup-stage-chip {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.cup-stage-chip.active {
+  color: var(--accent-gold);
+  border-color: var(--accent-gold);
+  background: var(--accent-gold-light);
+}
+.cup-stage-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--color-success);
+  box-shadow: 0 0 6px var(--color-success);
+}
+.cup-stage-count {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+.cup-view-toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 4px;
+  margin-bottom: 12px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+}
+.cup-view-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding: 7px 0;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+}
+.cup-view-btn.active {
+  background: var(--accent-gold-light);
+  color: var(--accent-gold);
+}
+.cup-line-notice {
+  font-size: 0.8rem;
+  color: var(--color-warning);
+  background: var(--color-warning-bg);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  margin-bottom: 12px;
+}
+.cup-empty {
+  text-align: center;
+  padding: 44px 20px;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+.cup-empty-icon {
+  font-size: 2.2rem;
+  margin-bottom: 8px;
+}
+.cup-empty-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+.cup-error {
+  color: var(--color-danger);
+}
+.cup-series-num,
+.cup-series-status {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+.cup-series-card.completed {
+  opacity: 0.85;
+}
+.cup-series-score {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 900;
+  color: var(--text-primary);
+}
+.cup-team.winner {
+  color: var(--accent-gold);
+}
+.cup-team.loser {
+  color: var(--text-muted);
+}
+.cup-market-title {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 4px 0 6px;
+}
+.cup-series-card .odds-grid-2col {
+  margin-bottom: 8px;
+}
+.cup-odd-locked {
+  background: var(--bg-tertiary);
+  border: 1px dashed var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 8px 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  opacity: 0.55;
+}
+.cup-odd-locked .odd-val {
+  color: var(--text-muted);
+}
+.cup-game-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.cup-game-num {
+  flex-shrink: 0;
+  width: 52px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+.cup-game-odds {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+.cup-game-odds .odd-btn,
+.cup-game-odds .cup-odd-locked {
+  padding: 6px 2px;
+}
+.cup-game-odds .odd-label {
+  font-size: 0.64rem;
+}
+.cup-game-odds .odd-val {
+  font-size: 0.9rem;
+}
+.cup-game-more {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-tertiary);
+  color: var(--accent-gold);
+  font-size: 1rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+.cup-bracket-games {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 8px;
+}
+.cup-bracket-game {
+  display: grid;
+  grid-template-columns: 60px 80px minmax(0, 1fr);
+  gap: 8px;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+.cup-bracket-game.voided {
+  color: var(--text-muted);
+  font-style: italic;
+}
+.cup-bracket-game-score {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+.cup-bracket-game-winner {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: right;
+}
+.cup-series-winner {
+  margin-top: 8px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--accent-gold);
+}
+
+/* ─── История прогнозов: карточка купона ───
+   Раньше каждый элемент карточки нёс эти стили inline (~6 КБ HTML на купон).
+   Селекторы привязаны к .bet-history-card, чтобы по специфичности перекрывать
+   общие правила .coupon-* выше так же, как их перекрывал inline-стиль. */
+.coupon-card.bet-history-card {
+  background: rgba(14, 18, 27, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 16px;
+  padding: 14px 16px;
+  margin-bottom: 14px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  position: relative;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+.bet-history-card .coupon-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  margin-bottom: 10px;
+}
+.bet-history-card .coupon-header-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.bet-history-card .coupon-badge-express {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: rgba(245, 176, 39, 0.12);
+  color: var(--accent-gold);
+  border: 1px solid rgba(245, 176, 39, 0.28);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+.bet-history-card .coupon-id {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #fff;
+}
+.bet-history-card .coupon-meta-dot {
+  color: var(--text-muted);
+  font-size: 0.68rem;
+}
+.bet-history-card .coupon-date {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+.bet-history-card .coupon-settled-date {
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.45);
+  font-weight: 500;
+}
+.bet-history-card .coupon-header-right {
+  display: flex;
+  align-items: center;
+}
+.bet-history-card .coupon-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.bet-history-card .status-indicator-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.bet-history-card .coupon-matches-list {
+  display: flex;
+  flex-direction: column;
+}
+.bet-history-card .coupon-teams-layout {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.bet-history-card .coupon-team.home {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+  justify-content: flex-start;
+  text-align: left;
+}
+.bet-history-card .coupon-team-name {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #fff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.25;
+}
+.bet-history-card .coupon-match-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0 6px;
+  min-width: 58px;
+  flex-shrink: 0;
+}
+.bet-history-card .coupon-score {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: 0.02em;
+  line-height: 1.1;
+}
+.bet-history-card .coupon-match-sub {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  margin-top: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+.bet-history-card .coupon-score.live {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 900;
+  color: #ff4757;
+  letter-spacing: 0.02em;
+  line-height: 1.1;
+}
+.bet-history-card .coupon-match-sub.live {
+  font-size: 0.68rem;
+  color: #ff4757;
+  font-weight: 700;
+  margin-top: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+.bet-history-card .coupon-vs {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+  line-height: 1.1;
+}
+.bet-history-card .coupon-team.away {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+  justify-content: flex-end;
+  text-align: right;
+}
+.bet-history-card .coupon-prediction-subrow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+  padding: 0 2px;
+}
+.bet-history-card .coupon-market-label {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 55%;
+}
+.bet-history-card .coupon-prediction-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.bet-history-card .coupon-pred-outcome {
+  font-weight: 800;
+  color: #fff;
+}
+.bet-history-card .coupon-pred-at {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  margin: 0 1px;
+}
+.bet-history-card .coupon-pred-odd {
+  font-weight: 800;
+}
+.bet-history-card .coupon-pred-icon {
+  font-size: 0.82rem;
+  font-weight: 900;
+  margin-left: 2px;
+}
+.bet-history-card .coupon-summary {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.2fr;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-top: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  box-sizing: border-box;
+}
+.bet-history-card .coupon-summary-col {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.bet-history-card .coupon-summary-label {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.bet-history-card .coupon-summary-val {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.98rem;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.bet-history-card .coupon-summary-val.gold {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.98rem;
+  font-weight: 800;
+  color: var(--accent-gold);
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.bet-history-card .coupon-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+.bet-history-card .btn-cashout.coupon-btn-cashout {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  color: #38bdf8;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 800;
+  padding: 9px 14px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+.bet-history-card .btn-repeat-bet.coupon-btn-repeat {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text-secondary);
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 9px 14px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: var(--transition-fast);
+  text-align: center;
+}
+.bet-history-card .coupon-match-row {
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+.bet-history-card .coupon-match-row:last-child {
+  border-bottom: none;
+  padding-bottom: 6px;
+}
+.bet-history-card .coupon-summary-col:last-child {
+  text-align: right;
+}
+.bet-history-card .coupon-status-badge.badge-won {
+  background: rgba(16, 185, 129, 0.12);
+  color: var(--color-success);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+.bet-history-card .coupon-status-badge.badge-lost {
+  background: rgba(239, 68, 68, 0.12);
+  color: var(--color-danger);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}
+.bet-history-card .coupon-status-badge.badge-pending {
+  background: rgba(56, 189, 248, 0.12);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.25);
+}
+.bet-history-card .coupon-status-badge.badge-cashout {
+  background: rgba(0, 210, 255, 0.12);
+  color: var(--accent-cyan);
+  border: 1px solid rgba(0, 210, 255, 0.25);
+}
+.bet-history-card .coupon-status-badge.badge-refunded {
+  background: rgba(245, 158, 11, 0.12);
+  color: var(--color-warning);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+}
+.bet-history-card .coupon-status-badge.badge-cancelled {
+  background: rgba(148, 163, 184, 0.12);
+  color: var(--text-muted);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+}
+.bet-history-card .coupon-prediction-pill.won {
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: var(--color-success);
+}
+.bet-history-card .coupon-prediction-pill.lost {
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: var(--color-danger);
+}
+.bet-history-card .coupon-prediction-pill.pending {
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  color: #38bdf8;
+}
+.bet-history-card .coupon-prediction-pill.refunded {
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: var(--color-warning);
+}
+.bet-history-card .coupon-summary-val.val-won {
+  color: var(--color-success);
+  font-weight: 900;
+}
+.bet-history-card .coupon-summary-val.val-lost {
+  color: var(--text-muted);
+  font-weight: 700;
+}
+.bet-history-card .coupon-summary-val.val-cashout {
+  color: #38bdf8;
+  font-weight: 900;
+}
+.bet-history-card .coupon-summary-val.val-refund {
+  color: var(--color-warning);
+  font-weight: 800;
+}
+.bet-history-card .coupon-summary-val.val-pending {
+  color: var(--accent-gold);
+  font-weight: 800;
+}
+.bet-history-card .coupon-summary-val.val-muted {
+  color: var(--text-muted);
+}
+
+/* ─── Логотип клуба без обёртки (renderTeamLogoHtml) ───
+   Размер задаётся inline (он у каждого места свой), остальное — здесь. */
+img.team-logo-img {
+  object-fit: contain;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.4));
+  vertical-align: middle;
+  display: inline-block;
+  flex-shrink: 0;
+  background: transparent;
+}
+
+span.team-logo-fallback {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* ─── «Показать ещё» для длинных списков (renderPagedList) ─── */
+.list-more-btn {
+  grid-column: 1 / -1;
+  display: block;
+  width: 100%;
+  margin: 4px 0 8px;
+  padding: 11px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-secondary);
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.list-more-btn:active {
+  background: rgba(245, 176, 39, 0.08);
+  border-color: rgba(245, 176, 39, 0.3);
+  color: var(--accent-gold);
+}
+
+/* ═══ Бывшие inline-стили ui.js / app.js ═══
+   Разметка карточек и модалок раньше несла стили в каждом элементе. Динамические
+   значения (ширины баров, цвета по статусу) остались inline, остальное здесь.
+   У элементов со своим классом селектор составной, чтобы перекрывать их общие
+   правила так же, как это делал inline-стиль. */
+
+/* ─── Линия матчей ─── */
+.line-empty {
+  text-align: center;
+  padding: 50px 20px;
+  color: var(--text-muted);
+}
+.line-empty-icon {
+  font-size: 2.5rem;
+  margin-bottom: 10px;
+}
+.line-empty-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 4px;
+}
+.line-empty-hint {
+  font-size: 0.85rem;
+}
+.line-empty-search {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-muted);
+}
+.match-card-tags {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.match-division-tag.division-tag-gold {
+  background: rgba(245,176,39,0.15);
+  color: var(--accent-gold);
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.match-league-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+/* ─── Матч-центр ─── */
+.mc-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-muted);
+}
+.mc-empty-icon {
+  font-size: 2.2rem;
+  margin-bottom: 8px;
+}
+.mc-empty-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #fff;
+}
+.mc-empty-hint {
+  font-size: 0.8rem;
+  margin-top: 4px;
+}
+.team-name-lg.mc-team-name {
+  margin-top: 6px;
+}
+.mc-team-tag {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  margin-top: 2px;
+}
+.mc-score-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.mc-status {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+.mc-mvp {
+  font-size: 0.72rem;
+  color: var(--accent-gold);
+  font-weight: 700;
+  text-align: center;
+  max-width: 120px;
+}
+.mc-markets-pending {
+  text-align:center;
+  padding:20px;
+  color:var(--text-muted);
+  font-size:0.85rem;
+}
+.h2h-summary-head {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+.mc-probs {
+  margin: 12px 0 8px 0;
+}
+.mc-probs-labels {
+  display:flex;
+  justify-content:space-between;
+  font-size:0.8rem;
+  font-weight:700;
+  margin-bottom:4px;
+}
+.prob-home {
+  color:#60a5fa;
+}
+.prob-draw {
+  color:#9ca3af;
+}
+.prob-away {
+  color:#f87171;
+}
+.h2h-progress-bar.mc-probs-bar {
+  height:8px;
+  border-radius:4px;
+  overflow:hidden;
+  display:flex;
+}
+.prob-bar-home {
+  background:#3b82f6;
+}
+.prob-bar-draw {
+  background:#6b7280;
+}
+.prob-bar-away {
+  background:#ef4444;
+}
+.mc-probs-foot {
+  display:flex;
+  justify-content:space-between;
+  font-size:0.75rem;
+  color:var(--text-muted);
+  margin-top:4px;
+}
+.mc-factors {
+  margin-top: 10px;
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 10px;
+}
+.mc-factors-title {
+  font-size:0.8rem;
+  font-weight:700;
+  color:var(--text-secondary);
+  margin-bottom:6px;
+}
+.insight-card.mc-factor {
+  padding:6px 10px;
+  margin-bottom:6px;
+  font-size:0.8rem;
+  background:rgba(255,255,255,0.03);
+  border-left:3px solid var(--primary-accent);
+  border-radius:4px;
+}
+
+/* ─── Турниры: таблица, результаты, лидеры ─── */
+.leaders-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 4px;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.leaders-row-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.leaders-rank {
+  font-weight: 800;
+  width: 22px;
+}
+.leaders-name {
+  font-weight: 700;
+  color: #fff;
+  font-size: 0.88rem;
+}
+.leaders-team {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+.leaders-value {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 900;
+  color: var(--accent-gold);
+  font-size: 1.05rem;
+}
+.list-empty {
+  text-align: center;
+  padding: 40px;
+  color: var(--text-muted);
+}
+.standings-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 10px;
+  overflow-x: auto;
+}
+.standings-dash {
+  color: var(--text-muted);
+  font-size: 0.7rem;
+}
+.standings-team-cell {
+  text-align: left;
+}
+.standings-team {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.standings-team-name {
+  font-weight: 700;
+  color: #fff;
+}
+.standings-diff {
+  font-weight: 700;
+}
+.standings-points {
+  font-weight: 900;
+  color: var(--accent-gold);
+  font-size: 0.95rem;
+}
+.result-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.result-team-home {
+  flex: 1;
+  text-align: right;
+  font-weight: 700;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+.result-score {
+  padding: 4px 14px;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 900;
+  font-size: 1.15rem;
+  color: var(--accent-gold);
+  background: rgba(0,0,0,0.3);
+  border-radius: var(--radius-sm);
+  margin: 0 10px;
+}
+.result-team-away {
+  flex: 1;
+  text-align: left;
+  font-weight: 700;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 6px;
+}
+.leaders-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 10px;
+}
+
+/* ─── История прогнозов: пустое состояние ─── */
+.coupons-empty-state.history-empty {
+  text-align: center;
+  padding: 48px 20px;
+  background: rgba(14, 18, 27, 0.5);
+  border-radius: 16px;
+  border: 1px dashed rgba(255, 255, 255, 0.08);
+}
+.empty-icon.history-empty-icon {
+  font-size: 2.2rem;
+  margin-bottom: 10px;
+}
+.empty-title.history-empty-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 4px;
+}
+.empty-subtitle.history-empty-hint {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  max-width: 280px;
+  margin: 0 auto;
+  line-height: 1.4;
+}
+
+/* ─── Купон и черновики ─── */
+.odds-old {
+  color: var(--text-muted);
+  text-decoration: line-through;
+}
+.odds-new {
+  color: var(--accent-gold);
+}
+.saved-title {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: 8px;
+}
+.saved-name {
+  font-weight: 800;
+  color: #fff;
+  font-size: 0.88rem;
+}
+.saved-meta {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+.saved-actions {
+  display: flex;
+  gap: 8px;
+}
+.btn-delete-saved-coupon.saved-delete {
+  background: transparent;
+  border: none;
+  color: var(--color-danger);
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+.slip-empty {
+  text-align: center;
+  padding: 24px 10px;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+.bet-accepted-stat.win.bet-accepted-stat-wide {
+  grid-column: 1 / -1;
+}
+
+/* ─── Профиль и достижения ─── */
+.profile-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.profile-name {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: #fff;
+}
+.profile-level {
+  font-size: 0.82rem;
+  color: var(--accent-gold);
+  font-weight: 700;
+  margin-top: 2px;
+}
+.ach-icon.ach-icon-big {
+  font-size: 1.8rem;
+}
+.ach-text {
+  margin-top: 6px;
+}
+.ach-title.ach-title-text {
+  font-weight: 800;
+  color: #fff;
+  font-size: 0.85rem;
+}
+.ach-desc.ach-about {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+.ach-reward.ach-reward-line {
+  margin-top: 8px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: var(--accent-gold);
+}
+.ach-xp {
+  color: var(--text-secondary);
+  font-weight: 700;
+}
+.btn-claim-achievement.ach-claim-btn {
+  width: 100%;
+}
+.ach-status.ach-got {
+  margin-top: 8px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: var(--accent-gold);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+/* ─── Модалки: рынки матча и зал славы ─── */
+.modal-loading {
+  text-align: center;
+  padding: 30px;
+  color: var(--text-muted);
+}
+.mm-group {
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+  padding: 10px;
+  margin-bottom: 10px;
+}
+.mm-group-title {
+  font-weight: 800;
+  font-size: 0.85rem;
+  color: #fff;
+  margin-bottom: 8px;
+}
+.mm-grid {
+  display: grid;
+  gap: 6px;
+}
+.mm-footer {
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-subtle);
+}
+.btn-match-action.btn-open-match-center.mm-open-center {
+  width: 100%;
+  padding: 10px;
+  font-weight: 800;
+  font-size: 0.82rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  color: var(--accent-gold);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.podium-col.lb-podium-col {
+  text-align: center;
+  flex: 1;
+}
+.lb-medal {
+  font-size: 1.8rem;
+  margin-bottom: 4px;
+}
+.lb-podium-name {
+  font-weight: 800;
+  font-size: 0.85rem;
+  color: #fff;
+}
+.lb-podium-balance {
+  font-size: 0.78rem;
+  color: var(--accent-gold);
+  font-weight: 800;
+}
+.lb-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 4px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  font-size: 0.85rem;
+}
+.lb-row-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.lb-rank {
+  font-weight: 800;
+  color: var(--text-muted);
+  width: 22px;
+}
+.lb-name {
+  font-weight: 700;
+  color: #fff;
+}
+.lb-balance {
+  font-weight: 800;
+  color: var(--accent-gold);
+}
+.load-error {
+  text-align: center;
+  padding: 24px;
+  color: var(--color-danger);
+}
+.markets-loading {
+  text-align: center;
+  padding: 36px 16px;
+  color: var(--text-muted);
+}
+.markets-loading-icon {
+  font-size: 1.6rem;
+  margin-bottom: 8px;
+}
+.markets-error {
+  text-align: center;
+  padding: 24px;
+  color: var(--accent-red);
+}
+
+/* ─── Лента: горячие матчи, движение коэффициентов, рекомендации ─── */
+.feed-section {
+  margin-bottom: 14px;
+}
+.feed-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.feed-title {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.feed-tag-gold {
+  font-size: 0.75rem;
+  color: var(--accent-gold);
+  font-weight: 700;
+}
+.hot-scroll {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  -webkit-overflow-scrolling: touch;
+}
+.hot-card {
+  min-width: 220px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 10px;
+  flex-shrink: 0;
+}
+.hot-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+.hot-score {
+  color: #ff4757;
+  font-weight: 800;
+}
+.hot-teams {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: 6px;
+}
+.hot-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.78rem;
+}
+.hot-reason {
+  color: var(--text-secondary);
+}
+.feed-tag-cyan {
+  font-size: 0.75rem;
+  color: var(--accent-cyan);
+  font-weight: 700;
+}
+.movers-scroll {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  -webkit-overflow-scrolling: touch;
+}
+.mover-card {
+  min-width: 170px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  flex-shrink: 0;
+}
+.mover-match {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+.mover-selection {
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #fff;
+  margin: 3px 0;
+}
+.mover-odds {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+.mover-current {
+  color: #fff;
+}
+.rec-tags {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-top: 1px;
+}
+.rec-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.rec-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.rec-teams {
+  font-weight: 800;
+  font-size: 0.85rem;
+  color: #fff;
+}
+.rec-reason {
+  font-size: 0.75rem;
+  color: var(--text-gold);
+  margin-top: 2px;
+}
+.btn-open-match-center.rec-open-btn {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-subtle);
+  color: var(--accent-gold);
+  border-radius: var(--radius-sm);
+  padding: 5px 10px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+/* ─── Мой клуб ─── */
+.club-hero.club-error {
+  text-align: center;
+  padding: 24px 16px;
+}
+.club-error-icon {
+  font-size: 2rem;
+  margin-bottom: 8px;
+}
+.club-error-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 6px;
+}
+.club-error-text {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-bottom: 14px;
+}
+.btn-club-secondary.club-retry-btn {
+  margin: 0 auto;
+  display: inline-flex;
+}
+.club-loading {
+  text-align: center;
+  padding: 30px 16px;
+  color: var(--text-muted);
+}
+.club-match-actions.club-protocol-actions {
+  margin-top: 10px;
+}
+.btn-club-secondary.btn-view-match-protocol.club-protocol-btn {
+  width: 100%;
+  justify-content: center;
+  gap: 6px;
+}
+
+/* ─── Протокол матча ─── */
+.proto-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  margin-bottom: 14px;
+}
+.proto-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.proto-round {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--accent-gold);
+  background: rgba(245,176,39,0.1);
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+.proto-status {
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+.proto-teams {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+}
+.proto-team {
+  flex: 1;
+  text-align: center;
+}
+.proto-team-name {
+  font-weight: 800;
+  color: #fff;
+  font-size: 0.95rem;
+  margin-top: 6px;
+}
+.proto-team-user {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+.proto-score-box {
+  padding: 6px 16px;
+  background: rgba(0,0,0,0.4);
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255,255,255,0.06);
+  text-align: center;
+}
+.proto-score {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 900;
+  font-size: 1.6rem;
+  color: var(--accent-gold);
+  letter-spacing: 2px;
+}
+.proto-mvp {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(245,176,39,0.08);
+  border: 1px solid rgba(245,176,39,0.25);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  margin-bottom: 14px;
+}
+.proto-mvp-icon {
+  font-size: 1.1rem;
+}
+.proto-mvp-label {
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: var(--accent-gold);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.proto-mvp-name {
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: #fff;
+}
+.proto-events {
+  margin-bottom: 16px;
+}
+.proto-section-title {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.proto-events-empty {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  padding: 10px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-sm);
+  text-align: center;
+}
+.proto-goals {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.proto-goal {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.82rem;
+}
+.proto-goal-player {
+  color: #fff;
+  font-weight: 700;
+}
+.proto-goal-team {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+.proto-assist {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.82rem;
+  border-top: 1px dashed rgba(255,255,255,0.06);
+  padding-top: 4px;
+}
+.proto-assist-player {
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+.proto-shot {
+  margin-bottom: 12px;
+}
+.proto-shot-title {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.proto-shot-hint {
+  font-size: 0.72rem;
+  color: var(--accent-gold);
+  font-weight: 600;
+}
+.proto-shot-frame {
+  position: relative;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+  background: #000;
+  text-align: center;
+}
+.proto-shot-link {
+  display: block;
+}
+.proto-shot-img {
+  width: 100%;
+  display: block;
+  max-height: 280px;
+  object-fit: contain;
+  cursor: pointer;
+}
+.proto-shot-empty {
+  text-align: center;
+  padding: 24px;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  border: 1px dashed var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--bg-secondary);
+}
+
+/* ─── Экран «Откройте через Telegram» ─── */
+.tg-required {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-secondary);
+}
+.tg-required-icon {
+  font-size: 2.5rem;
+  margin-bottom: 12px;
+}
+.tg-required-title {
+  font-weight: 800;
+  font-size: 1.1rem;
+  color: #fff;
+  margin-bottom: 8px;
+}
+.tg-required-text {
+  font-size: 0.85rem;
+  max-width: 320px;
+  margin: 0 auto;
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+
+/* ─── Admin Panel (вкладка «Управление», js/admin.js) ─── */
+.admin-pill {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  padding: 0;
+  font-size: 0.95rem;
+  line-height: 1;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+.admin-pill[hidden] { display: none; }
+.admin-pill.active {
+  background: rgba(245, 176, 39, 0.16);
+  border-color: var(--accent-gold);
+}
+.admin-pill:active { transform: scale(0.92); }
+
+#admin-root .green, .adm-modal .green { color: var(--color-success); }
+#admin-root .red, .adm-modal .red { color: var(--color-danger); }
+#admin-root .gold, .adm-modal .gold { color: var(--text-gold); }
+
+.adm-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.adm-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+.adm-subtitle { font-size: 0.78rem; color: var(--text-muted); }
+.adm-tabs { margin-bottom: 14px; overflow-x: auto; }
+.adm-tabs .mc-tab-btn { white-space: nowrap; }
+.adm-div-pills { margin-bottom: 8px; }
+.adm-empty {
+  padding: 32px 12px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+.adm-muted { color: var(--text-muted); font-size: 0.78rem; }
+.adm-mb { margin-bottom: 10px; }
+.adm-mt { margin-top: 8px; }
+
+.adm-banner {
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  font-size: 0.82rem;
+  line-height: 1.45;
+  margin-bottom: 12px;
+  text-align: left;
+}
+.adm-banner-danger {
+  background: var(--color-danger-bg);
+  border: 1px solid var(--color-danger);
+  color: var(--text-primary);
+}
+
+.adm-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  margin-bottom: 12px;
+}
+.adm-card-title {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  margin-bottom: 10px;
+}
+.adm-kpi-hint { font-size: 0.7rem; color: var(--text-muted); margin-top: 2px; }
+#admin-root .kpi-grid { margin-bottom: 12px; }
+#admin-root .kpi-value { font-size: 1.05rem; word-break: break-word; }
+
+.adm-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 110px;
+}
+.adm-bar {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+.adm-bar-fill {
+  width: 100%;
+  min-height: 2px;
+  background: linear-gradient(180deg, var(--accent-gold), rgba(245, 176, 39, 0.35));
+  border-radius: 3px 3px 0 0;
+}
+.adm-bar span { font-size: 0.62rem; color: var(--text-muted); }
+
+.adm-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.adm-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 8px;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-full);
+  font-size: 0.76rem;
+  color: var(--text-secondary);
+}
+.adm-chip b { color: var(--text-primary); }
+
+.adm-badge {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: var(--radius-full);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  vertical-align: middle;
+  white-space: nowrap;
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+}
+.adm-st-open, .adm-st-won, .adm-st-active, .adm-st-live {
+  background: var(--color-success-bg); color: var(--color-success);
+}
+.adm-st-suspended, .adm-st-pending, .adm-st-acknowledged, .adm-st-scheduled {
+  background: var(--color-warning-bg); color: var(--color-warning);
+}
+.adm-st-voided, .adm-st-lost, .adm-st-cancelled {
+  background: var(--color-danger-bg); color: var(--color-danger);
+}
+.adm-st-cashed_out, .adm-st-settled {
+  background: rgba(245, 176, 39, 0.12); color: var(--text-gold);
+}
+
+.adm-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 0;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 0.86rem;
+  text-align: left;
+  cursor: pointer;
+}
+.adm-row:last-child { border-bottom: none; }
+.adm-row:disabled { cursor: default; opacity: 1; }
+.adm-row:not(:disabled):active { opacity: 0.7; }
+.adm-row-main { min-width: 0; flex: 1; }
+.adm-row-main small {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.adm-row-side { font-weight: 700; white-space: nowrap; flex-shrink: 0; }
+/* ИИ-прогноз: место, шанс захода справа, пояснение модели переносится. */
+.adm-pick-row { cursor: default; align-items: flex-start; }
+.adm-pick-rank {
+  flex-shrink: 0;
+  width: 22px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+.adm-pick-prob { text-align: right; font-size: 1rem; }
+.adm-pick-prob small { display: block; font-size: 0.7rem; font-weight: 400; color: var(--text-muted); }
+.adm-row-main small.adm-pick-reason,
+.adm-row-main small.adm-picks-note { white-space: normal; }
+/* Фильтры прогноза: чипы переносятся, а не прокручиваются — их немного. */
+.adm-picks-pills { flex-wrap: wrap; overflow: visible; padding-bottom: 0; margin-bottom: 10px; }
+.adm-picks-odds { display: flex; align-items: center; gap: 8px; }
+.adm-picks-odds .adm-input {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 8px 10px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 16px; /* меньше 16px — iOS увеличивает страницу при фокусе */
+  outline: none;
+  box-sizing: border-box;
+}
+.adm-picks-odds .adm-input:focus { border-color: var(--accent-gold); }
+/* Сверка ИИ-прогноза: вердикт цветом. */
+.adm-verdict { margin-bottom: 4px; }
+.adm-verdict.green { color: var(--color-success); }
+.adm-verdict.red { color: var(--color-danger); }
+.adm-verdict.gold { color: var(--text-gold); }
+.adm-picks-hint { display: block; margin-top: 6px; }
+/* Сборщик купона: подпись «Событий» в ряду чипов, итог купона строкой. */
+.adm-builder-counts { align-items: center; }
+.adm-builder-counts > span { margin-right: 2px; font-size: 0.8rem; }
+.adm-builder-sum { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 10px; font-size: 0.85rem; }
+.adm-builder-go { width: 100%; margin-top: 12px; }
+/* Подсказка у лимита длиннее обычной подписи строки — переносим, а не обрезаем. */
+.adm-limit-row .adm-row-main small { white-space: normal; }
+.adm-bet-row,
+.adm-bet-row:last-child {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  margin-bottom: 8px;
+}
+
+.adm-input {
+  width: 100%;
+  -webkit-user-select: text;
+  user-select: text;
+}
+#admin-root .match-search-input { margin-bottom: 10px; }
+
+.adm-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 6px 4px 12px;
+  margin-bottom: 10px;
+  border-radius: var(--radius-full);
+  background: rgba(245, 176, 39, 0.12);
+  color: var(--text-gold);
+  font-size: 0.8rem;
+}
+.adm-filter-chip button {
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.adm-match-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.adm-match-teams { font-weight: 700; font-size: 0.92rem; color: var(--text-primary); }
+.adm-score { color: var(--text-gold); margin-left: 4px; }
+.adm-market {
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 8px;
+  margin-top: 8px;
+}
+.adm-market-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.adm-market-name { font-size: 0.82rem; font-weight: 600; color: var(--text-secondary); }
+.adm-market-actions { display: flex; gap: 4px; flex-shrink: 0; }
+.adm-icon-btn {
+  width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.adm-icon-btn.danger { color: var(--color-danger); border-color: var(--color-danger-bg); }
+.adm-icon-btn:active { transform: scale(0.92); }
+
+.adm-selections {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 6px;
+}
+.adm-sel {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 6px 8px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  min-width: 0;
+}
+.adm-sel:disabled { cursor: default; opacity: 0.6; }
+.adm-sel.loaded { border-color: rgba(239, 68, 68, 0.45); }
+.adm-sel-name {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.adm-sel-odd { font-weight: 800; color: var(--text-gold); font-size: 0.9rem; }
+.adm-sel-risk { font-size: 0.66rem; color: var(--color-danger); }
+
+.adm-more {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 12px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.adm-kv {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 0;
+  font-size: 0.84rem;
+  color: var(--text-secondary);
+  border-bottom: 1px dashed var(--border-subtle);
+}
+.adm-kv b { color: var(--text-primary); text-align: right; }
+.adm-kv b.gold { color: var(--text-gold); }
+.adm-kv b.green { color: var(--color-success); }
+.adm-kv b.red { color: var(--color-danger); }
+.adm-section-label {
+  margin: 14px 0 6px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.adm-leg {
+  padding: 8px 10px;
+  margin-bottom: 6px;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+}
+.adm-leg-top { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+.adm-leg-pick { margin-top: 4px; color: var(--text-secondary); }
+
+.adm-tx {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 0;
+  font-size: 0.82rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.adm-tx:last-child { border-bottom: none; }
+.adm-tx small { display: block; }
+.adm-tx > div:last-child { font-weight: 700; white-space: nowrap; }
+
+.adm-pause-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.adm-pause-row:last-child { border-bottom: none; }
+.adm-pause-row small { display: block; font-size: 0.74rem; margin-top: 2px; }
+
+.adm-alert {
+  padding: 8px 10px;
+  margin-bottom: 8px;
+  border-left: 3px solid var(--text-muted);
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+}
+.adm-alert-msg { font-size: 0.84rem; color: var(--text-primary); margin-bottom: 2px; }
+.adm-sev-medium { border-left-color: var(--color-warning); }
+.adm-sev-high, .adm-sev-critical { border-left-color: var(--color-danger); }
+
+.adm-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.adm-btn {
+  flex: 1 1 auto;
+  padding: 9px 12px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.adm-btn.small { flex: 0 0 auto; padding: 6px 10px; font-size: 0.76rem; }
+.adm-btn.primary { background: var(--accent-gold); border-color: var(--accent-gold); color: #000; }
+.adm-btn.danger { background: var(--color-danger-bg); border-color: var(--color-danger); color: var(--color-danger); }
+.adm-btn.wide { width: 100%; margin-top: 6px; padding: 12px; font-size: 0.9rem; }
+.adm-btn:disabled { opacity: 0.55; cursor: default; }
+.adm-btn:not(:disabled):active { transform: scale(0.97); }
+
+.modal-content.adm-modal {
+  text-align: left;
+  padding: 18px;
+  max-height: calc(100vh - 40px);
+  max-height: calc(100dvh - 40px);
+  display: flex;
+  flex-direction: column;
+}
+.adm-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.adm-modal-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.adm-modal-body { overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.adm-form-desc { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.45; margin-bottom: 12px; }
+.adm-field { display: block; margin-bottom: 10px; }
+.adm-field span { display: block; font-size: 0.76rem; color: var(--text-muted); margin-bottom: 4px; }
+.adm-field .adm-input {
+  padding: 10px 12px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 16px; /* меньше 16px — iOS увеличивает страницу при фокусе */
+  outline: none;
+  box-sizing: border-box;
+}
+.adm-field .adm-input:focus { border-color: var(--accent-gold); }
+.adm-form-error { min-height: 1em; font-size: 0.8rem; color: var(--color-danger); margin-bottom: 4px; }
+
+.adm-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 90px;
+  z-index: 200;
+  max-width: calc(100% - 32px);
+  padding: 10px 16px;
+  border-radius: var(--radius-full);
+  background: var(--bg-card);
+  border: 1px solid var(--border-active);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 10px);
+  transition: opacity 0.2s, transform 0.2s;
+}
+.adm-toast.show { opacity: 1; transform: translate(-50%, 0); }
+.adm-toast.error { border-color: var(--color-danger); color: var(--color-danger); }

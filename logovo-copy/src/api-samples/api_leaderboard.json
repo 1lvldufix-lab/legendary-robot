@@ -1,0 +1,317 @@
+{
+ "status": "ok",
+ "leaders": [
+  {
+   "user_id": 8944565538,
+   "balance": 28958,
+   "total_won": 32190,
+   "bets_count": 22,
+   "bets_won": 8,
+   "username": "Diktator_new",
+   "team_name": "Галатасарай"
+  },
+  {
+   "user_id": 5542363060,
+   "balance": 20525,
+   "total_won": 21513,
+   "bets_count": 70,
+   "bets_won": 15,
+   "username": "Snikers2121",
+   "team_name": "Айнтрахт"
+  },
+  {
+   "user_id": 693304510,
+   "balance": 8233,
+   "total_won": 3986,
+   "bets_count": 7,
+   "bets_won": 1,
+   "username": "Serghe1KO",
+   "team_name": "Будё Глимт"
+  },
+  {
+   "user_id": 1996094164,
+   "balance": 6815,
+   "total_won": 1980,
+   "bets_count": 22,
+   "bets_won": 9,
+   "username": "sayvvel",
+   "team_name": "Лион"
+  },
+  {
+   "user_id": 7441120078,
+   "balance": 5427,
+   "total_won": 850,
+   "bets_count": 19,
+   "bets_won": 1,
+   "username": "mitixfc",
+   "team_name": "Фулхэм"
+  },
+  {
+   "user_id": 822243963,
+   "balance": 5369,
+   "total_won": 4619,
+   "bets_count": 3,
+   "bets_won": 3,
+   "username": "k1nkyua",
+   "team_name": "Брайтон"
+  },
+  {
+   "user_id": 6180189068,
+   "balance": 5160,
+   "total_won": 2937,
+   "bets_count": 29,
+   "bets_won": 5,
+   "username": "t3miy",
+   "team_name": "Бетис"
+  },
+  {
+   "user_id": 7448630791,
+   "balance": 4780,
+   "total_won": 6881,
+   "bets_count": 12,
+   "bets_won": 4,
+   "username": "aidarreezz",
+   "team_name": "Трабзонспор"
+  },
+  {
+   "user_id": 5393234397,
+   "balance": 4305,
+   "total_won": 4439,
+   "bets_count": 12,
+   "bets_won": 6,
+   "username": "brando055",
+   "team_name": "Порту"
+  },
+  {
+   "user_id": 6521190470,
+   "balance": 4091,
+   "total_won": 2174,
+   "bets_count": 15,
+   "bets_won": 7,
+   "username": "ilia575",
+   "team_name": "Наполи"
+  },
+  {
+   "user_id": 720535030,
+   "balance": 3500,
+   "total_won": 3244,
+   "bets_count": 7,
+   "bets_won": 2,
+   "username": "vitasmachiha",
+   "team_name": "Тоттенхэм"
+  },
+  {
+   "user_id": 996329471,
+   "balance": 3331,
+   "total_won": 4621,
+   "bets_count": 32,
+   "bets_won": 10,
+   "username": "Forzainternationale",
+   "team_name": "Хоффенхайм"
+  },
+  {
+   "user_id": 5105087464,
+   "balance": 3285,
+   "total_won": 1730,
+   "bets_count": 8,
+   "bets_won": 3,
+   "username": "LazyMaxxAA",
+   "team_name": "Болонья"
+  },
+  {
+   "user_id": 6233467566,
+   "balance": 3250,
+   "total_won": 1590,
+   "bets_count": 15,
+   "bets_won": 2,
+   "username": "sergeynobody1",
+   "team_name": "Ноттингем Форест"
+  },
+  {
+   "user_id": 8965840859,
+   "balance": 3204,
+   "total_won": 6204,
+   "bets_count": 21,
+   "bets_won": 9,
+   "username": "tornike07",
+   "team_name": "ПСЖ"
+  },
+  {
+   "user_id": 5830300634,
+   "balance": 3145,
+   "total_won": 2968,
+   "bets_count": 24,
+   "bets_won": 8,
+   "username": "joraknaz",
+   "team_name": "Манчестер Сити"
+  },
+  {
+   "user_id": 5426268517,
+   "balance": 3027,
+   "total_won": 1840,
+   "bets_count": 22,
+   "bets_won": 3,
+   "username": "azs5652",
+   "team_name": "Париж"
+  },
+  {
+   "user_id": 1884597759,
+   "balance": 3000,
+   "total_won": 5193,
+   "bets_count": 10,
+   "bets_won": 3,
+   "username": "Artilawyer",
+   "team_name": "Фенербахче"
+  },
+  {
+   "user_id": 6094499846,
+   "balance": 2982,
+   "total_won": 1255,
+   "bets_count": 2,
+   "bets_won": 1,
+   "username": "Daot1",
+   "team_name": "Арсенал"
+  },
+  {
+   "user_id": 8517460120,
+   "balance": 2971,
+   "total_won": 2344,
+   "bets_count": 15,
+   "bets_won": 4,
+   "username": "agosv",
+   "team_name": "Манчестер Юнайтед"
+  }
+ ],
+ "capper_leaders": [
+  {
+   "user_id": 8944565538,
+   "username": "Diktator_new",
+   "division_id": 5,
+   "settled_bets": 15,
+   "wins": 8,
+   "losses": 7,
+   "voids": 0,
+   "total_staked": 5275,
+   "total_payout": 32190,
+   "net_profit": 26915,
+   "roi_pct": 510.24,
+   "win_rate_pct": 53.3,
+   "rank": 1
+  },
+  {
+   "user_id": 5542363060,
+   "username": "Snikers2121",
+   "division_id": 1,
+   "settled_bets": 45,
+   "wins": 15,
+   "losses": 26,
+   "voids": 4,
+   "total_staked": 7075,
+   "total_payout": 21262,
+   "net_profit": 14187,
+   "roi_pct": 200.52,
+   "win_rate_pct": 33.3,
+   "rank": 2
+  },
+  {
+   "user_id": 7350502774,
+   "username": "Prizrakks",
+   "division_id": 2,
+   "settled_bets": 10,
+   "wins": 6,
+   "losses": 4,
+   "voids": 0,
+   "total_staked": 2500,
+   "total_payout": 5178,
+   "net_profit": 2678,
+   "roi_pct": 107.12,
+   "win_rate_pct": 60.0,
+   "rank": 3
+  },
+  {
+   "user_id": 5393234397,
+   "username": "brando055",
+   "division_id": 1,
+   "settled_bets": 12,
+   "wins": 6,
+   "losses": 6,
+   "voids": 0,
+   "total_staked": 1811,
+   "total_payout": 4439,
+   "net_profit": 2628,
+   "roi_pct": 145.11,
+   "win_rate_pct": 50.0,
+   "rank": 4
+  },
+  {
+   "user_id": 7448630791,
+   "username": "aidarreezz",
+   "division_id": 3,
+   "settled_bets": 9,
+   "wins": 4,
+   "losses": 5,
+   "voids": 0,
+   "total_staked": 3650,
+   "total_payout": 5659,
+   "net_profit": 2009,
+   "roi_pct": 55.04,
+   "win_rate_pct": 44.4,
+   "rank": 5
+  },
+  {
+   "user_id": 720535030,
+   "username": "vitasmachiha",
+   "division_id": 5,
+   "settled_bets": 5,
+   "wins": 2,
+   "losses": 3,
+   "voids": 0,
+   "total_staked": 1563,
+   "total_payout": 3108,
+   "net_profit": 1545,
+   "roi_pct": 98.85,
+   "win_rate_pct": 40.0,
+   "rank": 6
+  },
+  {
+   "user_id": 1996094164,
+   "username": "sayvvel",
+   "division_id": 3,
+   "settled_bets": 15,
+   "wins": 9,
+   "losses": 6,
+   "voids": 0,
+   "total_staked": 1016,
+   "total_payout": 1980,
+   "net_profit": 964,
+   "roi_pct": 94.88,
+   "win_rate_pct": 60.0,
+   "rank": 7
+  },
+  {
+   "user_id": 6180189068,
+   "username": "t3miy",
+   "division_id": 4,
+   "settled_bets": 21,
+   "wins": 5,
+   "losses": 16,
+   "voids": 0,
+   "total_staked": 1732,
+   "total_payout": 2651,
+   "net_profit": 919,
+   "roi_pct": 53.06,
+   "win_rate_pct": 23.8,
+   "rank": 8
+  },
+  {
+   "user_id": 1884597759,
+   "username": "Artilawyer",
+   "division_id": 3,
+   "settled_bets": 9,
+   "wins": 3,
+   "losses": 6,
+   "voids": 0,
+   "total_staked": 4293,
+   "total_payout": 5193,
+   "net_profit": 900,
+   "roi_pct": 

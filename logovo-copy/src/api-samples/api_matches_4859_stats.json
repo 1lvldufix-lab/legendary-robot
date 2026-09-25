@@ -1,0 +1,39 @@
+{
+ "status": "ok",
+ "match_id": 4859,
+ "team1": {
+  "name": "Лилль",
+  "stats": {
+   "form": [
+    "D",
+    "W"
+   ],
+   "goals_scored": 2,
+   "goals_conceded": 1,
+   "avg_goals_scored": 1.0,
+   "avg_goals_conceded": 0.5,
+   "over_25_pct": 0,
+   "btts_pct": 50,
+   "matches_count": 2
+  }
+ },
+ "team2": {
+  "name": "Ницца",
+  "stats": {
+   "form": [
+    "W",
+    "W",
+    "W",
+    "W",
+    "W"
+   ],
+   "goals_scored": 17,
+   "goals_conceded": 4,
+   "avg_goals_scored": 3.4,
+   "avg_goals_conceded": 0.8,
+   "over_25_pct": 80,
+   "btts_pct": 60,
+   "matches_count": 5
+  }
+ }
+}

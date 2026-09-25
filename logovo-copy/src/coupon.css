@@ -1,0 +1,903 @@
+/* ==========================================================================
+   LOGOVO.BET — Bet Coupon: floating bar, bottom sheet, bet-accepted modal
+   Layering: modals 100 < bar 150 < sheet backdrop 155 < sheet 160
+             < modals opened over the sheet (odds changed, accepted) 200+
+   ========================================================================== */
+
+:root {
+  --coupon-obsidian: rgba(11, 12, 17, 0.9);
+  --coupon-sheet-bg: #0b0d13;
+  --coupon-card-bg: linear-gradient(180deg, rgba(24, 28, 39, 0.95) 0%, rgba(17, 20, 29, 0.95) 100%);
+  --coupon-amber: #ff9f1a;
+  --coupon-gold-grad: linear-gradient(135deg, #ffd166 0%, #f5b027 45%, #ff8a00 100%);
+  --coupon-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --coupon-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+body.has-coupon {
+  padding-bottom: calc(146px + env(safe-area-inset-bottom, 20px));
+}
+body.coupon-open {
+  overflow: hidden;
+}
+
+/* ─── Floating Bet Bar ─── */
+.betbar {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: calc(68px + env(safe-area-inset-bottom, 8px));
+  max-width: 576px;
+  margin: 0 auto;
+  z-index: 150;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 8px;
+  height: 50px;
+  padding: 0 6px 0 8px;
+  background: var(--coupon-obsidian);
+  border: 1px solid rgba(245, 176, 39, 0.45);
+  border-radius: 16px;
+  box-shadow:
+    0 0 0 1px rgba(255, 159, 26, 0.08),
+    0 0 22px rgba(245, 176, 39, 0.28),
+    0 12px 32px rgba(0, 0, 0, 0.7);
+  cursor: pointer;
+  transform: translateY(calc(100% + 90px));
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 0.5s var(--coupon-spring), opacity 0.25s ease;
+}
+.betbar.visible {
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+.betbar.visible:active {
+  transform: scale(0.98);
+}
+.betbar.bump {
+  animation: betbarBump 0.45s var(--coupon-spring);
+}
+@keyframes betbarBump {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.035); }
+  100% { transform: scale(1); }
+}
+
+.betbar-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.betbar-count {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  height: 26px;
+  padding: 0 6px;
+  border-radius: 50%;
+  background: var(--coupon-gold-grad);
+  color: #1a1000;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 900;
+  box-shadow: 0 0 14px rgba(255, 159, 26, 0.55);
+}
+.betbar-mode {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.betbar-odd {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  justify-self: center;
+}
+.betbar-odd-label {
+  font-size: 0.66rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.betbar-odd-val {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.15rem;
+  font-weight: 900;
+  color: var(--accent-gold);
+  text-shadow: 0 0 12px rgba(245, 176, 39, 0.45);
+  font-variant-numeric: tabular-nums;
+}
+.betbar-cta {
+  justify-self: end;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: 10px;
+  background: var(--coupon-gold-grad);
+  color: #1a1000;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 900;
+  box-shadow: 0 4px 16px rgba(255, 138, 0, 0.4);
+  white-space: nowrap;
+}
+.betbar-cta-arrow {
+  font-size: 0.7rem;
+}
+
+/* ─── Sheet backdrop ─── */
+.coupon-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 155;
+  background: rgba(0, 0, 0, 0.62);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.coupon-backdrop.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* ─── Bottom Sheet ─── */
+.coupon-sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  max-width: 600px;
+  margin: 0 auto;
+  z-index: 160;
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh;
+  max-height: 90dvh;
+  background:
+    radial-gradient(120% 60% at 50% 0%, rgba(245, 176, 39, 0.1) 0%, transparent 60%),
+    var(--coupon-sheet-bg);
+  border: 1px solid rgba(245, 176, 39, 0.28);
+  border-bottom: none;
+  border-radius: 24px 24px 0 0;
+  box-shadow: 0 -16px 48px rgba(0, 0, 0, 0.85), 0 -1px 24px rgba(245, 176, 39, 0.12);
+  transform: translateY(105%);
+  transition: transform 0.42s var(--coupon-ease-out);
+  will-change: transform;
+}
+.coupon-sheet.open {
+  transform: translateY(0);
+}
+.coupon-sheet.dragging {
+  transition: none;
+}
+
+.coupon-grab {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: center;
+  padding: 10px 0 6px;
+  cursor: grab;
+  touch-action: none;
+}
+.coupon-handle {
+  width: 42px;
+  height: 5px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.coupon-head {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 2px 14px 0;
+  touch-action: none;
+}
+.coupon-head-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.coupon-icon-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  border: 1px solid var(--border-subtle);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+.coupon-icon-btn:active {
+  transform: scale(0.9);
+}
+.coupon-icon-btn.danger:active {
+  background: var(--color-danger-bg);
+  border-color: rgba(239, 68, 68, 0.4);
+}
+
+/* Segmented control with a sliding thumb */
+.coupon-seg {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  padding: 4px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-subtle);
+}
+.coupon-seg-thumb {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 4px;
+  width: calc(50% - 4px);
+  border-radius: 10px;
+  background: var(--coupon-gold-grad);
+  box-shadow: 0 2px 14px rgba(255, 159, 26, 0.45);
+  transition: transform 0.35s var(--coupon-spring);
+}
+.coupon-seg[data-mode="express"] .coupon-seg-thumb {
+  transform: translateX(100%);
+}
+.coupon-seg-btn {
+  position: relative;
+  z-index: 1;
+  padding: 9px 6px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.86rem;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.2s ease, opacity 0.2s ease;
+}
+.coupon-seg-btn.active {
+  color: #1a1000;
+}
+.coupon-seg-btn:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+}
+.coupon-seg-hint {
+  flex-shrink: 0;
+  margin: 8px 14px 0;
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-align: center;
+}
+.coupon-seg-hint:empty {
+  display: none;
+}
+
+.coupon-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  padding: 12px 14px 8px;
+}
+
+/* ─── Bet Cards ─── */
+.coupon-items {
+  display: flex;
+  flex-direction: column;
+}
+.slip-card {
+  position: relative;
+  background: var(--coupon-card-bg);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 16px;
+  padding: 12px 12px 12px 14px;
+  margin-bottom: 10px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  animation: slipCardIn 0.35s var(--coupon-ease-out);
+}
+@keyframes slipCardIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.slip-card-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.slip-card-logos {
+  display: flex;
+  flex-shrink: 0;
+  padding-top: 1px;
+}
+.slip-card-logos > *:last-child {
+  margin-left: -6px;
+}
+.slip-card-match {
+  flex: 1;
+  min-width: 0;
+}
+.slip-card-teams {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.slip-card-meta {
+  margin-top: 2px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.slip-card-remove {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  margin: -4px -4px 0 0;
+  border: none;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+.slip-card-remove:active {
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+}
+.slip-card-pick {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 10px;
+}
+.slip-card-outcome {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.08rem;
+  font-weight: 900;
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.coupon-odd-pill {
+  flex-shrink: 0;
+  padding: 5px 11px;
+  border-radius: 10px;
+  background: var(--coupon-gold-grad);
+  color: #1a1000;
+  font-family: 'Outfit', sans-serif;
+  font-size: 1rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  box-shadow: 0 2px 12px rgba(255, 159, 26, 0.35);
+}
+
+/* Per-event stake (batch singles) */
+.slip-card-stake {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.08);
+}
+.coupon-mini-field {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 128px;
+  flex-shrink: 0;
+  padding: 0 10px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--border-subtle);
+  transition: border-color 0.15s ease;
+}
+.coupon-mini-field:focus-within {
+  border-color: var(--accent-gold);
+}
+.coupon-mini-field input {
+  width: 100%;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #fff;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 800;
+  user-select: text;
+}
+.slip-card-win {
+  flex: 1;
+  text-align: right;
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+.slip-card-win b {
+  display: block;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.98rem;
+  font-weight: 900;
+  color: var(--color-success);
+}
+
+/* Express chain: a gold rail links the cards, a × node between each pair */
+.coupon-items.express .slip-card {
+  margin-bottom: 0;
+}
+.coupon-items.express .slip-card::before {
+  content: '';
+  position: absolute;
+  left: -1px;
+  top: 14px;
+  bottom: 14px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--coupon-gold-grad);
+}
+.coupon-chain-link {
+  position: relative;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.coupon-chain-link::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 2px;
+  transform: translateX(-50%);
+  background: repeating-linear-gradient(180deg, rgba(245, 176, 39, 0.75) 0 4px, transparent 4px 7px);
+}
+.coupon-chain-node {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: #16120a;
+  border: 1px solid rgba(245, 176, 39, 0.55);
+  color: var(--accent-gold);
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+.coupon-chain-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 10px 0 2px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: rgba(245, 176, 39, 0.08);
+  border: 1px dashed rgba(245, 176, 39, 0.4);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+.coupon-chain-total b {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.15rem;
+  font-weight: 900;
+  color: var(--accent-gold);
+}
+
+/* ─── Stake input & quick chips ─── */
+.coupon-stake {
+  margin-top: 14px;
+}
+.coupon-stake-label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-align: center;
+}
+.coupon-stake-field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 50px;
+  padding: 0 16px;
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1.5px solid rgba(245, 176, 39, 0.35);
+  box-shadow: inset 0 0 18px rgba(245, 176, 39, 0.06);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.coupon-stake-field:focus-within {
+  border-color: var(--accent-gold);
+  box-shadow: inset 0 0 18px rgba(245, 176, 39, 0.1), 0 0 18px rgba(245, 176, 39, 0.22);
+}
+.coupon-coin {
+  font-size: 1.2rem;
+  filter: drop-shadow(0 0 8px rgba(245, 176, 39, 0.55));
+}
+.coupon-stake-field input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #fff;
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.4rem;
+  font-weight: 900;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  user-select: text;
+  -moz-appearance: textfield;
+}
+.coupon-stake-field input::placeholder {
+  color: var(--text-muted);
+  font-size: 1rem;
+  font-weight: 700;
+}
+.coupon-stake-field input::-webkit-outer-spin-button,
+.coupon-stake-field input::-webkit-inner-spin-button,
+.coupon-mini-field input::-webkit-outer-spin-button,
+.coupon-mini-field input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.coupon-stake-balance {
+  flex-shrink: 0;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-align: right;
+  line-height: 1.2;
+}
+
+.coupon-chips {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+  margin: 10px 0 0;
+}
+.coupon-chips .stake-chip {
+  padding: 8px 2px;
+  border-radius: 11px;
+  border: 1px solid var(--border-subtle);
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+.coupon-chips .stake-chip:active {
+  transform: scale(0.92);
+  background: var(--accent-gold-light);
+  border-color: var(--accent-gold);
+}
+.coupon-chips .stake-chip.max {
+  border-color: rgba(245, 176, 39, 0.55);
+  color: var(--accent-gold);
+  background: rgba(245, 176, 39, 0.08);
+}
+
+/* ─── Summary & warnings ─── */
+.coupon-totals {
+  margin-top: 14px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+.coupon-totals-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+.coupon-totals-row b {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.98rem;
+  font-weight: 800;
+  color: #fff;
+}
+.coupon-totals-row.win b {
+  font-size: 1.2rem;
+  color: var(--color-success);
+  text-shadow: 0 0 12px rgba(16, 185, 129, 0.35);
+}
+.coupon-totals-row.limit span,
+.coupon-totals-row.limit b {
+  font-size: 0.78rem;
+  color: var(--text-secondary, #9ca3af);
+}
+/* Счётчик слотов виден всегда: старые купоны занимают слоты, и человек должен
+   видеть, почему их нет, ещё до отказа. Краснеет, когда свободных не осталось. */
+.coupon-totals-row.limit.is-full b {
+  color: var(--color-danger, #ef4444);
+}
+.coupon-warning {
+  margin-top: 10px;
+  padding: 9px 12px;
+  border-radius: 12px;
+  background: var(--color-danger-bg);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: #fca5a5;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-align: center;
+}
+/* Предупреждение, которое не мешает отправить купон: пачку ординаров сервер
+   примет частично, и красный «отказ» здесь был бы неправдой. */
+.coupon-warning.is-notice {
+  background: rgba(245, 176, 39, 0.1);
+  border-color: rgba(245, 176, 39, 0.35);
+  color: var(--accent-gold, #f5b027);
+}
+.coupon-warning:empty {
+  display: none;
+}
+
+/* ─── CTA ─── */
+.coupon-foot {
+  flex-shrink: 0;
+  padding: 10px 14px calc(12px + env(safe-area-inset-bottom, 8px));
+  background: linear-gradient(180deg, rgba(11, 13, 19, 0) 0%, var(--coupon-sheet-bg) 30%);
+}
+.coupon-cta {
+  position: relative;
+  width: 100%;
+  min-height: 50px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  padding: 8px 14px;
+  border: none;
+  border-radius: 14px;
+  background: var(--coupon-gold-grad);
+  color: #1a1000;
+  cursor: pointer;
+  overflow: hidden;
+  box-shadow: 0 8px 26px rgba(255, 138, 0, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  transition: transform 0.12s ease, filter 0.2s ease, box-shadow 0.2s ease;
+}
+.coupon-cta::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 40%;
+  left: 0;
+  background: linear-gradient(100deg, transparent 0%, rgba(255, 255, 255, 0.35) 50%, transparent 100%);
+  transform: translateX(-150%);
+  animation: couponShine 3.2s ease-in-out infinite;
+}
+@keyframes couponShine {
+  /* translateX в % от ширины блика (40% кнопки): −150% ≙ left −60%, 325% ≙ left 130%. */
+  0%, 60% { transform: translateX(-150%); }
+  100% { transform: translateX(325%); }
+}
+.coupon-cta:active {
+  transform: scale(0.98);
+}
+.coupon-cta:disabled {
+  cursor: not-allowed;
+  filter: grayscale(0.7) brightness(0.6);
+  box-shadow: none;
+}
+.coupon-cta:disabled::after {
+  display: none;
+}
+.coupon-cta.loading {
+  filter: none;
+}
+.coupon-cta-main {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.98rem;
+  font-weight: 900;
+  letter-spacing: 0.01em;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.coupon-cta-sub {
+  font-size: 0.76rem;
+  font-weight: 700;
+  opacity: 0.78;
+}
+.coupon-cta-sub:empty {
+  display: none;
+}
+.coupon-spinner {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2.5px solid rgba(26, 16, 0, 0.25);
+  border-top-color: #1a1000;
+  animation: couponSpin 0.7s linear infinite;
+}
+@keyframes couponSpin {
+  to { transform: rotate(360deg); }
+}
+
+/* ─── Modals that must sit above the open sheet ─── */
+#odds-changed-modal,
+#general-success-modal {
+  z-index: 200;
+}
+.bet-accepted-overlay {
+  z-index: 210;
+}
+.bet-accepted {
+  padding: 28px 22px 22px;
+  background:
+    radial-gradient(90% 50% at 50% 0%, rgba(16, 185, 129, 0.14) 0%, transparent 70%),
+    var(--coupon-sheet-bg);
+  border-color: rgba(16, 185, 129, 0.45);
+}
+.bet-accepted-check {
+  width: 84px;
+  height: 84px;
+  margin: 0 auto 14px;
+  filter: drop-shadow(0 0 18px rgba(16, 185, 129, 0.5));
+}
+.bet-accepted-check svg {
+  width: 100%;
+  height: 100%;
+}
+.bet-accepted-ring {
+  fill: rgba(16, 185, 129, 0.12);
+  stroke: var(--color-success);
+  stroke-width: 2.5;
+  stroke-dasharray: 151;
+  stroke-dashoffset: 151;
+  animation: betRing 0.55s var(--coupon-ease-out) forwards;
+}
+.bet-accepted-tick {
+  fill: none;
+  stroke: var(--color-success);
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 40;
+  stroke-dashoffset: 40;
+  animation: betTick 0.35s 0.45s var(--coupon-ease-out) forwards;
+}
+@keyframes betRing { to { stroke-dashoffset: 0; } }
+@keyframes betTick { to { stroke-dashoffset: 0; } }
+
+.bet-accepted-coupon {
+  display: inline-block;
+  margin: 2px 0 14px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(245, 176, 39, 0.1);
+  border: 1px solid rgba(245, 176, 39, 0.35);
+  color: var(--accent-gold);
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+.bet-accepted-coupon:empty {
+  display: none;
+}
+.bet-accepted-details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+.bet-accepted-stat {
+  padding: 10px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+.bet-accepted-stat span {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.bet-accepted-stat b {
+  display: block;
+  margin-top: 3px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 900;
+  color: #fff;
+}
+.bet-accepted-stat.win b {
+  color: var(--color-success);
+}
+.bet-accepted-actions {
+  display: grid;
+  /* The secondary label is the longer one: size it to fit, give the rest to the CTA. */
+  grid-template-columns: auto 1fr;
+  gap: 8px;
+}
+.bet-accepted-btn {
+  min-width: 0;
+  padding: 11px 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border-radius: 12px;
+  font-family: 'Outfit', sans-serif;
+  /* Scales with the viewport so both labels fit on one line down to 320px. */
+  font-size: clamp(0.72rem, 3.6vw, 0.88rem);
+  font-weight: 800;
+  cursor: pointer;
+}
+.bet-accepted-btn.secondary {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-subtle);
+  color: #fff;
+}
+.bet-accepted-btn.primary {
+  width: auto;
+  background: var(--coupon-gold-grad);
+  border: none;
+  color: #1a1000;
+  box-shadow: 0 6px 20px rgba(255, 138, 0, 0.35);
+}
+
+@media (max-width: 360px) {
+  .betbar-mode { display: none; }
+  .coupon-seg-btn { font-size: 0.8rem; }
+  .coupon-chips .stake-chip { font-size: 0.74rem; }
+  .bet-accepted-actions { gap: 6px; }
+  .bet-accepted-btn { padding: 10px 6px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .betbar, .coupon-sheet, .coupon-seg-thumb { transition-duration: 0.01ms; }
+  .slip-card, .betbar.bump, .coupon-cta::after { animation: none; }
+}

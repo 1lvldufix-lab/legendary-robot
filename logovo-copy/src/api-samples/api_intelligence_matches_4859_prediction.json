@@ -1,0 +1,97 @@
+{
+ "status": "ok",
+ "prediction": {
+  "match_id": 4859,
+  "division_id": 1,
+  "season_id": 2,
+  "model_version": "ensemble_v1",
+  "feature_version": "features_v1",
+  "team1": "Лилль",
+  "team2": "Ницца",
+  "home_probability": 0.3851,
+  "draw_probability": 0.2801,
+  "away_probability": 0.3348,
+  "confidence": 0.35,
+  "expected_goals": {
+   "team1": 1.38,
+   "team2": 1.2,
+   "total": 2.58
+  },
+  "goals_markets": {
+   "over_1_5": 0.7279,
+   "under_1_5": 0.2721,
+   "over_2_5": 0.4757,
+   "under_2_5": 0.5243,
+   "over_3_5": 0.2588,
+   "under_3_5": 0.7412,
+   "btts_yes": 0.523,
+   "btts_no": 0.477
+  },
+  "correct_scores": {
+   "0:0": 0.0758,
+   "0:1": 0.0909,
+   "0:2": 0.0546,
+   "0:3": 0.0218,
+   "0:4": 0.0065,
+   "1:0": 0.1046,
+   "1:1": 0.1255,
+   "1:2": 0.0753,
+   "1:3": 0.0301,
+   "1:4": 0.009,
+   "2:0": 0.0722,
+   "2:1": 0.0866,
+   "2:2": 0.0519,
+   "2:3": 0.0208,
+   "2:4": 0.0062,
+   "3:0": 0.0332,
+   "3:1": 0.0398,
+   "3:2": 0.0239,
+   "3:3": 0.0096,
+   "3:4": 0.0029,
+   "4:0": 0.0115,
+   "4:1": 0.0137,
+   "4:2": 0.0082,
+   "4:3": 0.0033,
+   "4:4": 0.001
+  },
+  "sub_models": {
+   "poisson": {
+    "home": 0.4101,
+    "draw": 0.264,
+    "away": 0.3259,
+    "weight": 0.31
+   },
+   "elo": {
+    "home": 0.3656,
+    "draw": 0.28,
+    "away": 0.3544,
+    "rating_t1": 1511.9,
+    "rating_t2": 1573.0,
+    "weight": 0.54
+   },
+   "form": {
+    "home": 0.4397,
+    "draw": 0.2764,
+    "away": 0.2839,
+    "form_t1": 0.5,
+    "form_t2": 0.5,
+    "weight": 0.15
+   }
+  },
+  "key_factors": [
+   "⚡ Рейтинг силы Elo: преимущество у Ницца (61 очков разницы)."
+  ],
+  "xg_available": false,
+  "sample_size": 0,
+  "disclaimer": "Прогноз AI — аналитическая оценка, а не гарантия результата.",
+  "freshness": {
+   "status": "UNAVAILABLE",
+   "badge": "🔴 LIVE DATA UNAVAILABLE",
+   "age_seconds": null,
+   "is_stale": true,
+   "is_expired": true,
+   "confidence_multiplier": 0.0,
+   "warning": "Нет актуальных данных реального времени по матчу."
+  }
+ }
+}

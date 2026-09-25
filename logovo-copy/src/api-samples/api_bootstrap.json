@@ -1,0 +1,89 @@
+{
+ "status": "ok",
+ "user": {
+  "user_id": 8061798118,
+  "first_name": "GPT-6 ASTRA",
+  "username": "Verysecretqwenapi",
+  "photo_url": "https://t.me/i/userpic/320/KPX-l-FtSyD6fkpL1QHNK5s5Zk3HV9IBqvxhkeNuAoKb4QVHPArOgiULOXAu6jXI.svg",
+  "balance": 677,
+  "total_wagered": 0,
+  "total_won": 0,
+  "bets_count": 0,
+  "bets_won": 0,
+  "is_admin": false,
+  "is_panel_admin": false,
+  "has_access": true,
+  "bet_limits": {
+   "min_bet": 10,
+   "max_bet": 50000,
+   "max_payout": 10000,
+   "max_open_exposure": 20000,
+   "open_exposure": 0,
+   "max_open_bets": 6,
+   "open_bets": 0
+  }
+ },
+ "open_tours_count": 10,
+ "divisions": [
+  {
+   "id": 1,
+   "tournament_id": 1,
+   "name": "Дивизион 1",
+   "code": "DIV_1",
+   "topic_id": null,
+   "is_active": 1,
+   "sort_order": 0,
+   "created_at": "2026-09-03 23:07:44",
+   "season_id": 2,
+   "group_chat_id": -1004434161061
+  },
+  {
+   "id": 2,
+   "tournament_id": 1,
+   "name": "Дивизион 2",
+   "code": "DIV_2",
+   "topic_id": null,
+   "is_active": 1,
+   "sort_order": 0,
+   "created_at": "2026-09-03 23:09:27",
+   "season_id": 2,
+   "group_chat_id": -1004348175011
+  },
+  {
+   "id": 3,
+   "tournament_id": 1,
+   "name": "Дивизион 3",
+   "code": "DIV_3",
+   "topic_id": null,
+   "is_active": 1,
+   "sort_order": 0,
+   "created_at": "2026-09-03 23:10:26",
+   "season_id": 2,
+   "group_chat_id": -1004340241773
+  },
+  {
+   "id": 4,
+   "tournament_id": 1,
+   "name": "Дивизион 4",
+   "code": "DIV_4",
+   "topic_id": null,
+   "is_active": 1,
+   "sort_order": 0,
+   "created_at": "2026-09-03 23:11:43",
+   "season_id": 2,
+   "group_chat_id": -1004342764951
+  },
+  {
+   "id": 5,
+   "tournament_id": 1,
+   "name": "Дивизион 5",
+   "code": "DIV_5",
+   "topic_id": null,
+   "is_active": 1,
+   "sort_order": 0,
+   "created_at": "2026-09-03 23:11:55",
+   "season_id": 2,
+   "group_chat_id": -1003906959494
+  }
+ ]
+}

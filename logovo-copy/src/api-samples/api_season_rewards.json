@@ -1,0 +1,62 @@
+{
+ "status": "ok",
+ "season_id": 2,
+ "catalog": [
+  {
+   "id": "REW_CHAMPION",
+   "season_id": null,
+   "division_id": null,
+   "name": "Чемпион Дивизиона",
+   "reward_type": "coins",
+   "amount": 10000,
+   "badge_id": "BADGE_CHAMPION",
+   "title": "Чемпион Дивизиона 👑",
+   "criteria": "CHAMPION"
+  },
+  {
+   "id": "REW_TOP_3",
+   "season_id": null,
+   "division_id": null,
+   "name": "Призер Сезона (Топ-3)",
+   "reward_type": "coins",
+   "amount": 5000,
+   "badge_id": "BADGE_TOP_3",
+   "title": "Призер Сезона 🥈",
+   "criteria": "TOP_3"
+  },
+  {
+   "id": "REW_TOP_10",
+   "season_id": null,
+   "division_id": null,
+   "name": "Элита Дивизиона (Топ-10)",
+   "reward_type": "coins",
+   "amount": 2500,
+   "badge_id": "BADGE_TOP_10",
+   "title": "Топ-10 🌟",
+   "criteria": "TOP_10"
+  },
+  {
+   "id": "REW_PROMOTION",
+   "season_id": null,
+   "division_id": null,
+   "name": "Награда за Повышение",
+   "reward_type": "coins",
+   "amount": 3000,
+   "badge_id": "BADGE_PROMOTED",
+   "title": "Повышен в классе 🚀",
+   "criteria": "PROMOTION"
+  },
+  {
+   "id": "REW_PARTICIPATION",
+   "season_id": null,
+   "division_id": null,
+   "name": "Участник Сезона",
+   "reward_type": "xp",
+   "amount": 500,
+   "badge_id": null,
+   "title": null,
+   "criteria": "PARTICIPATION"
+  }
+ ],
+ "user_rewards": []
+}

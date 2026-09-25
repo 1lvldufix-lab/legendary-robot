@@ -1,0 +1,72 @@
+{
+ "status": "ok",
+ "model_version": "ensemble_v1",
+ "sample_size": 163,
+ "correct_predictions": 82,
+ "accuracy_percent": 50.31,
+ "brier_score": 0.3102,
+ "log_loss": 1.0314,
+ "calibration_report": [
+  {
+   "bucket": "0-10%",
+   "count": 0,
+   "hits": 0,
+   "actual_accuracy": null
+  },
+  {
+   "bucket": "10-20%",
+   "count": 0,
+   "hits": 0,
+   "actual_accuracy": null
+  },
+  {
+   "bucket": "20-30%",
+   "count": 0,
+   "hits": 0,
+   "actual_accuracy": null
+  },
+  {
+   "bucket": "30-40%",
+   "count": 24,
+   "hits": 10,
+   "actual_accuracy": 41.7
+  },
+  {
+   "bucket": "40-50%",
+   "count": 85,
+   "hits": 42,
+   "actual_accuracy": 49.4
+  },
+  {
+   "bucket": "50-60%",
+   "count": 32,
+   "hits": 16,
+   "actual_accuracy": 50.0
+  },
+  {
+   "bucket": "60-70%",
+   "count": 21,
+   "hits": 13,
+   "actual_accuracy": 61.9
+  },
+  {
+   "bucket": "70-80%",
+   "count": 1,
+   "hits": 1,
+   "actual_accuracy": 100.0
+  },
+  {
+   "bucket": "80-90%",
+   "count": 0,
+   "hits": 0,
+   "actual_accuracy": null
+  },
+  {
+   "bucket": "90-100%",
+   "count": 0,
+   "hits": 0,
+   "actual_accuracy": null
+  }
+ ],
+ "disclaimer": "Метрики основаны на исторической валидации и не гарантируют будущие результаты."
+}

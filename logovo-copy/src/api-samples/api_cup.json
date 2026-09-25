@@ -1,0 +1,17 @@
+{
+ "status": "ok",
+ "stages": [
+  {
+   "id": 1,
+   "stage": "1/64",
+   "stage_order": 1,
+   "season_id": 2,
+   "is_open": true,
+   "bets_open": false,
+   "deadline": null,
+   "series_total": 16,
+   "series_completed": 13
+  }
+ ],
+ "current_stage_id": 1
+}

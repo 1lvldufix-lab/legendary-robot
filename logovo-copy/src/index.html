@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>LOGOVO.BET — Киберспортивный Центр Прогнозов</title>
+  <!-- Шрифты: preconnect + link в <head> вместо @import в main.css — иначе запрос
+       к Google Fonts стартует только после загрузки и разбора main.css. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Outfit:wght@600;700;800;900&display=swap">
+  <!-- Telegram WebApp SDK. defer: не блокирует разбор и первый показ страницы;
+       отложенные скрипты и type="module" исполняются по порядку документа,
+       поэтому SDK всё равно готов раньше /js/app.js. -->
+  <script src="https://telegram.org/js/telegram-web-app.js" defer></script>
+  <!-- Styles. Сервер (api/server.py) переписывает /css/… и /js/app.js на
+       /v/<хэш содержимого>/…, так что ?v= ниже нужен только для локального
+       просмотра без API-сервера — бампать его вручную не нужно. -->
+  <link rel="stylesheet" href="/v/cf04743ac1e7/css/main.css">
+  <link rel="stylesheet" href="/v/cf04743ac1e7/css/components.css">
+  <link rel="stylesheet" href="/v/cf04743ac1e7/css/coupon.css">
+
+  <!-- Critical Coupons & Team Logos Styles -->
+  <style id="coupons-critical-css">
+    .nav-item { overflow: hidden; }
+    .nav-item .nav-icon { width: 24px !important; height: 24px !important; max-width: 24px !important; max-height: 24px !important; display: inline-flex !important; align-items: center !important; justify-content: center !important; overflow: hidden !important; }
+    .nav-club-logo, .nav-item .nav-club-logo { width: 22px !important; height: 22px !important; min-width: 22px !important; min-height: 22px !important; max-width: 22px !important; max-height: 22px !important; object-fit: contain !important; display: block !important; margin: 0 auto !important; }
+    @media (max-width: 380px) {
+      .nav-club-logo, .nav-item .nav-club-logo { width: 20px !important; height: 20px !important; min-width: 20px !important; min-height: 20px !important; max-width: 20px !important; max-height: 20px !important; }
+      .nav-item .nav-icon { width: 20px !important; height: 20px !important; max-width: 20px !important; max-height: 20px !important; }
+    }
+    @media (max-width: 345px) {
+      .nav-club-logo, .nav-item .nav-club-logo { width: 18px !important; height: 18px !important; min-width: 18px !important; min-height: 18px !important; max-width: 18px !important; max-height: 18px !important; }
+      .nav-item .nav-icon { width: 18px !important; height: 18px !important; max-width: 18px !important; max-height: 18px !important; }
+    }
+    .coupons-page-header { margin-bottom: 12px; }
+    .coupons-page-title { font-family: 'Outfit', sans-serif; font-size: 1.15rem; font-weight: 800; color: #fff; letter-spacing: -0.01em; display: flex; align-items: center; gap: 6px; line-height: 1.2; }
+    .coupons-page-subtitle { font-size: 0.78rem; color: var(--text-muted, #64748b); margin-top: 3px; font-weight: 500; }
+    .coupons-filter-chips { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 12px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+    .coupons-filter-chips::-webkit-scrollbar { display: none; }
+    .coupons-filter-chips .category-pill { background: rgba(19, 24, 36, 0.85); border: 1px solid rgba(255, 255, 255, 0.08); color: var(--text-secondary, #94a3b8); font-family: 'Outfit', sans-serif; font-size: 0.8rem; font-weight: 700; padding: 6px 14px; border-radius: 9999px; white-space: nowrap; cursor: pointer; transition: 0.15s ease; flex-shrink: 0; }
+    .coupons-filter-chips .category-pill.active { background: rgba(245, 176, 39, 0.12); border-color: var(--accent-gold, #f5b027); color: var(--accent-gold, #f5b027); box-shadow: 0 0 12px rgba(245, 176, 39, 0.2); }
+    .team-logo-wrapper { width: 44px !important; height: 44px !important; min-width: 44px !important; min-height: 44px !important; max-width: 44px !important; max-height: 44px !important; display: flex !important; align-items: center !important; justify-content: center !important; flex-shrink: 0 !important; border-radius: 10px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05); padding: 4px; box-sizing: border-box; }
+    .team-logo-wrapper img { width: 100% !important; height: 100% !important; max-width: 100% !important; max-height: 100% !important; object-fit: contain !important; display: block !important; filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.45)); }
+    .team-logo-wrapper .team-logo-fallback { font-size: 20px; line-height: 1; display: flex; align-items: center; justify-content: center; color: var(--text-muted, #64748b); }
+    .team-logo-wrapper img + .team-logo-fallback, img.team-logo-img + .team-logo-fallback { display: none !important; }
+    .coupon-card { background: rgba(14, 18, 27, 0.92); border: 1px solid rgba(255, 255, 255, 0.07); border-radius: 16px; padding: 14px 16px; margin-bottom: 14px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4); position: relative; overflow: hidden; box-sizing: border-box; }
+    .coupon-header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 10px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); margin-bottom: 10px; }
+    .coupon-header-left { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .coupon-badge-express { font-family: 'Outfit', sans-serif; font-size: 0.68rem; font-weight: 800; padding: 2px 7px; border-radius: 4px; background: rgba(245, 176, 39, 0.12); color: var(--accent-gold, #f5b027); border: 1px solid rgba(245, 176, 39, 0.28); letter-spacing: 0.03em; text-transform: uppercase; }
+    .coupon-id { font-family: 'Outfit', sans-serif; font-size: 0.78rem; font-weight: 800; color: #fff; }
+    .coupon-meta-dot { color: var(--text-muted, #64748b); font-size: 0.68rem; }
+    .coupon-date { font-size: 0.74rem; color: var(--text-muted, #64748b); font-weight: 500; }
+    .coupon-status-badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px; border-radius: 6px; font-family: 'Outfit', sans-serif; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; }
+    .coupon-status-badge .status-indicator-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+    .coupon-status-badge.badge-won { background: rgba(16, 185, 129, 0.12); color: var(--color-success, #10b981); border: 1px solid rgba(16, 185, 129, 0.25); }
+    .coupon-status-badge.badge-lost { background: rgba(239, 68, 68, 0.12); color: var(--color-danger, #ef4444); border: 1px solid rgba(239, 68, 68, 0.25); }
+    .coupon-status-badge.badge-pending { background: rgba(56, 189, 248, 0.12); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.25); }
+    .coupon-status-badge.badge-cashout { background: rgba(0, 210, 255, 0.12); color: var(--accent-cyan, #00d2ff); border: 1px solid rgba(0, 210, 255, 0.25); }
+    .coupon-status-badge.badge-refunded { background: rgba(245, 158, 11, 0.12); color: var(--color-warning, #f59e0b); border: 1px solid rgba(245, 158, 11, 0.25); }
+    .coupon-status-badge.badge-cancelled { background: rgba(148, 163, 184, 0.12); color: var(--text-muted, #64748b); border: 1px solid rgba(148, 163, 184, 0.25); }
+    .coupon-matches-list { display: flex; flex-direction: column; }
+    .coupon-match-row { padding: 10px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
+    .coupon-match-row:last-child { border-bottom: none; padding-bottom: 6px; }
+    .coupon-teams-layout { display: flex !important; align-items: center !important; justify-content: space-between !important; gap: 8px !important; }
+    .coupon-team { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+    .coupon-team.home { justify-content: flex-start; text-align: left; }
+    .coupon-team.away { justify-content: flex-end; text-align: right; }
+    .coupon-team-name { font-size: 0.88rem; font-weight: 700; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 1.25; }
+    .coupon-match-center { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 6px; min-width: 58px; flex-shrink: 0; }
+    .coupon-score { font-family: 'Outfit', sans-serif; font-size: 1.05rem; font-weight: 900; color: #fff; letter-spacing: 0.02em; line-height: 1.1; }
+    .coupon-score.live { color: #ff4757; }
+    .coupon-vs { font-family: 'Outfit', sans-serif; font-size: 0.82rem; font-weight: 800; color: var(--text-muted, #64748b); letter-spacing: 0.04em; line-height: 1.1; }
+    .coupon-match-sub { font-size: 0.68rem; color: var(--text-muted, #64748b); font-weight: 500; margin-top: 2px; text-transform: uppercase; letter-spacing: 0.02em; white-space: nowrap; }
+    .coupon-match-sub.live { color: #ff4757; font-weight: 700; }
+    .coupon-prediction-subrow { display: flex; align-items: center; justify-content: space-between; margin-top: 8px; padding: 0 2px; }
+    .coupon-market-label { font-size: 0.74rem; color: var(--text-muted, #64748b); font-weight: 600; text-transform: uppercase; letter-spacing: 0.02em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 55%; }
+    .coupon-prediction-pill { display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px; border-radius: 6px; font-family: 'Outfit', sans-serif; font-size: 0.8rem; font-weight: 700; white-space: nowrap; }
+    .coupon-prediction-pill.won { background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.3); color: var(--color-success, #10b981); }
+    .coupon-prediction-pill.lost { background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.3); color: var(--color-danger, #ef4444); }
+    .coupon-prediction-pill.pending { background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.3); color: #38bdf8; }
+    .coupon-prediction-pill.refunded { background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.3); color: var(--color-warning, #f59e0b); }
+    .coupon-pred-outcome { font-weight: 800; color: #fff; }
+    .coupon-pred-at { color: var(--text-muted, #64748b); font-size: 0.72rem; margin: 0 1px; }
+    .coupon-pred-odd { font-weight: 800; }
+    .coupon-pred-icon { font-size: 0.82rem; font-weight: 900; margin-left: 2px; }
+    .coupon-summary { display: grid !important; grid-template-columns: 1fr 1fr 1.2fr !important; gap: 8px !important; background: rgba(255, 255, 255, 0.02); border-radius: 10px; padding: 10px 12px; margin-top: 8px; border: 1px solid rgba(255, 255, 255, 0.04); box-sizing: border-box; }
+    .coupon-summary-col { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+    .coupon-summary-col:last-child { text-align: right; }
+    .coupon-summary-label { font-size: 0.7rem; color: var(--text-muted, #64748b); font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .coupon-summary-val { font-family: 'Outfit', sans-serif; font-size: 0.98rem; font-weight: 800; color: #fff; letter-spacing: 0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .coupon-summary-val.gold { color: var(--accent-gold, #f5b027); }
+    .coupon-summary-val.val-won { color: var(--color-success, #10b981); font-weight: 900; }
+    .coupon-summary-val.val-lost { color: var(--text-muted, #64748b); font-weight: 700; }
+    .coupon-summary-val.val-cashout { color: #38bdf8; font-weight: 900; }
+    .coupon-summary-val.val-refund { color: var(--color-warning, #f59e0b); font-weight: 800; }
+    .coupon-summary-val.val-pending { color: var(--accent-gold, #f5b027); font-weight: 800; }
+    .coupon-actions { display: flex; gap: 8px; margin-top: 10px; }
+    .coupon-btn-repeat { flex: 1; width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); color: var(--text-secondary, #94a3b8); font-family: 'Outfit', sans-serif; font-size: 0.8rem; font-weight: 700; padding: 9px 14px; border-radius: 10px; cursor: pointer; transition: 0.15s ease; text-align: center; }
+    .coupon-btn-repeat:hover { background: rgba(245, 176, 39, 0.08); border-color: rgba(245, 176, 39, 0.3); color: var(--accent-gold, #f5b027); }
+    .coupon-btn-cashout { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.3); color: #38bdf8; font-family: 'Outfit', sans-serif; font-size: 0.8rem; font-weight: 800; padding: 9px 14px; border-radius: 10px; cursor: pointer; transition: 0.15s ease; }
+    .coupons-empty-state { text-align: center; padding: 48px 20px; background: rgba(14, 18, 27, 0.5); border-radius: 16px; border: 1px dashed rgba(255, 255, 255, 0.08); }
+    @media (max-width: 390px) {
+      .team-logo-wrapper { width: 38px !important; height: 38px !important; min-width: 38px !important; min-height: 38px !important; max-width: 38px !important; max-height: 38px !important; padding: 3px; }
+      .coupon-team-name { font-size: 0.82rem; }
+      .coupon-score { font-size: 0.95rem; }
+      .coupon-summary-val { font-size: 0.88rem; }
+    }
+    @media (max-width: 360px) {
+      .team-logo-wrapper { width: 34px !important; height: 34px !important; min-width: 34px !important; min-height: 34px !important; max-width: 34px !important; max-height: 34px !important; padding: 2px; }
+      .coupon-team { gap: 6px; }
+      .coupon-team-name { font-size: 0.78rem; }
+      .coupon-summary { padding: 8px; gap: 4px; }
+      .coupon-summary-val { font-size: 0.82rem; }
+      .coupon-summary-label { font-size: 0.64rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- App Header -->
+  <header class="app-header">
+    <div class="brand-block">
+      <span class="brand-logo-icon">🐺</span>
+      <span class="brand-title">LOGOVO.BET</span>
+    </div>
+    <div class="header-right">
+      <!-- Admin Panel Button: shown only to admins -->
+      <button class="admin-pill" id="header-admin-btn" type="button" title="Управление Logovo.bet" hidden>⚙️</button>
+      <!-- Level Badge Pill -->
+      <div class="level-pill" id="header-level-btn" title="Ваш уровень и опыт">
+        <span class="level-badge-icon">🎯</span>
+        <span class="level-number" id="user-level-val">Lvl 1</span>
+      </div>
+      <!-- Coin Balance Pill -->
+      <div class="balance-pill" id="header-balance-btn">
+        <span class="balance-icon">🪙</span>
+        <span class="balance-amount" id="user-balance-val">1 000</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Views Container -->
+  <main class="views-container">
+    
+    <!-- 1. Lobby & Match Line View (Default Active) -->
+    <section id="view-lobby" class="view-section active">
+      <!-- Sticky filter bar: дивизионы — строка прокручивается по горизонтали
+           и остаётся в верхней части экрана. Туры не фильтруются: линия
+           показывается единым сквозным списком открытых матчей. -->
+      <div class="lobby-filter-bar">
+        <!-- Division Selector Tabs -->
+        <div class="division-tabs scroll-row" id="lobby-division-tabs-container"></div>
+      </div>
+
+      <!-- Search Input -->
+      <div class="search-box-container">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="match-search-input" class="match-search-input" placeholder="Поиск матча или команды...">
+      </div>
+
+      <!-- Phase 6: Hot Matches, Odds Movers & Recommendations Hub -->
+      <div id="hot-matches-container"></div>
+      <div id="odds-movers-container"></div>
+      <div id="recommendations-container"></div>
+
+      <!-- Общий кубок: этапы, линия и сетка (режим лобби «🏆 Кубок») -->
+      <div id="cup-view-container" style="display: none;"></div>
+
+      <!-- Match Cards List -->
+      <div id="matches-list-container">
+        <div style="text-align: center; padding: 40px 20px; color: var(--text-muted);">
+          <div style="font-size: 2rem; margin-bottom: 8px;">⏳</div>
+          <div>Загрузка линии матчей...</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 1b. LIVE-центр удалён. Лайв-данные отдельного матча остались во вкладке
+         «Матч-Центр» (/api/matches/{id}/live). -->
+
+    <!-- 2. Match Center & Analytics View -->
+    <section id="view-match_center" class="view-section">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <span style="font-size: 1.1rem; font-weight: 800; color: #fff;">📊 Матч-Центр & H2H</span>
+        <span id="mc-selected-tour-label" style="font-size: 0.8rem; color: var(--accent-gold); font-weight: 700;">Тур 1</span>
+      </div>
+
+      <!-- Match Center Container -->
+      <div id="match-center-container">
+        <div style="text-align: center; padding: 40px 20px; color: var(--text-muted);">
+          Выберите матч в линии для просмотра детальной аналитики.
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. Tournament Hub & Standings View -->
+    <section id="view-tournaments" class="view-section">
+      <div style="font-size: 1.1rem; font-weight: 800; margin-bottom: 12px; color: #fff;">
+        🏆 Турнирный Центр
+      </div>
+
+      <!-- Division Selector Tabs for Tournaments -->
+      <div class="division-tabs scroll-row" id="tournament-division-tabs-container" style="margin-bottom: 12px;"></div>
+
+      <!-- Sub-tabs: Standings / Results / Leaders (scorers, assists, MVP) -->
+      <div class="mc-tabs" style="margin-bottom: 14px;">
+        <button class="mc-tab-btn active" id="btn-tab-standings">Таблица</button>
+        <button class="mc-tab-btn" id="btn-tab-results">Результаты</button>
+        <button class="mc-tab-btn" id="btn-tab-scorers">Лидеры</button>
+      </div>
+
+      <div id="tournaments-content-container">
+        <div style="text-align: center; padding: 40px 20px; color: var(--text-muted);">
+          Загрузка турнирных данных...
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. Predictions History & Saved Slips View -->
+    <section id="view-history" class="view-section">
+      <!-- Header -->
+      <div class="coupons-page-header">
+        <h1 class="coupons-page-title">📜 Мои купоны</h1>
+        <p class="coupons-page-subtitle">История прогнозов и результаты</p>
+      </div>
+
+      <!-- Filter Chips -->
+      <div class="coupons-filter-chips" id="history-filter-pills">
+        <button class="category-pill active" data-filter="all">Все</button>
+        <button class="category-pill" data-filter="pending">В игре</button>
+        <button class="category-pill" data-filter="won">Выигрыши</button>
+        <button class="category-pill" data-filter="lost">Проигрыши</button>
+        <button class="category-pill" data-filter="refunded">🔄 Возвраты</button>
+      </div>
+
+      <!-- Saved Draft Coupons Section -->
+      <div id="saved-coupons-container" style="margin-bottom: 16px;"></div>
+
+      <!-- History Cards List -->
+      <div id="history-list-container">
+        <div style="text-align: center; padding: 40px 20px; color: var(--text-muted);">
+          Загрузка истории...
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. Profile, Analytics & Achievements View -->
+    <section id="view-profile" class="view-section">
+      <!-- Esports Gamer Card -->
+      <div class="gamer-profile-card" id="profile-card-container"></div>
+
+      <!-- Performance KPI Analytics Grid -->
+      <div style="font-size: 1.05rem; font-weight: 800; margin: 20px 0 10px; color: #fff;">
+        📈 Статистика Каппера
+      </div>
+      <div class="kpi-grid" id="kpi-grid-container">
+        <div class="kpi-card">
+          <span class="kpi-label">ROI (Окупаемость)</span>
+          <span class="kpi-value gold" id="kpi-roi">0.0%</span>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-label">Проходимость (Винрейт)</span>
+          <span class="kpi-value green" id="kpi-winrate">0.0%</span>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-label">Средний коэффициент</span>
+          <span class="kpi-value" id="kpi-avg-odds">1.00</span>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-label">Лучший выигрыш</span>
+          <span class="kpi-value gold" id="kpi-best-win">0 🪙</span>
+        </div>
+      </div>
+
+      <!-- Achievements Showcase -->
+      <div style="font-size: 1.05rem; font-weight: 800; margin: 16px 0 10px; color: #fff; display: flex; align-items: center; justify-content: space-between;">
+        <span>🏆 Достижения</span>
+        <span id="achievements-count-label" style="font-size: 0.8rem; color: var(--text-gold); font-weight: 700;">0/22</span>
+      </div>
+      <div class="achievements-grid" id="achievements-grid-container">
+        <div style="text-align: center; padding: 30px; color: var(--text-muted); grid-column: 1/-1;">Загрузка наград...</div>
+      </div>
+
+      <!-- Global Leaderboard Button -->
+      <div style="margin-top: 24px;">
+        <button class="btn-open-leaderboard" id="btn-toggle-leaderboard-modal">
+          🥇 Открыть Зал Славы Лиги
+        </button>
+      </div>
+    </section>
+
+    <!-- 6. My Club — Player's Personal Cabinet -->
+    <section id="view-my_club" class="view-section">
+      <!-- Club Hero Banner -->
+      <div id="my-club-hero-container">
+        <div class="club-hero club-hero-skeleton">
+          <div style="text-align: center; padding: 30px 16px; color: var(--text-muted);">Загрузка клуба...</div>
+        </div>
+      </div>
+
+      <!-- Internal Sub-tabs -->
+      <div class="mc-tabs club-subtabs" id="my-club-subtabs" style="margin: 14px 0;">
+        <button class="mc-subtab-btn active" data-club-tab="matches">📋 Мои матчи</button>
+        <button class="mc-subtab-btn" data-club-tab="squad">👥 Состав клуба</button>
+        <button class="mc-subtab-btn" data-club-tab="history">📜 История игр</button>
+      </div>
+
+      <!-- Sub-tab Panels -->
+      <div id="my-club-matches-container" class="club-panel"></div>
+      <div id="my-club-squad-container" class="club-panel" style="display: none;"></div>
+      <div id="my-club-history-container" class="club-panel" style="display: none;"></div>
+    </section>
+
+    <!-- VIEW: ADMIN PANEL (admins only, filled by js/admin.js) -->
+    <section id="view-admin" class="view-section">
+      <div id="admin-root"></div>
+    </section>
+
+  </main>
+
+  <!-- Admin Panel Modal: confirmations, forms, coupon and player cards -->
+  <div class="modal-overlay" id="admin-modal">
+    <div class="modal-content adm-modal"></div>
+  </div>
+
+  <!-- Floating Bet Bar: appears as soon as the coupon has an event -->
+  <div class="betbar" id="betbar" role="button" tabindex="0" aria-label="Открыть купон" aria-hidden="true">
+    <div class="betbar-left">
+      <span class="betbar-count" id="betbar-count">0</span>
+      <span class="betbar-mode" id="betbar-mode">Ординар</span>
+    </div>
+    <div class="betbar-odd">
+      <span class="betbar-odd-label">Кэф</span>
+      <span class="betbar-odd-val" id="betbar-odd">1.00</span>
+    </div>
+    <span class="betbar-cta">Купон <span class="betbar-cta-arrow">▲</span></span>
+  </div>
+
+  <!-- Coupon Bottom Sheet -->
+  <div class="coupon-backdrop" id="coupon-backdrop"></div>
+  <section class="coupon-sheet" id="coupon-sheet" role="dialog" aria-modal="true" aria-label="Купон" aria-hidden="true">
+    <div class="coupon-grab" id="coupon-grab">
+      <div class="coupon-handle"></div>
+    </div>
+
+    <header class="coupon-head">
+      <div class="coupon-seg" id="coupon-seg" data-mode="single" role="tablist">
+        <span class="coupon-seg-thumb"></span>
+        <button class="coupon-seg-btn slip-type-btn" data-slip-mode="single" role="tab">🎯 Ординар</button>
+        <button class="coupon-seg-btn slip-type-btn" data-slip-mode="express" role="tab">⚡ Экспресс</button>
+      </div>
+      <div class="coupon-head-actions">
+        <button class="coupon-icon-btn" id="btn-save-draft-slip" title="Сохранить черновик" aria-label="Сохранить черновик">💾</button>
+        <button class="coupon-icon-btn danger" id="btn-clear-slip" title="Очистить купон" aria-label="Очистить купон">🗑</button>
+        <button class="coupon-icon-btn" id="btn-close-coupon" title="Свернуть" aria-label="Свернуть купон">✕</button>
+      </div>
+    </header>
+    <div class="coupon-seg-hint" id="coupon-seg-hint">Добавьте ещё 1 событие для экспресса</div>
+
+    <div class="coupon-scroll" id="coupon-scroll">
+      <div class="coupon-items" id="slip-items-container"></div>
+
+      <div class="coupon-stake">
+        <label class="coupon-stake-label" for="stake-input" id="coupon-stake-label">Сумма ставки</label>
+        <div class="coupon-stake-field">
+          <span class="coupon-coin">🪙</span>
+          <input type="number" id="stake-input" inputmode="numeric" value="100" min="0" step="10" autocomplete="off">
+          <span class="coupon-stake-balance" id="coupon-stake-balance"></span>
+        </div>
+        <div class="stake-chips coupon-chips">
+          <button class="stake-chip" data-add="100">+100</button>
+          <button class="stake-chip" data-add="250">+250</button>
+          <button class="stake-chip" data-add="500">+500</button>
+          <button class="stake-chip" data-add="1000">+1000</button>
+          <button class="stake-chip max" data-amount="max">MAX</button>
+        </div>
+      </div>
+
+      <div class="coupon-totals">
+        <div class="coupon-totals-row">
+          <span id="coupon-summary-odd-label">Коэффициент</span>
+          <b id="coupon-summary-odd">1.00</b>
+        </div>
+        <div class="coupon-totals-row">
+          <span>Сумма</span>
+          <b id="coupon-summary-stake">0 🪙</b>
+        </div>
+        <div class="coupon-totals-row limit">
+          <span id="coupon-summary-max-label">Макс. ставка</span>
+          <b id="coupon-summary-max">0 🪙</b>
+        </div>
+        <div class="coupon-totals-row limit" id="coupon-slots-row">
+          <span>Открытых купонов</span>
+          <b id="coupon-summary-slots">0 из 12</b>
+        </div>
+        <div class="coupon-totals-row win">
+          <span>Возможный выигрыш</span>
+          <b id="slip-forecast-val">0 🪙</b>
+        </div>
+      </div>
+      <div class="coupon-warning" id="coupon-warning"></div>
+    </div>
+
+    <footer class="coupon-foot">
+      <button class="coupon-cta" id="btn-submit-prediction">
+        <span class="coupon-cta-main" id="coupon-cta-main">Поставить</span>
+        <span class="coupon-cta-sub" id="coupon-cta-sub"></span>
+      </button>
+    </footer>
+  </section>
+
+  <!-- Bet Accepted Modal -->
+  <div class="modal-overlay bet-accepted-overlay" id="bet-accepted-modal">
+    <div class="modal-content bet-accepted">
+      <div class="bet-accepted-check">
+        <svg viewBox="0 0 52 52" aria-hidden="true">
+          <circle class="bet-accepted-ring" cx="26" cy="26" r="24"></circle>
+          <path class="bet-accepted-tick" d="M15 27 l7 7 l15 -16"></path>
+        </svg>
+      </div>
+      <div class="modal-title" id="bet-accepted-title">Пари принято!</div>
+      <div class="bet-accepted-coupon" id="bet-accepted-coupon"></div>
+      <div class="bet-accepted-details" id="bet-accepted-details"></div>
+      <div class="bet-accepted-actions">
+        <button class="bet-accepted-btn secondary" id="btn-bet-accepted-history">В историю ставок</button>
+        <button class="bet-accepted-btn primary btn-modal-close">Продолжить</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Navigation -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" data-view="lobby">
+      <span class="nav-icon">⚽</span>
+      <span>Линия</span>
+    </button>
+    <button class="nav-item" data-view="match_center">
+      <span class="nav-icon">📊</span>
+      <span>Центр</span>
+    </button>
+    <button class="nav-item" data-view="tournaments">
+      <span class="nav-icon">🏆</span>
+      <span>Турнир</span>
+    </button>
+    <button class="nav-item" data-view="history">
+      <span class="nav-icon">📜</span>
+      <span>Купоны</span>
+    </button>
+    <button class="nav-item" data-view="my_club">
+      <span class="nav-icon" id="nav-my-club-icon">🛡</span>
+      <span>Мой Клуб</span>
+    </button>
+    <button class="nav-item" data-view="profile">
+      <span class="nav-icon">🐺</span>
+      <span>Кабинет</span>
+      <span class="nav-badge" id="achievements-badge" style="display: none;">!</span>
+    </button>
+  </nav>
+
+  <!-- Match Full Markets Modal Drawer -->
+  <div class="modal-overlay" id="match-markets-modal">
+    <div class="modal-content" style="max-height: 85vh; overflow-y: auto; text-align: left;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+        <div style="font-size: 1.15rem; font-weight: 900; color: #fff;" id="modal-match-title">Все рынки матча</div>
+        <button class="btn-modal-close btn-modal-x" aria-label="Закрыть">✕</button>
+      </div>
+      <div id="modal-markets-list"></div>
+    </div>
+  </div>
+
+  <!-- Leaderboard Modal -->
+  <div class="modal-overlay" id="leaderboard-modal">
+    <div class="modal-content" style="max-height: 85vh; overflow-y: auto; text-align: left;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+        <div style="font-size: 1.2rem; font-weight: 900; color: #fff;">🏆 Зал Славы Лиги</div>
+        <button class="btn-modal-close btn-modal-x" aria-label="Закрыть">✕</button>
+      </div>
+      <!-- Top 3 Podium -->
+      <div class="podium-container" id="leaderboard-podium"></div>
+      <!-- Full Rankings List -->
+      <div id="leaderboard-list"></div>
+    </div>
+  </div>
+
+  <!-- Match Time Proposal Modal («Мой Клуб») -->
+  <div class="modal-overlay" id="match-time-modal">
+    <div class="modal-content" style="text-align: left;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+        <div style="font-size: 1.1rem; font-weight: 900; color: #fff;">🗓 Предложить время</div>
+        <button class="btn-modal-close btn-modal-x" aria-label="Закрыть">✕</button>
+      </div>
+      <div class="time-modal-opponent" id="match-time-modal-opponent"></div>
+
+      <label class="time-modal-label" for="match-time-date">Дата</label>
+      <input type="date" id="match-time-date" class="time-modal-input">
+
+      <label class="time-modal-label" for="match-time-time">Время</label>
+      <input type="time" id="match-time-time" class="time-modal-input" step="300">
+
+      <div class="time-modal-presets" id="match-time-presets">
+        <button class="time-preset-btn" data-time="19:00">19:00</button>
+        <button class="time-preset-btn" data-time="20:00">20:00</button>
+        <button class="time-preset-btn" data-time="21:00">21:00</button>
+        <button class="time-preset-btn" data-time="22:00">22:00</button>
+      </div>
+
+      <div class="time-modal-error" id="match-time-error" style="display: none;"></div>
+
+      <button class="btn-club-primary" id="btn-submit-match-time" style="width: 100%; margin-top: 14px;">
+        Отправить предложение
+      </button>
+    </div>
+  </div>
+
+  <!-- Match Protocol & Screenshot Modal («Мой Клуб» & Матчи) -->
+  <div class="modal-overlay" id="match-protocol-modal">
+    <div class="modal-content" style="max-height: 90vh; overflow-y: auto; text-align: left; max-width: 520px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+        <div style="font-size: 1.15rem; font-weight: 900; color: #fff;">📋 Протокол матча</div>
+        <button class="btn-modal-close btn-modal-x" aria-label="Закрыть">✕</button>
+      </div>
+      <div id="match-protocol-content"></div>
+    </div>
+  </div>
+
+  <!-- General Success Modal -->
+  <div class="modal-overlay" id="general-success-modal">
+    <div class="modal-content">
+      <div class="modal-icon">🎉</div>
+      <div class="modal-title" id="success-modal-title">Успешно!</div>
+      <div class="modal-desc" id="success-modal-desc">Операция выполнена успешно.</div>
+      <button class="btn-modal-close">Отлично</button>
+    </div>
+  </div>
+
+  <!-- Odds Changed Confirmation Modal (Phase 5) -->
+  <div class="modal-overlay" id="odds-changed-modal">
+    <div class="modal-content" style="text-align: center;">
+      <div class="modal-icon" style="font-size: 2.2rem; margin-bottom: 8px;">⚠️</div>
+      <div class="modal-title" style="font-size: 1.15rem; font-weight: 800; color: #fff;">Коэффициент изменился</div>
+      <div class="modal-desc" id="odds-changed-modal-desc" style="margin: 12px 0; font-size: 0.95rem; color: var(--text-secondary); line-height: 1.4;">
+        Котировка была обновлена. Принять новые условия?
+      </div>
+      <div style="display: flex; gap: 10px; margin-top: 16px;">
+        <button class="btn-secondary" id="btn-reject-odds-change" style="flex: 1; padding: 10px; border-radius: var(--radius-sm); font-weight: 700; background: var(--bg-tertiary); color: #fff; border: 1px solid var(--border-subtle); cursor: pointer;">Отмена</button>
+        <button class="btn-primary" id="btn-accept-odds-change" style="flex: 1; padding: 10px; border-radius: var(--radius-sm); font-weight: 700; background: var(--accent-gold); color: #000; border: none; cursor: pointer;">Принять</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Fullscreen Access Restricted Screen -->
+  <div id="access-lock-screen" style="display: none; position: fixed; inset: 0; z-index: 999; background: #080a0e; flex-direction: column; align-items: center; justify-content: center; padding: 24px; text-align: center;">
+    <div style="font-size: 3.5rem; margin-bottom: 16px; filter: drop-shadow(0 0 20px rgba(245, 176, 39, 0.4));">🔒</div>
+    <h2 style="font-size: 1.4rem; font-weight: 800; color: #fff; margin-bottom: 10px;">Доступ Ограничен</h2>
+    <p style="font-size: 0.92rem; color: var(--text-secondary); line-height: 1.5; max-width: 380px; margin-bottom: 24px;">
+      Платформа <b>Logovo.bet</b> в данный момент временно недоступна.<br><br>
+      Следите за анонсами в канале лиги! 🎰
+    </p>
+    <button id="btn-close-locked-app" style="background: var(--accent-gold); color: #000; font-size: 0.95rem; font-weight: 700; border: none; padding: 12px 28px; border-radius: var(--radius-md); cursor: pointer; box-shadow: var(--shadow-gold);">
+      Вернуться в чат
+    </button>
+  </div>
+
+  <!-- Fullscreen Global Lockdown Screen -->
+  <div id="app-lockdown-screen" style="display: none; position: fixed; inset: 0; z-index: 10000; background: #080a0e; flex-direction: column; align-items: center; justify-content: center; padding: 24px; text-align: center;">
+    <div style="font-size: 3.5rem; margin-bottom: 16px; filter: drop-shadow(0 0 20px rgba(245, 176, 39, 0.4));">🔒</div>
+    <h2 style="font-size: 1.5rem; font-weight: 800; color: #fff; margin-bottom: 6px; letter-spacing: 0.05em;">LOGOVO.BET</h2>
+    <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--accent-gold, #f5b027); margin-bottom: 16px;">ВРЕМЕННО ЗАКРЫТ</h3>
+    <p style="font-size: 0.95rem; color: var(--text-secondary, #94a3b8); line-height: 1.5; max-width: 380px; margin-bottom: 24px;">
+      Доступ к приложению временно ограничен администраторами.
+    </p>
+    <button id="btn-close-lockdown-app" style="background: var(--accent-gold, #f5b027); color: #000; font-size: 0.95rem; font-weight: 700; border: none; padding: 12px 28px; border-radius: var(--radius-md, 8px); cursor: pointer; box-shadow: var(--shadow-gold);">
+      Закрыть
+    </button>
+  </div>
+
+
+  <!-- Main JavaScript App with cache-busting -->
+  <script type="module" src="/v/cf04743ac1e7/js/app.js"></script>
+</body>
+</html>

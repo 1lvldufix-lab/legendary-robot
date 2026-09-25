@@ -1,0 +1,24 @@
+{
+ "status": "ok",
+ "match_id": 4859,
+ "match_status": "confirmed",
+ "live_minute": null,
+ "score1": 1,
+ "score2": 0,
+ "events": [
+  {
+   "id": 2977,
+   "team_name": "Лилль",
+   "player_name": "UEDA",
+   "event_type": "goal",
+   "count": 1
+  },
+  {
+   "id": 2978,
+   "team_name": "Лилль",
+   "player_name": "ANDRE",
+   "event_type": "assist",
+   "count": 1
+  }
+ ]
+}

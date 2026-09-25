@@ -1,0 +1,302 @@
+/* ==========================================================================
+   LOGOVO.BET — Premium Esports Dark Glassmorphism CSS Design System
+   ========================================================================== */
+
+:root {
+  /* Surface Colors */
+  --bg-app: #07090e;
+  --bg-card: rgba(16, 20, 29, 0.78);
+  --bg-card-hover: rgba(24, 30, 43, 0.92);
+  --bg-tertiary: #131824;
+  --bg-glass: rgba(14, 18, 27, 0.95);
+  --bg-drawer: rgba(10, 13, 20, 0.96);
+  /* Стекло шапки и нижнего меню: полупрозрачно, чтобы размытие было видно.
+     Размыты только эти два слоя — на карточках в списках blur тормозит прокрутку. */
+  --bg-glass-bar: rgba(14, 18, 27, 0.82);
+
+  /* Brand Accents */
+  --accent-gold: #f5b027;
+  --accent-gold-hover: #e09e1d;
+  --accent-gold-glow: rgba(245, 176, 39, 0.35);
+  --accent-gold-light: rgba(245, 176, 39, 0.12);
+  --accent-cyan: #00d2ff;
+  --accent-cyan-glow: rgba(0, 210, 255, 0.3);
+
+  /* Status Colors */
+  --color-success: #10b981;
+  --color-success-bg: rgba(16, 185, 129, 0.15);
+  --color-danger: #ef4444;
+  --color-danger-bg: rgba(239, 68, 68, 0.15);
+  --color-warning: #f59e0b;
+  --color-warning-bg: rgba(245, 158, 11, 0.15);
+
+  /* Text Colors */
+  --text-primary: #ffffff;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --text-gold: #f5b027;
+
+  /* Borders & Shadows */
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-active: rgba(245, 176, 39, 0.8);
+  --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.45);
+  --shadow-gold: 0 4px 24px rgba(245, 176, 39, 0.4);
+  --shadow-neon: 0 0 16px rgba(245, 176, 39, 0.5);
+
+  /* Radius */
+  --radius-xs: 6px;
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-full: 9999px;
+
+  /* Transitions */
+  --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-bounce: 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background-color: var(--bg-app);
+  color: var(--text-primary);
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow-x: hidden;
+  padding-bottom: calc(76px + env(safe-area-inset-bottom, 20px));
+}
+
+/* Фоновое свечение — отдельный fixed-слой: background-attachment: fixed
+   заставляет WebView перерисовывать весь экран на каждом кадре прокрутки. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    radial-gradient(circle at 10% 15%, rgba(245, 176, 39, 0.06) 0%, transparent 40%),
+    radial-gradient(circle at 90% 85%, rgba(0, 210, 255, 0.05) 0%, transparent 40%);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+}
+
+/* App Header */
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--bg-glass-bar);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border-subtle);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.brand-block {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  /* Логотип уступает место пилюлям, а не наоборот. */
+  min-width: 0;
+  flex: 0 1 auto;
+  overflow: hidden;
+}
+
+.brand-logo-icon {
+  font-size: 1.5rem;
+  filter: drop-shadow(0 0 10px var(--accent-gold-glow));
+  animation: floatIcon 3s ease-in-out infinite;
+}
+
+@keyframes floatIcon {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+.brand-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.22rem;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  background: linear-gradient(135deg, #ffffff 30%, var(--accent-gold) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+/* Компактные пилюли шапки: без свечения и анимаций, минимум высоты. */
+.balance-pill {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(245, 176, 39, 0.10);
+  border: 1px solid rgba(245, 176, 39, 0.28);
+  padding: 4px 9px;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: var(--transition-fast);
+  /* Пилюля не переносится на две строки и не сжимается. */
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.balance-pill:active {
+  transform: scale(0.95);
+}
+
+.balance-icon {
+  font-size: 0.82rem;
+  line-height: 1;
+}
+
+.balance-amount {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--accent-gold);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+}
+
+/* App Views Container */
+.views-container {
+  padding: 16px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.view-section {
+  display: none;
+}
+
+.view-section.active {
+  display: block;
+  animation: pageSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes pageSlideIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Bottom Navigation Bar */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  background: var(--bg-glass-bar);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-top: 1px solid var(--border-subtle);
+  padding: 8px 8px calc(8px + env(safe-area-inset-bottom, 12px));
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
+  transition: var(--transition-fast);
+  position: relative;
+}
+
+.nav-item .nav-icon {
+  font-size: 1.3rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.nav-club-logo {
+  width: 22px;
+  height: 22px;
+  max-width: 22px;
+  max-height: 22px;
+  object-fit: contain;
+  display: block;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.45));
+  transition: inherit;
+}
+
+.nav-item.active {
+  color: var(--accent-gold);
+}
+
+.nav-item.active .nav-icon {
+  transform: translateY(-3px) scale(1.15);
+  filter: drop-shadow(0 0 8px var(--accent-gold-glow));
+}
+
+.nav-badge {
+  position: absolute;
+  top: 2px;
+  right: 10px;
+  background: var(--accent-gold);
+  color: #000;
+  font-size: 0.65rem;
+  font-weight: 900;
+  padding: 1px 5px;
+  border-radius: var(--radius-full);
+  min-width: 16px;
+  text-align: center;
+  box-shadow: 0 0 8px var(--accent-gold-glow);
+}
+
+/* Системная настройка «уменьшить движение»: без бесконечных анимаций и с мгновенными переходами. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

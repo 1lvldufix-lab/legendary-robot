@@ -1,0 +1,54 @@
+{
+ "status": "ok",
+ "match_id": 4859,
+ "division_id": 1,
+ "season_id": 2,
+ "team1": "Лилль",
+ "team2": "Ницца",
+ "probabilities": {
+  "home": 0.3851,
+  "draw": 0.2801,
+  "away": 0.3348
+ },
+ "goals": {
+  "over_1_5": 0.7279,
+  "under_1_5": 0.2721,
+  "over_2_5": 0.4757,
+  "under_2_5": 0.5243,
+  "over_3_5": 0.2588,
+  "under_3_5": 0.7412,
+  "btts_yes": 0.523,
+  "btts_no": 0.477
+ },
+ "confidence": 0.35,
+ "elo": {
+  "home": 0.3656,
+  "draw": 0.28,
+  "away": 0.3544,
+  "rating_t1": 1511.9,
+  "rating_t2": 1573.0,
+  "weight": 0.54
+ },
+ "form": {
+  "home": 0.4397,
+  "draw": 0.2764,
+  "away": 0.2839,
+  "form_t1": 0.5,
+  "form_t2": 0.5,
+  "weight": 0.15
+ },
+ "key_factors": [
+  "⚡ Рейтинг силы Elo: преимущество у Ницца (61 очков разницы)."
+ ],
+ "value_radar": [],
+ "disclaimer": "Прогноз AI — аналитическая оценка, а не гарантия результата.",
+ "freshness": {
+  "status": "UNAVAILABLE",
+  "badge": "🔴 LIVE DATA UNAVAILABLE",
+  "age_seconds": null,
+  "is_stale": true,
+  "is_expired": true,
+  "confidence_multiplier": 0.0,
+  "warning": "Нет актуальных данных реального времени по матчу."
+ }
+}
