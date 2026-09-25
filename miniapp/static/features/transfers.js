@@ -1,12 +1,18 @@
 import { $, api, esc, fmt, hooks, openSheet, toast, logoHtml } from '../lib.js';
+import { cardTile, normCard, loadQueue, queueHtml, onCardsChanged, STATS } from './cards.js';
 
 /* ===== трансферы: рынок, аукционы, обмены, судья (план 08 B2–B3) ===== */
 
 const tr = {
-  data: null, tab: 'market', filterPos: null, judge: [],
+  data: null, tab: 'market', filterPos: null, judge: [], cardQueue: [],
   lotId: null, sell: null, ex: null, busy: false,
+  q: '', f: {}, facets: { nations: [], leagues: [] }, marketSeq: 0,
 };
-const POSITIONS = ['', 'ВРТ', 'ЦЗ', 'ЛЗ', 'ЦП', 'ЛП', 'ФРВ', 'ПВ'];
+// коды FC Mobile + русская подсказка на чипе
+const POSITIONS = [['', 'Все'], ['GK', 'ВРТ'], ['CB', 'ЦЗ'], ['LB', 'ЛЗ'], ['RB', 'ПЗ'], ['CDM', 'ЦОП'], ['CM', 'ЦП'], ['CAM', 'ЦАП'],
+  ['LM', 'ЛП'], ['RM', 'ПП'], ['LW', 'ЛВ'], ['RW', 'ПВ'], ['CF', 'ФРВ'], ['ST', 'НАП']];
+const SORTS = [['new', 'Новые'], ['price_asc', 'Цена ↑'], ['price_desc', 'Цена ↓'], ['ovr_desc', 'OVR ↓'], ['ending', 'Скоро конец']];
+const KINDS = [['', 'Все'], ['fix', 'Фикс'], ['auction', 'Аукцион'], ['agent', 'Агенты']];
 const body = () => $('#transfers-body');
 const parseMoney = (v) => Number(String(v ?? '').replace(/[^\d]/g, '')) || 0;
 const roundUp = (n, step = 1000) => Math.ceil(n / step - 1e-9) * step;  // 1.4М×1.1 не должно стать 1 541 000
@@ -47,23 +53,25 @@ setInterval(() => {
 /* ===== главный рендер ===== */
 
 async function renderTransfers() {
-  let judge = { deals: [] };
+  let judge = { deals: [] }, queue = null;
   try {
-    [tr.data, judge] = await Promise.all([
+    [tr.data, judge, queue] = await Promise.all([
       api('/api/transfers/view'),
       api('/api/transfers/judge').catch(() => ({ deals: [] })),
+      loadQueue(),
     ]);
   } catch (e) {
     body().innerHTML = `<div class="empty-note">${esc(e.message)}</div>`;
     return;
   }
   tr.judge = judge.deals || [];
+  tr.cardQueue = queue || [];
   syncJudgeTab();
   if (tr.data.no_club) {
     $('#tr-budget').textContent = '—';
     setLocked(0);
-    if (tr.tab === 'judge' && tr.judge.length) return renderJudge();
-    $('#tr-filters').hidden = true;
+    if (tr.tab === 'judge' && judgeCount()) return renderJudge();
+    setMarketUi(false);
     body().innerHTML = '<div class="empty-note">Клуба нет — рынок недоступен. Запроси клуб во вкладке «Клуб».</div>';
     return;
   }
@@ -91,78 +99,196 @@ function setLocked(sum) {
   el.textContent = sum ? `🔒 в ставках ${fmt(sum)} ₼` : '';
 }
 
+const judgeCount = () => tr.judge.length + tr.cardQueue.length;
+
 function syncJudgeTab() {
   const tabs = $('#tabs-transfers');
   let btn = tabs.querySelector('[data-tab="judge"]');
-  if (tr.judge.length && !btn) {
+  const n = judgeCount();
+  if (n && !btn) {
     btn = document.createElement('button');
     btn.className = 'tab';
     btn.dataset.tab = 'judge';
     tabs.appendChild(btn);
   }
-  if (btn && !tr.judge.length) {
+  if (btn && !n) {
     btn.remove();
     if (tr.tab === 'judge') { tr.tab = 'market'; tabs.querySelector('[data-tab="market"]')?.classList.add('active'); }
     return;
   }
   if (btn) {
-    btn.innerHTML = `⚖️<span class="tr-badge">${tr.judge.length}</span>`;
-    btn.title = 'Судья: сделки на одобрение';
+    btn.innerHTML = `⚖️<span class="tr-badge">${n}</span>`;
+    btn.title = 'Судья: сделки и карточки на проверку';
     btn.classList.toggle('active', tr.tab === 'judge');
   }
 }
 
-/* ===== маркет ===== */
+/* ===== маркет: поиск, фильтры, плитки карточек ===== */
 
-function auctionCard(l, opts = {}) {
-  const bids = l.bids_count || 0;
-  const state = opts.my != null
+const bidsTxt = (n) => (n ? `${n} ${plural(n, 'ставка', 'ставки', 'ставок')}` : 'без ставок');
+const packActions = (html) => ` data-card-actions="${encodeURIComponent(html)}"`;
+
+/* строка лота/агента: плитка карточки + цена и кнопка; тап по строке открывает лист карточки */
+function lotTile(l, opts = {}) {
+  const isAgent = opts.agent;
+  const isAuction = !isAgent && l.kind === 'auction';
+  const price = isAgent ? l.effective_price : isAuction ? l.current_price : l.price;
+  let btn = opts.action;
+  let sheetAct = '';
+  if (btn == null) {
+    if (isAgent) {
+      btn = `<button class="lot-btn" data-tr-sign="${l.id}">Купить</button>`;
+      sheetAct = `<button class="place-btn" data-tr-sign="${l.id}">Подписать за ${fmt(price)} ₼</button>`;
+    } else if (isAuction) {
+      btn = opts.noBtn ? '' : `<button class="lot-btn" data-tr-bid="${l.id}">Ставка</button>`;
+      sheetAct = `<button class="place-btn" data-tr-bid="${l.id}">🔨 Ставка · сейчас ${fmt(price)} ₼</button>`;
+    } else {
+      btn = `<button class="lot-btn" data-tr-buy="${l.id}" data-price="${l.price}">Купить</button>`;
+      sheetAct = `<button class="place-btn" data-tr-buy="${l.id}" data-price="${l.price}">Купить за ${fmt(price)} ₼</button>`;
+    }
+  }
+  const my = opts.my != null
     ? (l.top_club_id === tr.data?.club_id
       ? `<span class="auc-state lead">лидируешь · ${fmt(opts.my)} ₼</span>`
       : '<span class="auc-state out">перебили</span>')
     : '';
-  return `<div class="lot-card auc-card" data-tr-lot="${l.id}">
-    <div class="lot-main">
-      <div class="lot-name">${esc(l.name)} <span class="auc-tag">аукцион</span></div>
-      <div class="lot-sub">${esc(l.position || '—')} · ${l.rating} OVR${l.seller_name ? ` · ${esc(l.seller_name)}` : ''}</div>
-      <div class="auc-meta">
-        <span class="auc-cur">${fmt(l.current_price)} ₼</span>
-        <span class="auc-dot"></span><span>${bids ? `${bids} ${plural(bids, 'ставка', 'ставки', 'ставок')}` : 'старт'}</span>
-        <span class="auc-dot"></span>${timerHtml(l.seconds_left)}
-      </div>
-      ${l.buyout_price ? `<div class="auc-buyout">выкуп ${fmt(l.buyout_price)} ₼</div>` : ''}
-      ${state}
-    </div>
-    ${opts.action ?? (opts.noBtn ? '' : `<button class="lot-btn" data-tr-bid="${l.id}">Ставка</button>`)}
-  </div>`;
+  const sub = isAuction
+    ? `<div class="auc-meta"><span class="auc-tag">аукцион</span><span>${bidsTxt(l.bids_count || 0)}</span></div>${l.buyout_price ? `<div class="auc-buyout">выкуп ${fmt(l.buyout_price)} ₼</div>` : ''}${my}`
+    : '';
+  const right = `<div class="lot-price">${fmt(price)} ₼</div>${isAuction && l.status !== 'needs_judge' ? timerHtml(l.seconds_left) : ''}${btn || ''}`;
+  const seller = opts.meta ?? (isAgent ? 'свободен' : esc(l.seller_name || ''));
+  return cardTile(l, { cls: isAuction ? 'auc-card' : '', right, sub, meta: seller, attrs: sheetAct && !opts.noSheetAct ? packActions(sheetAct) : '' });
 }
 
-const fixRow = (name, sub, price, actionHtml, attrs = '') => `<div class="lot-card"${attrs}>
-  <div class="lot-main"><div class="lot-name">${esc(name)}</div><div class="lot-sub">${sub}</div></div>
-  <div class="lot-price">${fmt(price)} ₼</div>${actionHtml}</div>`;
+function activeFilters() {
+  const f = tr.f;
+  let n = 0;
+  ['ovr_min', 'ovr_max', 'price_min', 'price_max', 'kind', 'nation', 'league'].forEach((k) => { if (f[k]) n++; });
+  if (f.verified) n++;
+  if (f.alt) n++;
+  STATS.forEach(([k]) => { if (f[`${k}_min`]) n++; });
+  return n;
+}
+
+function marketQuery() {
+  const p = new URLSearchParams();
+  if (tr.q) p.set('q', tr.q);
+  if (tr.filterPos) p.set('position', tr.filterPos);
+  Object.entries(tr.f).forEach(([k, v]) => { if (v !== '' && v != null && v !== false) p.set(k, v === true ? '1' : v); });
+  const s = p.toString();
+  return s ? `?${s}` : '';
+}
+
+function setMarketUi(on) {
+  $('#tr-filters').hidden = !on;
+  const bar = $('#tr-search-bar');
+  if (bar) bar.hidden = !on;
+}
+
+function ensureSearchBar() {
+  let bar = $('#tr-search-bar');
+  if (!bar) {
+    bar = document.createElement('div');
+    bar.id = 'tr-search-bar';
+    bar.innerHTML = `<div class="mk-bar">
+        <label class="mk-search"><input id="tr-q" type="search" placeholder="Игрок, клуб, сборная…" autocomplete="off" enterkeyhint="search">
+        <button class="mk-clear" data-tr-q-clear hidden aria-label="Очистить">✕</button></label>
+        <button class="mk-fbtn" data-tr-filters>⚙️ Фильтры<span class="tr-badge" hidden></span></button>
+      </div>
+      <div class="mk-active" id="tr-active" hidden></div>`;
+    $('#tr-filters').insertAdjacentElement('beforebegin', bar);
+    $('#tr-q').value = tr.q;
+  }
+  bar.hidden = false;
+  const n = activeFilters();
+  const fb = bar.querySelector('.mk-fbtn');
+  fb.classList.toggle('on', n > 0);
+  const badge = fb.querySelector('.tr-badge');
+  badge.hidden = !n;
+  badge.textContent = n;
+  bar.querySelector('[data-tr-q-clear]').hidden = !tr.q;
+  const act = $('#tr-active');
+  const sortLbl = tr.f.sort && tr.f.sort !== 'new' ? SORTS.find(([v]) => v === tr.f.sort)?.[1] : '';
+  act.hidden = !n && !sortLbl;
+  act.innerHTML = `${n ? `<span>${n} ${plural(n, 'фильтр', 'фильтра', 'фильтров')}</span><button data-tr-freset>сбросить</button>` : ''}${sortLbl ? `<span class="mk-sort">сортировка: ${esc(sortLbl)}</span>` : ''}`;
+}
 
 async function renderMarket() {
   const f = $('#tr-filters');
-  f.hidden = false;
-  f.innerHTML = POSITIONS.map((p) => `<button class="chip ${(tr.filterPos || '') === p ? 'active' : ''}" data-tr-pos="${p}">${p || 'Все'}</button>`).join('');
-  const q = tr.filterPos ? `?position=${encodeURIComponent(tr.filterPos)}` : '';
+  setMarketUi(true);
+  ensureSearchBar();
+  f.innerHTML = POSITIONS.map(([p, ru]) => `<button class="chip ${(tr.filterPos || '') === p ? 'active' : ''}" data-tr-pos="${p}" title="${ru}">${p || ru}${p ? `<small>${ru}</small>` : ''}</button>`).join('');
+  const seq = ++tr.marketSeq;
   let market;
-  try { market = await api(`/api/transfers/market${q}`); } catch (e) { body().innerHTML = `<div class="empty-note">${esc(e.message)}</div>`; return; }
+  try { market = await api(`/api/transfers/market${marketQuery()}`); } catch (e) {
+    if (seq === tr.marketSeq) body().innerHTML = `<div class="empty-note">${esc(e.message)}</div>`;
+    return;
+  }
+  if (seq !== tr.marketSeq || tr.tab !== 'market') return;  // пришёл устаревший ответ
   const { lots, free_agents } = market;
+  if (market.facets) tr.facets = market.facets;
   const auctions = lots.filter((l) => l.kind === 'auction');
   const fixed = lots.filter((l) => l.kind !== 'auction');
+  const kind = tr.f.kind || '';
+  const filtering = !!(tr.q || tr.filterPos || activeFilters());
   const mine = [...(tr.data.bids || []).map((b) => ({ ...b, _my: b.my_bid })), ...(tr.data.outbid || []).map((b) => ({ ...b, _my: 0 }))];
-  body().innerHTML =
-    (mine.length ? '<div class="group-title">Мои ставки</div>' + mine.map((l) => auctionCard(l, { my: l._my, noBtn: true })).join('') : '') +
-    '<div class="group-title">Аукционы</div>' +
-    (auctions.length ? auctions.map((l) => auctionCard(l)).join('') : '<div class="empty-note">Аукционов сейчас нет.</div>') +
-    '<div class="group-title">Фикс-цена</div>' +
-    (fixed.length ? fixed.map((l) => fixRow(l.name, `${esc(l.position || '—')} · ${l.rating} OVR · ${esc(l.seller_name || '')}`,
-      l.price, `<button class="lot-btn" data-tr-buy="${l.id}" data-price="${l.price}">Купить</button>`, ` data-tr-lot="${l.id}"`)).join('')
-      : '<div class="empty-note">Лотов пока нет.</div>') +
-    (free_agents.length ? '<div class="group-title">Свободные агенты · рейтинг² × K</div>' +
-      free_agents.map((a) => fixRow(a.name, `${esc(a.position || '—')} · ${a.rating} OVR · свободен`, a.effective_price,
-        `<button class="lot-btn" data-tr-sign="${a.id}">Купить</button>`)).join('') : '');
+  const group = (title, list, html, emptyTxt) => {
+    if (filtering && !list.length) return '';
+    return `<div class="group-title">${title}</div>` + (list.length ? list.map(html).join('') : `<div class="empty-note">${emptyTxt}</div>`);
+  };
+  let out = (mine.length && !filtering ? '<div class="group-title">Мои ставки</div>' + mine.map((l) => lotTile(l, { my: l._my, noBtn: true })).join('') : '');
+  if (!kind || kind === 'auction') out += group('Аукционы', auctions, (l) => lotTile(l), 'Аукционов сейчас нет.');
+  if (!kind || kind === 'fix') out += group('Фикс-цена', fixed, (l) => lotTile(l), 'Лотов пока нет.');
+  if ((!kind || kind === 'agent') && free_agents.length) out += group('Свободные агенты · рейтинг² × K', free_agents, (a) => lotTile(a, { agent: true }), '');
+  if (filtering && !lots.length && !free_agents.length) {
+    out += '<div class="empty-note">По запросу ничего не нашлось.<br><button class="lot-btn secondary" data-tr-freset style="margin-top:10px">Сбросить фильтры</button></div>';
+  }
+  body().innerHTML = out;
+}
+
+/* ===== лист фильтров ===== */
+
+function openFilterSheet() {
+  const f = tr.f;
+  const opt = (list, cur) => ['<option value="">Любая</option>', ...(list || []).map((x) => `<option value="${esc(x)}" ${x === cur ? 'selected' : ''}>${esc(x)}</option>`)].join('');
+  const num = (id, ph) => `<input class="amount-input cf-in" id="trf-${id}" inputmode="numeric" placeholder="${ph}" value="${f[id] ? esc(id.startsWith('price') ? fmt(f[id]) : f[id]) : ''}" autocomplete="off">`;
+  openSheet('⚙️ Фильтры рынка', `<div class="cf mk-sheet">
+    <div class="cf-lbl">Сортировка</div>
+    <select class="amount-input cf-in" id="trf-sort">${SORTS.map(([v, l]) => `<option value="${v}" ${(f.sort || 'new') === v ? 'selected' : ''}>${l}</option>`).join('')}</select>
+    <div class="cf-lbl">Тип</div>
+    <div class="tr-seg">${KINDS.map(([v, l]) => `<button type="button" class="chip ${(f.kind || '') === v ? 'active' : ''}" data-trf-kind="${v}">${l}</button>`).join('')}</div>
+    <div class="cf-lbl">OVR</div>
+    <div class="mk-range">${num('ovr_min', 'от 40')}<span>—</span>${num('ovr_max', 'до 150')}</div>
+    <div class="cf-lbl">Цена, ₼</div>
+    <div class="mk-range">${num('price_min', 'от')}<span>—</span>${num('price_max', 'до')}</div>
+    <div class="cf-grid2">
+      <label><span class="cf-lbl">Сборная</span><select class="amount-input cf-in" id="trf-nation">${opt(tr.facets.nations, f.nation)}</select></label>
+      <label><span class="cf-lbl">Лига</span><select class="amount-input cf-in" id="trf-league">${opt(tr.facets.leagues, f.league)}</select></label>
+    </div>
+    <div class="cf-lbl">Минимум по характеристикам</div>
+    <div class="cf-stats">${STATS.map(([k, lbl, ru]) => `<label><span>${lbl}<i>${ru}</i></span><input class="amount-input cf-in" id="trf-${k}_min" type="number" inputmode="numeric" min="0" max="200" placeholder="—" value="${esc(f[`${k}_min`] || '')}"></label>`).join('')}</div>
+    <label class="mk-toggle"><span>Искать и по доп. позициям</span><input type="checkbox" id="trf-alt" ${f.alt ? 'checked' : ''}></label>
+    <label class="mk-toggle"><span>Только сверенные с RenderZ ✅</span><input type="checkbox" id="trf-verified" ${f.verified ? 'checked' : ''}></label>
+    <div class="mk-btns"><button class="lot-btn secondary" data-tr-freset>Сбросить</button><button class="place-btn" data-tr-fapply>Показать</button></div>
+  </div>`);
+  tr.fKind = f.kind || '';
+}
+
+function applyFilterSheet() {
+  const v = (id) => $(`#trf-${id}`)?.value.trim() ?? '';
+  const n = (id) => { const x = parseMoney(v(id)); return x || ''; };
+  const f = {
+    sort: v('sort') === 'new' ? '' : v('sort'), kind: tr.fKind || '',
+    ovr_min: n('ovr_min'), ovr_max: n('ovr_max'), price_min: n('price_min'), price_max: n('price_max'),
+    nation: v('nation'), league: v('league'),
+    alt: $('#trf-alt')?.checked || false, verified: $('#trf-verified')?.checked || false,
+  };
+  STATS.forEach(([k]) => { f[`${k}_min`] = n(`${k}_min`); });
+  if (f.ovr_min && f.ovr_max && f.ovr_min > f.ovr_max) [f.ovr_min, f.ovr_max] = [f.ovr_max, f.ovr_min];
+  if (f.price_min && f.price_max && f.price_min > f.price_max) [f.price_min, f.price_max] = [f.price_max, f.price_min];
+  tr.f = Object.fromEntries(Object.entries(f).filter(([, x]) => x !== '' && x !== false));
+  $('#generic-sheet').hidden = true;
+  renderMarket();
 }
 
 /* ===== лист лота: ставка + история ===== */
@@ -215,6 +341,7 @@ async function openLotSheet(id) {
     `<div class="bet-history-item"><div><div>${esc(h.from_name || 'свободный агент')} → ${esc(h.to_name || '—')}</div><div class="sub">${esc(fmtUtc(h.created_at))}</div></div><div class="lot-price">${fmt(h.amount)} ₼</div></div>`).join('') + '</div>' : '';
 
   openSheet(lot.name, `<div class="sub" style="margin:-4px 0 12px">${esc(lot.position || '—')} · ${lot.rating} OVR · продавец ${esc(lot.seller_name || '—')}</div>
+    ${lot.card_id ? `<button class="lot-btn secondary tr-card-link" data-card-view="${lot.card_id}">🃏 Карточка и характеристики</button>` : ''}
     ${stats}${action}${bids}${hist}`);
 }
 
@@ -241,25 +368,38 @@ async function placeBid(lotId) {
 /* ===== мои лоты + продажа ===== */
 
 function renderMyLots() {
-  $('#tr-filters').hidden = true;
+  setMarketUi(false);
   const d = tr.data;
+  const judgeTag = '<span class="bh-status open">у судьи</span>';
   const myLots = d.lots.map((l) => (l.kind === 'auction'
-    ? auctionCard({ ...l, seller_name: l.top_club_name ? `лидер ${l.top_club_name}` : null }, {
+    ? lotTile(l, {
+      meta: l.top_club_name ? `лидер ${esc(l.top_club_name)}` : 'ставок нет',
+      noSheetAct: true,
       action: l.status === 'open'
         ? `<button class="lot-btn secondary" data-tr-unlot="${l.id}" ${l.top_bid ? 'disabled title="Есть ставки"' : ''}>Снять</button>`
-        : '<span class="bh-status open">у судьи</span>',
+        : judgeTag,
     })
-    : fixRow(l.name, `фикс · ${esc(l.position || '—')} · ${l.rating} OVR`, l.price,
-      l.status === 'open' ? `<button class="lot-btn secondary" data-tr-unlot="${l.id}">Снять</button>` : '<span class="bh-status open">у судьи</span>')));
+    : lotTile(l, {
+      meta: 'фикс', noSheetAct: true,
+      action: l.status === 'open' ? `<button class="lot-btn secondary" data-tr-unlot="${l.id}">Снять</button>` : judgeTag,
+    })));
+  const sellState = (s) => {
+    const st = normCard(s).vstatus;
+    if (s.on_market) return '<span class="bh-status open">на рынке</span>';
+    if (st === 'pending') return '<span class="bh-status open">⏳ проверка</span>';
+    if (st === 'rejected') return '<span class="bh-status lost">❌ отклонена</span>';
+    return `<button class="lot-btn" data-tr-sell="${s.id}">Продать</button>`;
+  };
+  const blocked = d.squad.filter((s) => normCard(s).vstatus !== 'approved').length;
   body().innerHTML =
     '<div class="group-title">Мои лоты</div>' +
     (myLots.length ? myLots.join('') : '<div class="empty-note">Активных лотов нет.</div>') +
     '<div class="group-title">Состав · выставить на рынок</div>' +
-    (d.squad.length ? d.squad.map((s) => `<div class="lot-card">
-        <div class="lot-main"><div class="lot-name">${esc(s.name)}</div>
-        <div class="lot-sub">${esc(s.position || '—')} · ${s.rating} OVR · ориентир ${fmt(s.sell_value)} ₼</div></div>
-        ${s.on_market ? '<span class="bh-status open">на рынке</span>' : `<button class="lot-btn" data-tr-sell="${s.id}">Продать</button>`}
-      </div>`).join('') : '<div class="empty-note">Состав пуст.</div>');
+    (blocked ? '<div class="sub tr-note" style="margin:-2px 2px 8px">Продавать можно только проверенные карточки ✅.</div>' : '') +
+    (d.squad.length ? d.squad.map((s) => cardTile(s, {
+      meta: normCard(s).vstatus === 'approved' ? `ориентир ${fmt(s.sell_value)} ₼` : '',
+      right: sellState(s),
+    })).join('') : '<div class="empty-note">Состав пуст.</div>');
 }
 
 function openSellSheet(cardId) {
@@ -318,7 +458,7 @@ function offerLine(o, dir) {
 }
 
 function renderOffers() {
-  $('#tr-filters').hidden = true;
+  setMarketUi(false);
   const d = tr.data;
   body().innerHTML = '<button class="bonus-btn" data-tr-ex-start style="margin-bottom:12px">🔄 Предложить обмен или цену</button>' +
     '<div class="group-title">Входящие</div>' +
@@ -403,9 +543,14 @@ async function exSend() {
 /* ===== судья ===== */
 
 function renderJudge() {
-  $('#tr-filters').hidden = true;
+  setMarketUi(false);
   const kinds = { lot: 'Покупка лота', auction: 'Аукцион', exchange: 'Обмен', offer: 'Денежное предложение' };
-  body().innerHTML = '<div class="sub tr-note" style="margin-bottom:10px">Сделки выше порога ждут решения. Проверь цену и связь клубов (анти-сговор).</div>' +
+  const cards = tr.cardQueue.length
+    ? `<div class="group-title">🃏 Карточки на проверку · ${tr.cardQueue.length}</div>
+      <div class="sub tr-note" style="margin:-2px 2px 8px">Сверь фото, OCR и RenderZ. Тап по карточке — подробности.</div>${queueHtml(tr.cardQueue)}`
+    : '';
+  body().innerHTML = cards + (cards && !tr.judge.length ? '' : '<div class="group-title">⚖️ Сделки</div>') +
+    (cards && !tr.judge.length ? '' : '<div class="sub tr-note" style="margin-bottom:10px">Сделки выше порога ждут решения. Проверь цену и связь клубов (анти-сговор).</div>') +
     (tr.judge.length ? tr.judge.map((t) => {
       const isEx = t.deal_kind === 'exchange' || t.deal_kind === 'offer';
       const what = isEx
@@ -418,13 +563,13 @@ function renderJudge() {
         <div class="tr-actions"><button class="lot-btn" data-tr-judge="${t.id}" data-ok="1">Одобрить</button>
         <button class="lot-btn secondary" data-tr-judge="${t.id}" data-ok="0">Отклонить</button></div>
       </div>`;
-    }).join('') : '<div class="empty-note">Очередь пуста.</div>');
+    }).join('') : cards ? '' : '<div class="empty-note">Очередь пуста.</div>');
 }
 
 /* ===== история ===== */
 
 function renderHistory() {
-  $('#tr-filters').hidden = true;
+  setMarketUi(false);
   const d = tr.data;
   const st = { approved: ['состоялся', 'won'], rejected: ['отклонён', 'lost'], cancelled: ['отозван', 'void'], needs_judge: ['у судьи', 'open'] };
   body().innerHTML = d.history.length ? `<div class="tr-list">${d.history.map((h) => {
@@ -450,7 +595,17 @@ async function act(fn, okText) {
 
 document.addEventListener('input', (ev) => {
   const id = ev.target.id;
-  if (id === 'tr-bid-amount') {
+  if (id === 'tr-q') {
+    clearTimeout(tr.qTimer);
+    const clr = $('[data-tr-q-clear]');
+    if (clr) clr.hidden = !ev.target.value;
+    tr.qTimer = setTimeout(() => {
+      const v = ev.target.value.trim();
+      if (v === tr.q) return;
+      tr.q = v;
+      if (tr.tab === 'market') renderMarket();
+    }, 350);
+  } else if (id === 'tr-bid-amount') {
     const btn = document.querySelector('[data-tr-place]');
     const v = parseMoney(ev.target.value);
     if (btn) btn.textContent = v ? `Поставить ${fmt(v)} ₼` : 'Поставить';
@@ -472,7 +627,30 @@ document.addEventListener('click', async (ev) => {
   let el;
 
   if ((el = q('[data-tr-sign]'))) {
-    return act(() => api(`/api/transfers/free-agent/${el.dataset.trSign}/sign`, { method: 'POST' }), (r) => `Агент подписан за ${fmt(r.price)} ₼`);
+    const r = await act(() => api(`/api/transfers/free-agent/${el.dataset.trSign}/sign`, { method: 'POST' }), (r) => `Агент подписан за ${fmt(r.price)} ₼`);
+    if (r && el.closest('#generic-sheet')) $('#generic-sheet').hidden = true;
+    return;
+  }
+  if (q('[data-tr-filters]')) return openFilterSheet();
+  if ((el = q('[data-trf-kind]'))) {
+    tr.fKind = el.dataset.trfKind;
+    el.parentElement.querySelectorAll('.chip').forEach((c) => c.classList.toggle('active', c === el));
+    return;
+  }
+  if (q('[data-tr-fapply]')) return applyFilterSheet();
+  if (q('[data-tr-freset]')) {
+    tr.f = {}; tr.filterPos = null; tr.q = '';
+    const inp = $('#tr-q'); if (inp) inp.value = '';
+    const sheet = $('#generic-sheet');
+    if (sheet && q('#generic-sheet')) sheet.hidden = true;
+    if (tr.tab === 'market') renderMarket();
+    return;
+  }
+  if (q('[data-tr-q-clear]')) {
+    ev.preventDefault();
+    tr.q = ''; $('#tr-q').value = '';
+    if (tr.tab === 'market') renderMarket();
+    return;
   }
   if ((el = q('[data-tr-buy]'))) {
     const r = await act(() => api(`/api/transfers/lots/${el.dataset.trBuy}/buy`, { method: 'POST' }),
@@ -558,3 +736,4 @@ setInterval(() => {
 }, 20000);
 
 hooks.views.transfers = renderTransfers;
+onCardsChanged(() => { if (document.querySelector('#view-transfers.active')) renderTransfers(); });

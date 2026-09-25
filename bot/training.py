@@ -72,6 +72,8 @@ def add_entry(user: dict, card_id, kind: str, count, note: str = "", today: date
         card = c.execute("SELECT * FROM club_cards WHERE id=? AND club_id=?", (card_id, club_id)).fetchone()
         if not card:
             raise TrainingError("NO_CARD", "Карточка не из твоего состава")
+        if (dict(card).get("verify_status") or "approved") != "approved":
+            raise TrainingError("NOT_APPROVED", "Карточка ещё не одобрена судьёй")
         period = period_start(today)
         log_id = c.insert_returning_id(
             "INSERT INTO training_log (club_id, user_id, player_id, card_id, card_name, kind, count, note, period_start) "

@@ -54,8 +54,18 @@ def _setup_feature_routes(app: web.Application) -> None:
         importlib.import_module(f"{__package__}.{path.stem}").setup(app)
 
 
+@web.middleware
+async def _static_revalidate(request, handler):
+    """Фронт — ES-модули без версий в import: заставляем браузер/Telegram сверяться
+    с сервером (ETag/Last-Modified → 304), иначе после обновления висит старый JS."""
+    resp = await handler(request)
+    if request.path.startswith("/static/") or request.path in ("/", "/app"):
+        resp.headers["Cache-Control"] = "no-cache"
+    return resp
+
+
 def build_app() -> web.Application:
-    app = web.Application()
+    app = web.Application(middlewares=[_static_revalidate])
     app.router.add_get("/", index)
     app.router.add_get("/app", index)
     app.router.add_get("/api/bootstrap", api_bootstrap)

@@ -159,6 +159,14 @@ def _on_market(c, card_id: int | None) -> bool:
                      (card_id,)).fetchone() is not None
 
 
+def _approved(card) -> bool:
+    """Торговать можно только карточкой, одобренной судьёй (bot/cards.py)."""
+    return card is not None and (dict(card).get("verify_status") or "approved") == "approved"
+
+
+NOT_APPROVED_TEXT = "Карточка ещё не одобрена судьёй — торговать ей нельзя"
+
+
 def _positive_int(value, field: str) -> int:
     """Цена из запроса → int > 0, иначе внятная TransferError (не 500)."""
     try:
@@ -191,6 +199,9 @@ def sign_free_agent(club_id: int, card_id: int, actor_tg: int | None = None) -> 
     if not card or card["club_id"] is not None:
         c.close()
         raise TransferError("NOT_FREE", "Карточка не свободный агент")
+    if not _approved(card):
+        c.close()
+        raise TransferError("NOT_APPROVED", NOT_APPROVED_TEXT)
     if not club:
         c.close()
         raise TransferError("NO_CLUB", "Клуб не найден")
@@ -244,6 +255,9 @@ def create_lot(club_id: int, card_id: int, kind: str, price: int,
     if not card or card["club_id"] != club_id:
         c.close()
         raise TransferError("NOT_YOURS", "Карточка не в твоём клубе")
+    if not _approved(card):
+        c.close()
+        raise TransferError("NOT_APPROVED", NOT_APPROVED_TEXT)
     if _on_market(c, card_id):
         c.close()
         raise TransferError("DUP", "Карточка уже на рынке")
@@ -287,6 +301,9 @@ def buy_lot(buyer_club_id: int, lot_id: int, actor_tg: int | None = None) -> dic
     if card["club_id"] != lot["seller_club_id"]:
         c.close()
         raise TransferError("MOVED", "Карточка уже не у продавца")
+    if not _approved(card):
+        c.close()
+        raise TransferError("NOT_APPROVED", NOT_APPROVED_TEXT)
     price = lot["price"]
     if buyer["budget"] < price:
         c.close()
@@ -368,6 +385,8 @@ def place_bid(club_id: int, lot_id: int, amount, actor_tg: int | None = None,
             raise TransferError("NO_CLUB", "Клуб не найден")
         if not card or card["club_id"] != lot["seller_club_id"]:
             raise TransferError("MOVED", "Карточка уже не у продавца")
+        if not _approved(card):
+            raise TransferError("NOT_APPROVED", NOT_APPROVED_TEXT)
         buyout = lot["buyout_price"]
         is_buyout = bool(buyout) and amount >= int(buyout)
         if is_buyout:
@@ -534,6 +553,9 @@ def propose_exchange(from_club_id: int, to_club_id: int, give_card_id: int | Non
     if not want or want["club_id"] != to_club_id:
         c.close()
         raise TransferError("NOT_THEIRS", "Запрашиваемая карточка у другого клуба")
+    if not _approved(want) or (give is not None and not _approved(give)):
+        c.close()
+        raise TransferError("NOT_APPROVED", NOT_APPROVED_TEXT)
     if from_club_id == to_club_id:
         c.close()
         raise TransferError("SELF", "Обмен внутри клуба запрещён")
@@ -619,6 +641,9 @@ def _check_exchange(c, t, give, want) -> None:
     if not want or want["club_id"] != t["to_club_id"]:
         c.close()
         raise TransferError("MOVED", "Запрашиваемая карточка уже не в клубе-получателе")
+    if not _approved(want) or (give is not None and not _approved(give)):
+        c.close()
+        raise TransferError("NOT_APPROVED", NOT_APPROVED_TEXT)
     if _on_market(c, t["card_id"]) or _on_market(c, t["want_card_id"]):
         c.close()
         raise TransferError("ON_MARKET", "Карточка выставлена на рынок — сначала сними лот")
@@ -818,6 +843,14 @@ def _auction_fields(r: dict, now: datetime, step: float) -> dict:
     return r
 
 
+def _with_images(rows: list[dict]) -> list[dict]:
+    """image_path → image_url (как в карточках), чтобы списки «Мои лоты» показывали фото."""
+    from cards import image_url
+    for r in rows:
+        r["image_url"] = image_url(r.get("image_path"))
+    return rows
+
+
 def club_transfers_view(club_id: int) -> dict:
     """Всё для полноэкранного экрана трансферов: бюджет, состав с ценами, лоты, предложения, ставки."""
     close_expired_auctions(drain=False)
@@ -833,7 +866,7 @@ def club_transfers_view(club_id: int) -> dict:
         s["sell_value"] = max(0, free_agent_price(s["rating"]) // 2)  # ориентир цены продажи
         s["on_market"] = s["id"] in on_market
     lots = [_auction_fields(dict(r), now, step) for r in c.execute(
-        "SELECT l.*, cc.name, cc.position, cc.rating, tc.name AS top_club_name FROM transfer_lots l "
+        "SELECT l.*, cc.name, cc.position, cc.rating, cc.image_path, cc.verify_status, tc.name AS top_club_name FROM transfer_lots l "
         "JOIN club_cards cc ON cc.id=l.card_id LEFT JOIN clubs tc ON tc.id=l.top_club_id "
         "WHERE l.seller_club_id=? AND l.status IN ('open','needs_judge') ORDER BY l.id DESC",
         (club_id,)).fetchall()]
@@ -878,48 +911,147 @@ def club_transfers_view(club_id: int) -> dict:
         "threshold": threshold(),
         "commission_pct": appsettings.setting_float("transfer_commission_pct", 5),
         "auction": {"step_pct": step, "hours": auction_hours(), "snipe_minutes": snipe_minutes()},
-        "squad": squad, "lots": lots, "offers_in": offers_in, "offers_out": offers_out,
+        "squad": _with_images(squad), "lots": _with_images(lots), "offers_in": offers_in, "offers_out": offers_out,
         "bids": bids, "outbid": outbid, "history": history,
     }
 
 
+MARKET_SORTS = ("new", "price_asc", "price_desc", "ovr_desc", "ending")
+MARKET_KINDS = ("fix", "auction", "agent")
+# поля карточки, которые не подмешиваем в лот (у лота свои id/created_at/продавец)
+_LOT_SKIP = {"id", "club_id", "club_name", "created_at", "updated_at", "on_market", "added_by",
+             "verified_by", "verified_at"}
+
+
 def market_list(division_id: int | None = None, position: str | None = None,
-                min_rating: int | None = None, max_price: int | None = None) -> dict:
-    """Маркетплейс: открытые лоты (кроме своих — фильтр на клиенте) + свободные агенты."""
+                min_rating: int | None = None, max_price: int | None = None, *,
+                q: str | None = None, alt: bool = False, ovr_min: int | None = None, ovr_max: int | None = None,
+                price_min: int | None = None, price_max: int | None = None, kind: str | None = None,
+                verified: bool = False, nation: str | None = None, league: str | None = None,
+                sort: str | None = None, stat_mins: dict | None = None, limit: int = 100) -> dict:
+    """Маркетплейс: открытые лоты (кроме своих — фильтр в API) + свободные агенты, только одобренные
+    карточки. Фильтры/сортировка — docs/API-cards.md; facets — по всему рынку до фильтров."""
+    import cards as cardlib
+    import renderz
+    if kind and kind not in MARKET_KINDS:
+        raise TransferError("BAD_FILTER", "kind = fix|auction|agent")
+    if sort and sort not in MARKET_SORTS:
+        raise TransferError("BAD_FILTER", "sort = " + "|".join(MARKET_SORTS))
+    ovr_min = ovr_min if ovr_min is not None else min_rating
+    price_max = price_max if price_max is not None else max_price
     close_expired_auctions(drain=False)
     now, step = _now(), auction_step_pct()
-    c = appdb.db()
-    sql, args = ("SELECT l.*, cc.name, cc.position, cc.rating, cl.name AS seller_name, tc.name AS top_club_name "
-                 "FROM transfer_lots l JOIN club_cards cc ON cc.id=l.card_id "
-                 "LEFT JOIN clubs cl ON cl.id=l.seller_club_id LEFT JOIN clubs tc ON tc.id=l.top_club_id "
-                 "WHERE l.status='open'"), []
+
+    where, args = ["COALESCE(cc.verify_status,'approved')='approved'"], []
     if position:
-        sql += " AND cc.position=?"
-        args.append(position)
-    if min_rating:
-        sql += " AND cc.rating>=?"
-        args.append(min_rating)
-    rows = [dict(r) for r in c.execute(sql + " ORDER BY l.id DESC LIMIT 100", args).fetchall()]
+        pos = cardlib.normalize_position(position)
+        names = cardlib.position_aliases(pos) if pos else [position]
+        cond = f"cc.position IN ({','.join('?' * len(names))})"
+        args += names
+        if alt and pos:
+            cond = f"({cond} OR (',' || COALESCE(cc.alt_positions,'') || ',') LIKE ?)"
+            args.append(f"%,{pos},%")
+        where.append(cond)
+    for col, val in (("rating>=", ovr_min), ("rating<=", ovr_max),
+                     *((f"{s}>=", (stat_mins or {}).get(s)) for s in cardlib.STATS)):
+        if val is not None:
+            where.append(f"cc.{col}?")
+            args.append(int(val))
+    if verified:
+        where.append("cc.renderz_status='match'")
+    cond_sql = " AND ".join(where)
+
+    c = appdb.db()
+    try:
+        rows, agents = [], []
+        if kind != "agent":
+            sql = ("SELECT l.*, cl.name AS seller_name, tc.name AS top_club_name "
+                   "FROM transfer_lots l JOIN club_cards cc ON cc.id=l.card_id "
+                   "LEFT JOIN clubs cl ON cl.id=l.seller_club_id LEFT JOIN clubs tc ON tc.id=l.top_club_id "
+                   f"WHERE l.status='open' AND {cond_sql}")
+            largs = list(args)
+            if kind in ("fix", "auction"):
+                sql += " AND l.kind=?"
+                largs.append(kind)
+            rows = [dict(r) for r in c.execute(sql + " ORDER BY l.id DESC LIMIT 2000", largs).fetchall()]
+        if kind in (None, "", "agent"):
+            agents = [dict(r) for r in c.execute(
+                "SELECT cc.*, NULL AS club_name FROM club_cards cc "
+                f"WHERE cc.club_id IS NULL AND {cond_sql} ORDER BY cc.rating DESC, cc.id DESC LIMIT 2000",
+                args).fetchall()]
+        card_rows = {}
+        ids = [r["card_id"] for r in rows]
+        for i in range(0, len(ids), 500):
+            chunk = ids[i:i + 500]
+            for cr in c.execute("SELECT cc.*, cl.name AS club_name FROM club_cards cc "
+                                "LEFT JOIN clubs cl ON cl.id=cc.club_id "
+                                f"WHERE cc.id IN ({','.join('?' * len(chunk))})", chunk).fetchall():
+                card_rows[cr["id"]] = cr
+        facet_rows = c.execute(
+            "SELECT cc.position, cc.nation, cc.league FROM club_cards cc "
+            "WHERE COALESCE(cc.verify_status,'approved')='approved' AND (cc.club_id IS NULL OR cc.id IN "
+            "(SELECT card_id FROM transfer_lots WHERE status='open'))").fetchall()
+    finally:
+        c.close()
+
+    lots = []
     for r in rows:
         _auction_fields(r, now, step)
         r["effective_price"] = r["current_price"] if r["kind"] == "auction" else r["price"]
-
-    sql2, args2 = ("SELECT cc.*, NULL AS seller_name FROM club_cards cc "
-                   "WHERE cc.club_id IS NULL"), []
-    if position:
-        sql2 += " AND cc.position=?"
-        args2.append(position)
-    if min_rating:
-        sql2 += " AND cc.rating>=?"
-        args2.append(min_rating)
-    agents = [dict(r) for r in c.execute(sql2 + " ORDER BY cc.rating DESC LIMIT 100", args2).fetchall()]
+        cr = card_rows.get(r["card_id"])
+        if cr:
+            r.update({k: v for k, v in cardlib.card_public(cr).items() if k not in _LOT_SKIP})
+        lots.append(r)
+    free = []
     for a in agents:
-        a["effective_price"] = free_agent_price(a["rating"])
-    if max_price:
-        rows = [r for r in rows if r["effective_price"] <= max_price]
-        agents = [a for a in agents if a["effective_price"] <= max_price]
-    c.close()
-    return {"lots": rows, "free_agents": agents}
+        item = cardlib.card_public(a, on_market=False)
+        item["effective_price"] = free_agent_price(a["rating"])
+        item["seller_name"] = None
+        free.append(item)
+
+    def keep(item) -> bool:
+        price = item["effective_price"]
+        if price_min is not None and price < int(price_min):
+            return False
+        if price_max is not None and price > int(price_max):
+            return False
+        if nation and (item.get("nation") or "").casefold() != nation.strip().casefold():
+            return False
+        if league and (item.get("league") or "").casefold() != league.strip().casefold():
+            return False
+        if q:
+            needle = renderz.norm_name(q)
+            hay = [renderz.norm_name(item.get(k)) for k in ("name", "real_club", "nation", "league", "program")]
+            if needle and not any(needle in h for h in hay):
+                return False
+        return True
+
+    lots, free = [x for x in lots if keep(x)], [x for x in free if keep(x)]
+    if sort in ("price_asc", "price_desc"):
+        rev = sort == "price_desc"
+        for lst in (lots, free):
+            lst.sort(key=lambda x: (x["effective_price"] * (-1 if rev else 1), -(x["rating"] or 0)))
+    elif sort == "ovr_desc":
+        for lst in (lots, free):
+            lst.sort(key=lambda x: (-(x["rating"] or 0), x["effective_price"]))
+    elif sort == "ending":
+        # аукционы по времени до конца, фиксы следом (новые выше)
+        lots.sort(key=lambda x: (0, x["seconds_left"], 0) if x["kind"] == "auction" and x.get("seconds_left") is not None
+                  else (1, 0, -x["id"]))
+    elif sort == "new":
+        free.sort(key=lambda x: -x["id"])
+    # без sort — прежний порядок: лоты новые выше, агенты по рейтингу
+
+    order = {p: i for i, p in enumerate(cardlib.POSITIONS)}
+    positions = {cardlib.normalize_position(r["position"]) or r["position"] for r in facet_rows if r["position"]}
+    return {
+        "lots": lots[:limit], "free_agents": free[:limit],
+        "facets": {
+            "positions": sorted(positions, key=lambda p: (order.get(p, 99), p)),
+            "nations": sorted({r["nation"] for r in facet_rows if r["nation"]}, key=str.casefold),
+            "leagues": sorted({r["league"] for r in facet_rows if r["league"]}, key=str.casefold),
+        },
+    }
 
 
 def lot_detail(lot_id: int, viewer_club_id: int | None = None) -> dict:
@@ -969,7 +1101,8 @@ def clubs_list(exclude_club_id: int | None = None) -> list[dict]:
 def club_squad(club_id: int) -> list[dict]:
     c = appdb.db()
     rows = [dict(r) for r in c.execute(
-        "SELECT id, name, position, rating FROM club_cards WHERE club_id=? ORDER BY rating DESC", (club_id,)).fetchall()]
+        "SELECT id, name, position, rating, verify_status FROM club_cards WHERE club_id=? ORDER BY rating DESC",
+        (club_id,)).fetchall()]
     for r in rows:
         r["on_market"] = _on_market(c, r["id"])
     c.close()

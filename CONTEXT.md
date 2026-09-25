@@ -58,6 +58,16 @@
   Порядок: Gemini → OpenRouter free → NIM → Ollama → OCR.space → tesseract.
 - Тесты: `gate11_fixes.py`, `gate12_bot.py` (+ все прежние) — зелёные.
 
+## Карточки игроков (25.09)
+`bot/cards.py`, `bot/card_ocr.py`, `bot/renderz.py`, `bot/schema_cards.py`, `miniapp/routes_cards.py`,
+`static/features/cards.js`; контракт — `docs/API-cards.md`. Владелец добавляет карточку в «Клуб»
+(фото → OCR-автозаполнение, ссылка RenderZ → сверка имя/OVR/позиция, или вручную) → `pending` →
+судья/админ одобряет (или авто при полном совпадении с RenderZ). Непроверенные нельзя продать/обменять.
+RenderZ: только одна страница по ссылке от игрока (robots.txt запрещает /api/*, ToS — раздачу их базы),
+их статы/картинки не храним. Фото — `data/media/cards/` (вне git, EXIF срезается). Рынок: поиск, позиция
+(+доп.), OVR/цена, тип, сборная/лига, минимумы статов, сортировка. Статика отдаётся с `Cache-Control:
+no-cache`. Тест: `tests/gate20_cards.py`.
+
 ## Лиги с названиями дивизионов и участники (25.09)
 `bot/league_admin.py` + `miniapp/routes_leagues.py` + `static/features/leagues.js`.
 Админка → «🏆 Лиги и участники»: сезон с дивизионами по названиям (Ла Лига, Серия А, Лига 1, Лига 2,

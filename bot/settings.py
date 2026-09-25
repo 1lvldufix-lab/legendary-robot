@@ -39,6 +39,11 @@ DEFAULTS: dict[str, str] = {
     "auction_hours": "24",               # аукцион: длительность лота по умолчанию, ч
     "auction_snipe_minutes": "10",       # анти-снайпинг: ставка в последние N мин продлевает на N мин
     "training_limit_per_week": "10",     # fair-play: тренировок FC Mobile на клуб за неделю (пн–вс)
+    "squad_edit_open": "1",              # 1 = владельцы могут добавлять/удалять карточки своего состава
+    "squad_max_cards": "60",             # лимит карточек в составе клуба
+    "cards_require_approval": "1",       # 1 = карточка владельца ждёт судью; 0 = сразу одобрена
+    "cards_auto_approve_renderz": "1",   # 1 = полное совпадение с RenderZ одобряет без судьи
+    "renderz_verify": "1",               # 0 = проверка по ссылке RenderZ выключена
 }
 
 

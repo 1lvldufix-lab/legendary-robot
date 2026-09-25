@@ -14,6 +14,8 @@ load_dotenv(Path(__file__).resolve().parent / ".env")
 
 # Корень проекта (logovo-clone/) — для абсолютных путей к БД и статике
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
+# загруженные картинки (фото карточек игроков): data/media/cards/<random>.jpg
+MEDIA_DIR = Path(os.environ.get("MEDIA_DIR") or PROJECT_ROOT / "data" / "media")
 
 BOT_TOKEN = os.environ.get("BOT_TOKEN", "")           # токен турнирного бота
 ADMIN_IDS = {int(x) for x in os.environ.get("ADMIN_IDS", "").replace(",", " ").split() if x.strip().isdigit()}

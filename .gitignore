@@ -4,3 +4,4 @@ __pycache__/
 bot/.env
 backups/
 .hoplite/
+data/

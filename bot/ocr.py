@@ -73,6 +73,8 @@ OPENROUTER_MODELS = [m for m in (config.OPENROUTER_MODELS or _DEFAULT_OPENROUTER
 GEMINI_MODEL = config.GEMINI_MODEL
 
 _TIMEOUT = 90
+# текстовые OCR без vision: промпт не понимают, для карточек игроков (card_ocr) не годятся
+TEXT_PROVIDERS = ("ocrspace", "tesseract")
 _LOCAL_TIMEOUT = 240  # CPU-инференс 3–4B модели на один скрин — десятки секунд
 
 
@@ -93,13 +95,13 @@ def _post_json(url: str, payload: dict, headers: dict, timeout: int = _TIMEOUT) 
 
 def _openai_style_vl(url: str, key: str, model: str, extra_headers: dict | None = None,
                      max_tokens: int = 2000) -> callable:
-    def call(image_bytes: bytes) -> str:
+    def call(image_bytes: bytes, prompt: str | None = None) -> str:
         payload = {
             "model": model,
             "messages": [{
                 "role": "user",
                 "content": [
-                    {"type": "text", "text": SYSTEM_PROMPT},
+                    {"type": "text", "text": prompt or SYSTEM_PROMPT},
                     {"type": "image_url", "image_url": {"url": _data_uri(image_bytes)}},
                 ],
             }],
@@ -111,13 +113,13 @@ def _openai_style_vl(url: str, key: str, model: str, extra_headers: dict | None 
     return call
 
 
-def _gemini_call(image_bytes: bytes) -> str:
+def _gemini_call(image_bytes: bytes, prompt: str | None = None) -> str:
     url = (f"https://generativelanguage.googleapis.com/v1beta/models/"
            f"{GEMINI_MODEL}:generateContent?key={config.GEMINI_API_KEY}")
     payload = {
         "contents": [{
             "parts": [
-                {"text": SYSTEM_PROMPT},
+                {"text": prompt or SYSTEM_PROMPT},
                 {"inline_data": {"mime_type": "image/jpeg",
                                  "data": base64.b64encode(image_bytes).decode()}},
             ]
@@ -128,11 +130,11 @@ def _gemini_call(image_bytes: bytes) -> str:
     return data["candidates"][0]["content"]["parts"][0]["text"]
 
 
-def _ollama_call(image_bytes: bytes) -> str:
+def _ollama_call(image_bytes: bytes, prompt: str | None = None) -> str:
     """Локальная vision-модель (Ollama /api/chat, format=json — ответ сразу JSON)."""
     payload = {
         "model": config.OLLAMA_MODEL,
-        "messages": [{"role": "user", "content": SYSTEM_PROMPT,
+        "messages": [{"role": "user", "content": prompt or SYSTEM_PROMPT,
                       "images": [base64.b64encode(image_bytes).decode()]}],
         "stream": False,
         "format": "json",
@@ -142,7 +144,7 @@ def _ollama_call(image_bytes: bytes) -> str:
     return data["message"]["content"]
 
 
-def _ocrspace_call(image_bytes: bytes) -> str:
+def _ocrspace_call(image_bytes: bytes, prompt: str | None = None) -> str:
     """OCR.space: сырой текст → эвристический разбор (без ИИ-vision)."""
     boundary = "----kurilkaocr"
     body = (
@@ -162,7 +164,7 @@ def _ocrspace_call(image_bytes: bytes) -> str:
     return data.get("ParsedResults", [{}])[0].get("ParsedText", "")
 
 
-def _tesseract_call(image_bytes: bytes) -> str:
+def _tesseract_call(image_bytes: bytes, prompt: str | None = None) -> str:
     if not shutil.which("tesseract"):
         raise RuntimeError("tesseract не установлен")
     with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as f:
@@ -269,7 +271,7 @@ def test_provider(row: dict) -> dict:
 
 
 def build_cascade() -> list[tuple[str, callable]]:
-    """Список (имя, callable(image_bytes)->str) доступных провайдеров по порядку."""
+    """Список (имя, callable(image_bytes, prompt=None)->str) доступных провайдеров по порядку."""
     cascade: list[tuple[str, callable]] = []
     custom_first, custom_last = _custom_providers()
     cascade += custom_first

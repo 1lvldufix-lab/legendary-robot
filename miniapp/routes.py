@@ -586,11 +586,30 @@ async def api_transfers_view(request):
 async def api_transfers_market(request):
     u = require_active_user(request)
     q = request.rel_url.query
-    data = transfers_engine.market_list(
-        position=q.get("position") or None,
-        min_rating=int(q["min_rating"]) if q.get("min_rating") else None,
-        max_price=int(q["max_price"]) if q.get("max_price") else None,
-    )
+
+    def num(*keys):
+        for k in keys:
+            if (q.get(k) or "").strip():
+                return int(q[k])
+        return None
+
+    try:
+        data = transfers_engine.market_list(
+            position=q.get("position") or None,
+            q=(q.get("q") or "").strip()[:60] or None,
+            alt=q.get("alt") in ("1", "true"),
+            ovr_min=num("ovr_min", "min_rating"), ovr_max=num("ovr_max"),
+            price_min=num("price_min"), price_max=num("price_max", "max_price"),
+            kind=q.get("kind") or None,
+            verified=q.get("verified") in ("1", "true"),
+            nation=q.get("nation") or None, league=q.get("league") or None,
+            sort=q.get("sort") or None,
+            stat_mins={s: num(f"{s}_min") for s in ("pac", "sho", "pas", "dri", "def", "phy")},
+        )
+    except ValueError:
+        return err("Фильтр: нужно целое число", 400, "BAD_FILTER")
+    except transfers_engine.TransferError as e:
+        return err(str(e), 400, e.code)
     my_club = _my_club_id(u)
     if my_club:
         data["lots"] = [r for r in data["lots"] if r["seller_club_id"] != my_club]
