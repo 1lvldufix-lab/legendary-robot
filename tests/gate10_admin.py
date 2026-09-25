@@ -6,6 +6,8 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "bot"))
 os.environ["DB_PATH"] = "/tmp/gate10.db"
+os.environ.setdefault("BOT_TOKEN", "123456:TEST")
+os.environ["ADMIN_IDS"] = "4999"
 if os.path.exists("/tmp/gate10.db"):
     os.remove("/tmp/gate10.db")
 
@@ -137,6 +139,56 @@ c.execute("INSERT INTO tournament_audit_log (actor_telegram_id, action, details)
 n_audit = c.execute("SELECT COUNT(*) n FROM tournament_audit_log").fetchone()["n"]
 c.close()
 check("audit-журнал растёт", n_audit >= 2, str(n_audit))
+
+# 8) API настроек и прав: GET работает, мусор/отрицательные/неизвестные ключи — 400,
+#    админ (не root) не назначает админов, root не снимается из аппа
+import asyncio  # noqa: E402
+import hashlib  # noqa: E402
+import hmac  # noqa: E402
+import json  # noqa: E402
+import time  # noqa: E402
+from urllib.parse import urlencode  # noqa: E402
+
+from aiohttp.test_utils import TestClient, TestServer  # noqa: E402
+
+import config  # noqa: E402
+
+
+def _sign(uid):
+    pairs = {"auth_date": str(int(time.time())), "user": json.dumps({"id": uid, "first_name": "A"})}
+    dcs = "\n".join(f"{k}={pairs[k]}" for k in sorted(pairs))
+    key = hmac.new(b"WebAppData", config.BOT_TOKEN.encode(), hashlib.sha256).digest()
+    pairs["hash"] = hmac.new(key, dcs.encode(), hashlib.sha256).hexdigest()
+    return {"X-Telegram-Init-Data": urlencode(pairs)}
+
+
+async def _api_checks():
+    from miniapp.server import build_app
+    cl = TestClient(TestServer(build_app()))
+    await cl.start_server()
+    root, adm = _sign(4999), _sign(4998)
+    await cl.get("/api/bootstrap", headers=adm)
+    c2 = db.db()
+    c2.execute("UPDATE users SET is_admin=1 WHERE telegram_id=4998")
+    c2.commit()
+    c2.close()
+    r = await cl.get("/api/admin/settings", headers=adm)
+    check("GET настроек работает (раньше 500)", r.status == 200 and "max_legs" in (await r.json())["settings"])
+    for bad in ({"max_legs": "abc"}, {"max_bet": "-5"}, {"evil_key": "1"}):
+        r = await cl.post("/api/admin/settings", headers=adm, data=json.dumps({"settings": bad}))
+        check(f"настройка отклонена {bad}", r.status == 400)
+    r = await cl.post("/api/admin/settings", headers=adm, data=json.dumps({"settings": {"max_legs": "4"}}))
+    check("валидная настройка сохранена", r.status == 200 and appsettings.setting_int("max_legs") == 4)
+    appsettings.set_setting("max_legs", 5)
+    r = await cl.post("/api/admin/players/4001", headers=adm, data=json.dumps({"action": "make_admin"}))
+    check("админ не назначает админов", r.status == 403)
+    r = await cl.post("/api/admin/players/4999", headers=root, data=json.dumps({"action": "unmake_admin"}))
+    check("root из ADMIN_IDS не снимается из аппа", r.status == 400)
+    r = await cl.post("/api/admin/players/4998", headers=root, data=json.dumps({"action": "unmake_admin"}))
+    check("root снимает админа", r.status == 200)
+    await cl.close()
+
+asyncio.run(_api_checks())
 
 print()
 print("GATE 10:", "OK" if not fails else f"ПРОВАЛЫ: {fails}")

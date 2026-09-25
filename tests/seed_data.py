@@ -39,13 +39,12 @@ SCORES_T1 = [(2, 1), (0, 3), (1, 1), (4, 2), (2, 0)]
 
 
 def wipe():
+    """Чистит все рабочие таблицы (включая таблицы фич из schema_*.py), bot_settings не трогает."""
     c = db.db()
-    for t in ("matches", "match_goals", "ties", "tours", "clubs", "club_players", "club_cards",
-              "divisions", "tournaments", "players", "users", "bets", "bet_legs", "markets",
-              "odds_history", "favorites", "notifications", "balance_history", "user_streaks",
-              "processed_screenshots", "transfers", "transfer_lots", "debts", "club_requests",
-              "promo_codes", "promo_activations", "tournament_elo", "tournament_admins",
-              "tournament_audit_log", "reminder_log", "challenge_links", "saved_coupons"):
+    tables = [r[0] for r in c.execute(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' "
+        "AND name NOT IN ('bot_settings', 'achievements')").fetchall()]
+    for t in tables:
         c.execute(f"DELETE FROM {t}")
     c.commit()
     c.close()

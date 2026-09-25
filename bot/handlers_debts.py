@@ -3,6 +3,7 @@
 Публикации только в ЛС (решение 09). reminder_log пишется по дате (3 раза/день,
 kind=debts_ЧЧ) — история не затирается.
 """
+import asyncio
 import logging
 from datetime import datetime
 
@@ -10,6 +11,7 @@ from telegram import Update
 from telegram.ext import ContextTypes
 
 import core
+import cp_fetch
 import db as appdb
 import parser_cp
 import settings as appsettings
@@ -96,12 +98,23 @@ async def cmd_scan(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         return
     if not context.args:
         await update.message.reply_text(
-            "Формат: /scan <файл.html|url> [турнир_id]\n"
-            "Сайт за Cloudflare — надёжнее сохранить страницу (Ctrl+S) и дать файл.")
+            "Формат: /scan <файл.html|https://challenge.place/c/…> [турнир_id]\n"
+            "Ссылка: бот пробует обычный запрос, затем headless-браузер (если установлен).\n"
+            "Сайт за Cloudflare — если не выйдет, сохрани страницу (Ctrl+S) и дай файл.")
         return
     source = context.args[0]
+    if len(context.args) > 1 and not context.args[1].isdigit():
+        await update.message.reply_text("турнир_id — число: /scan <файл|url> 3")
+        return
     tournament_id = int(context.args[1]) if len(context.args) > 1 else None
-    if not source.startswith("http"):
+    is_url = source.lower().startswith(("http://", "https://"))
+    if is_url:
+        try:
+            source = cp_fetch.validate_url(source)
+        except cp_fetch.CPFetchError as e:
+            await update.message.reply_text(f"⛔ {e}")
+            return
+    else:
         # локальный файл читает сервер — только root и только сохранённая страница/фикстура
         if not core.is_root(update.effective_user.id):
             await update.message.reply_text("⛔ Скан из файла — только root. Дай ссылку на турнир.")
@@ -109,10 +122,11 @@ async def cmd_scan(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         if not source.lower().endswith((".html", ".htm", ".json")):
             await update.message.reply_text("Файл должен быть .html/.htm/.json (сохранённая страница).")
             return
-    await update.message.reply_text("⏳ Сканирую…")
+    await update.message.reply_text("⏳ Загружаю страницу турнира…" if is_url else "⏳ Сканирую…")
     try:
-        if source.startswith("http"):
-            text = await parse_cp_async(source)
+        if is_url:
+            text = await parse_cp_async(source, progress=update.message.reply_text)
+            await update.message.reply_text("📥 Страница получена, импортирую…")
         else:
             import os
             if not os.path.exists(source):
@@ -147,9 +161,16 @@ async def cmd_scan(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await update.message.reply_text(f"⚠️ Скан не удался: {e}")
 
 
-async def parse_cp_async(url: str) -> str:
-    import asyncio
-    return await asyncio.to_thread(parser_cp.try_fetch_via_browser, url)
+async def parse_cp_async(url: str, progress=None) -> str:
+    """Блокирующая загрузка (urllib/Playwright) — в отдельном потоке;
+    progress — корутина-ответ в чат, зовётся из потока через loop бота."""
+    loop = asyncio.get_running_loop()
+
+    def on_progress(text: str) -> None:
+        if progress:
+            asyncio.run_coroutine_threadsafe(progress(text), loop)
+
+    return await asyncio.to_thread(cp_fetch.fetch_page, url, 90, on_progress)
 
 
 # ===== /paid — закрыть долг =====

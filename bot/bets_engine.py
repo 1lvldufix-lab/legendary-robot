@@ -196,6 +196,9 @@ def _leg_result_now(c, leg: dict) -> str:
     """Исход ноги по текущему состоянию БД: tie_* — по серии, остальное — по счёту."""
     m = c.execute("SELECT * FROM matches WHERE id=?", (leg["match_id"],)).fetchone()
     if leg["market_code"] in TIE_CODES:
+        # игра серии отменена до старта (пара пересобрана/снята) — рынок серии аннулирован
+        if m and m["status"] == "cancelled":
+            return "void"
         return _resolve_tie_leg(c, leg, dict(m)) if m else "void"
     if not m or m["status"] == "cancelled":
         return "void"
@@ -216,25 +219,41 @@ def _scope_leg_filter(c, match_id: int) -> tuple[str, list]:
 
 
 def _paid_for_bet(c, b: dict) -> int:
-    """Сколько по купону реально выплачено (выплаты минус прошлые откаты)."""
+    """Сколько по купону реально выплачено (выплаты минус прошлые откаты, в т.ч. неполные)."""
     row = c.execute(
-        "SELECT COUNT(*) n, COALESCE(SUM(delta),0) s FROM balance_history WHERE user_id=? AND reason IN (?,?)",
-        (b["user_id"], f"выплата по купону #{b['id']}", f"пересчёт купона #{b['id']}")).fetchone()
+        "SELECT COUNT(*) n, COALESCE(SUM(delta),0) s FROM balance_history WHERE user_id=? "
+        "AND (reason IN (?,?) OR reason LIKE ?)",
+        (b["user_id"], f"выплата по купону #{b['id']}", f"пересчёт купона #{b['id']}",
+         f"пересчёт купона #{b['id']} (%")).fetchone()
     if row["n"]:
         return int(row["s"])
     return int(b["potential_win"] or 0) if b["status"] in ("won", "void") else 0
 
 
+def _outstanding_for_bet(c, b: dict) -> int:
+    """Недосписанное при прошлом пересчёте (баланса не хватило) — удерживается из новой выплаты."""
+    row = c.execute(
+        "SELECT COUNT(*) n, COALESCE(SUM(delta),0) s FROM balance_history WHERE user_id=? "
+        "AND (reason IN (?,?) OR reason LIKE ?)",
+        (b["user_id"], f"выплата по купону #{b['id']}", f"пересчёт купона #{b['id']}",
+         f"пересчёт купона #{b['id']} (%")).fetchone()
+    return max(0, int(row["s"])) if row["n"] else 0
+
+
 def unsettle_for_match(c, match_id: int) -> list[int]:
     """Результат матча изменён: откатить расчёт купонов, чей исход по этому матчу
     (или по его серии) поменялся. Работает в транзакции вызывающего, без commit.
-    Идемпотентно: при том же счёте ничего не трогает. → id переоткрытых купонов."""
+    Идемпотентно: при том же счёте ничего не трогает. → id переоткрытых купонов.
+
+    Баланс (bot_settings resettle_allow_negative, деф. 0): списываем не больше, чем есть
+    на балансе; недостачу пишем в причину, аудит и уведомление. 1 — старое поведение (минус)."""
     where, args = _scope_leg_filter(c, match_id)
     legs = [dict(r) for r in c.execute(
         f"SELECT l.*, b.status AS bet_status FROM bet_legs l JOIN bets b ON b.id=l.bet_id WHERE {where}",
         args).fetchall()]
     lim = _limits()
     xp_win = appsettings.setting_int("xp_per_win", 100)
+    allow_negative = appsettings.setting_int("resettle_allow_negative", 0) == 1
     reopened: list[int] = []
     for leg in legs:
         new = _leg_result_now(c, leg)
@@ -249,12 +268,25 @@ def unsettle_for_match(c, match_id: int) -> list[int]:
         if leg["bet_status"] not in ("won", "lost") or old == "pending":
             continue
         b = dict(c.execute("SELECT * FROM bets WHERE id=?", (leg["bet_id"],)).fetchone())
-        paid = _paid_for_bet(c, b)
+        # проигранный купон ничего не держит (недостача прошлого clamp удержится при выплате)
+        paid = _paid_for_bet(c, b) if b["status"] == "won" else 0
+        take, short = paid, 0
         if paid:
+            if not allow_negative:
+                bal = c.execute("SELECT balance FROM users WHERE id=?", (b["user_id"],)).fetchone()["balance"]
+                take = max(0, min(paid, int(bal or 0)))
+                short = paid - take
             c.execute("UPDATE users SET balance=balance-?, total_won=total_won-? WHERE id=?",
-                      (paid, paid if b["status"] == "won" else 0, b["user_id"]))
+                      (take, paid if b["status"] == "won" else 0, b["user_id"]))
+            reason = f"пересчёт купона #{b['id']}" + (f" (не хватило {short})" if short else "")
             c.execute("INSERT INTO balance_history (user_id, delta, reason) VALUES (?,?,?)",
-                      (b["user_id"], -paid, f"пересчёт купона #{b['id']}"))
+                      (b["user_id"], -take, reason))
+            if short:
+                c.execute(
+                    "INSERT INTO tournament_audit_log (tournament_id, actor_telegram_id, action, details) "
+                    "VALUES ((SELECT tournament_id FROM matches WHERE id=?), NULL, 'resettle_shortfall', ?)",
+                    (match_id, f"купон #{b['id']} user={b['user_id']}: к списанию {paid}, списано {take}, "
+                               f"не хватило {short}"))
         if b["status"] == "won":
             c.execute("UPDATE users SET bets_won=CASE WHEN bets_won>0 THEN bets_won-1 ELSE 0 END, "
                       "xp=CASE WHEN xp>? THEN xp-? ELSE 0 END WHERE id=?",
@@ -265,8 +297,13 @@ def unsettle_for_match(c, match_id: int) -> list[int]:
         potential = min(int(b["amount"] * odds), lim["max_payout"])
         c.execute("UPDATE bets SET status='open', potential_win=? WHERE id=?", (potential, b["id"]))
         c.execute("UPDATE bet_legs SET result='pending', settled_at=NULL WHERE id=?", (leg["id"],))
-        _notify(c, b["user_id"], f"♻️ Результат матча исправлен — купон #{b['id']} пересчитывается"
-                                 + (f" (списано {paid} дыма прошлой выплаты)" if paid else ""))
+        note = ""
+        if paid and short:
+            note = (f" (списано {take} из {paid} дыма прошлой выплаты — на балансе не хватило {short}, "
+                    f"в минус не уходим; недостача удержится, если купон снова сыграет)")
+        elif paid:
+            note = f" (списано {paid} дыма прошлой выплаты)"
+        _notify(c, b["user_id"], f"♻️ Результат матча исправлен — купон #{b['id']} пересчитывается{note}")
         reopened.append(b["id"])
     return reopened
 
@@ -324,10 +361,16 @@ def settle_match(match_id: int) -> dict:
             payout = min(int(b["amount"] * eff_odds), lim["max_payout"]) if any_void else b["potential_win"]
         c.execute("UPDATE bets SET status=?, potential_win=? WHERE id=?", (status, payout, b["id"]))
         if payout > 0:
+            # недостача прошлого пересчёта (clamp) удерживается из повторной выплаты
+            held = min(payout, _outstanding_for_bet(c, b))
+            credit = payout - held
             c.execute("UPDATE users SET balance=balance+?, total_won=total_won+? WHERE id=?",
-                      (payout, payout if status == "won" else 0, b["user_id"]))
+                      (credit, payout if status == "won" else 0, b["user_id"]))
             c.execute("INSERT INTO balance_history (user_id, delta, reason) VALUES (?,?,?)",
-                      (b["user_id"], payout, f"выплата по купону #{b['id']}"))
+                      (b["user_id"], credit, f"выплата по купону #{b['id']}"))
+            if held:
+                _notify(c, b["user_id"], f"Из выплаты по купону #{b['id']} удержано {held} дыма — "
+                                         f"недостача прошлого пересчёта")
         if status == "won":
             c.execute("UPDATE users SET bets_won=bets_won+1 WHERE id=?", (b["user_id"],))
             _apply_xp(c, b["user_id"], xp_win)

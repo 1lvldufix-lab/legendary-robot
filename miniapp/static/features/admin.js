@@ -16,6 +16,7 @@ export async function openAdmin() {
     renderAdminPlayers();
     renderAdminAudit();
     renderAdminOcr();
+    renderAdminSettings();
     hooks.adminCards.forEach((fn) => { try { fn(); } catch (e) { console.error(e); } });
     $('#admin-sheet').hidden = false;
   } catch (e) { toast(e.message); }
@@ -76,16 +77,90 @@ async function renderAdminBets() {
     </div>`).join('') : '<div class="empty-note">Открытых купонов нет.</div>';
 }
 
-async function renderAdminPlayers() {
-  const { players } = await api('/api/admin/players');
-  $('#admin-players').innerHTML = players.slice(0, 10).map((p) => `<div class="bet-history-item">
-      <div><div>${esc(p.username || p.first_name || p.telegram_id)} ${p.is_frozen ? '🧊' : ''} ${p.is_admin ? '👑' : ''}</div>
-      <div class="sub">${fmt(p.balance)} дыма · ур. ${p.level}</div></div>
-      <div style="display:flex;gap:4px">
+async function renderAdminPlayers(q = '') {
+  const el = $('#admin-players');
+  if (!el.querySelector('#admin-player-q')) {
+    el.innerHTML = `<input class="amount-input" id="admin-player-q" placeholder="Поиск: @ник, имя или ID" style="margin:0 0 8px;font-size:14px">
+      <div id="admin-player-list"></div>`;
+    let t;
+    el.querySelector('#admin-player-q').addEventListener('input', (e) => {
+      clearTimeout(t);
+      t = setTimeout(() => renderAdminPlayers(e.target.value.trim()), 250);
+    });
+  }
+  const { players } = await api(`/api/admin/players${q ? `?q=${encodeURIComponent(q)}` : ''}`);
+  const me = state.user?.user_id;
+  $('#admin-player-list').innerHTML = players.slice(0, 30).map((p) => `<div class="bet-history-item">
+      <div><div>${esc(p.username ? '@' + p.username : (p.first_name || p.telegram_id))} ${p.is_frozen ? '🧊' : ''} ${p.is_admin ? '👑' : ''}</div>
+      <div class="sub">${fmt(p.balance)} дыма · ур. ${p.level} · ID ${p.telegram_id}</div></div>
+      <div class="adm-actions">
         <button class="lot-btn secondary" data-ban="${p.telegram_id}">${p.is_frozen ? 'Разбан' : 'Бан'}</button>
-        <button class="lot-btn secondary" data-adjust="${p.telegram_id}">+дым</button>
+        ${p.telegram_id !== me ? `<button class="lot-btn secondary" data-adjust="${p.telegram_id}">±дым</button>` : ''}
+        ${state.user?.is_root && p.telegram_id !== me ? `<button class="lot-btn secondary" data-admin-toggle="${p.telegram_id}" data-on="${p.is_admin ? 1 : 0}">${p.is_admin ? 'Снять админа' : 'Сделать админом'}</button>` : ''}
       </div>
-    </div>`).join('');
+    </div>`).join('') || '<div class="empty-note">Никого не нашёл.</div>';
+}
+
+/* ===== настройки (bot_settings) ===== */
+
+const SETTING_GROUPS = [
+  ['🎟 Ставки', {
+    min_bet: 'Мин. ставка, дым', max_bet: 'Макс. ставка, дым', max_payout: 'Макс. выплата, дым',
+    max_open_bets: 'Открытых купонов на игрока', max_open_exposure: 'Макс. сумма выплат по открытым', max_legs: 'Событий в экспрессе',
+    odds_margin_pct: 'Маржа кэфов, %', notify_bets_dm: 'Итог ставки в ЛС (1/0)', resettle_allow_negative: 'Пересчёт может увести в минус (1/0)',
+  }],
+  ['⭐ Прогрессия', {
+    xp_per_win: 'XP за выигрыш', level_xp_step: 'XP на уровень (×N)', streak_bonus_base: 'Бонус серии: старт',
+    streak_bonus_step: 'Бонус серии: шаг', streak_bonus_cap: 'Бонус серии: максимум',
+  }],
+  ['💱 Трансферы', {
+    transfer_deal_threshold: 'Сделка через судью от, ₼', transfer_commission_pct: 'Комиссия, %', free_agent_k: 'Цена агента: K (рейтинг²×K)',
+    auction_hours: 'Аукцион, часов', auction_min_step_pct: 'Мин. шаг ставки, %', auction_snipe_minutes: 'Антиснайпинг, мин',
+  }],
+  ['🏆 Турнир', {
+    default_tour_days: 'Дней на тур', dispute_window_hours: 'Окно спора, ч', unplayed_fine: 'Штраф за неигранный, ₼',
+    prize_champion: 'Приз чемпиону, ₼', prize_second: 'Приз 2 месту, ₼', prize_third: 'Приз 3 месту, ₼', prize_cup_winner: 'Приз за кубок, ₼',
+    training_limit_per_week: 'Тренировок в неделю (лимит)',
+  }],
+];
+
+async function renderAdminSettings() {
+  let card = document.getElementById('admin-settings-card');
+  if (!card) {
+    card = document.createElement('div');
+    card.className = 'card';
+    card.id = 'admin-settings-card';
+    card.innerHTML = '<div class="card-title">⚙️ Настройки</div><div id="admin-settings"></div>';
+    const audit = $('#admin-audit')?.parentElement;
+    audit.parentElement.insertBefore(card, audit);
+  }
+  const el = card.querySelector('#admin-settings');
+  let data;
+  try { data = await api('/api/admin/settings'); } catch (e) { el.innerHTML = `<div class="empty-note">${esc(e.message)}</div>`; return; }
+  const settings = data.settings;
+  const known = new Set(SETTING_GROUPS.flatMap(([, g]) => Object.keys(g)));
+  known.add('bets_paused'); known.add('bets_paused_reason');
+  const other = Object.keys(settings).filter((k) => !known.has(k)).sort();
+  const groups = [...SETTING_GROUPS, ...(other.length ? [['🧩 Прочее', Object.fromEntries(other.map((k) => [k, k]))]] : [])];
+  el.innerHTML = `<form id="settings-form">${groups.map(([title, keys]) => {
+    const rows = Object.entries(keys).filter(([k]) => k in settings);
+    if (!rows.length) return '';
+    return `<details class="set-group"><summary>${title}</summary>${rows.map(([k, label]) => `
+      <label class="set-row"><span>${esc(label)}</span>
+        <input class="amount-input" name="${esc(k)}" value="${esc(settings[k])}" inputmode="decimal"></label>`).join('')}</details>`;
+  }).join('')}
+    <button class="bonus-btn" type="submit" style="margin-top:10px">💾 Сохранить изменения</button></form>`;
+  $('#settings-form').onsubmit = async (ev) => {
+    ev.preventDefault();
+    const changed = {};
+    for (const [k, v] of new FormData(ev.target).entries()) if (String(settings[k]) !== v) changed[k] = v;
+    if (!Object.keys(changed).length) return toast('Ничего не изменилось');
+    try {
+      await api('/api/admin/settings', { method: 'POST', body: JSON.stringify({ settings: changed }) });
+      toast(`Сохранено: ${Object.keys(changed).length}`);
+      renderAdminSettings();
+    } catch (e) { toast(e.message, 5000); }
+  };
 }
 
 async function renderAdminAudit() {
@@ -116,6 +191,17 @@ document.addEventListener('click', async (ev) => {
       await api(`/api/admin/players/${tg}`, { method: 'POST', body: JSON.stringify({ action: freeze ? 'ban' : 'unban', reason }) });
       toast(freeze ? 'Заморожен (баланс цел)' : 'Разбанен');
       openAdmin();
+    } catch (e) { toast(e.message); }
+    return;
+  }
+  const admBtn = ev.target.closest('[data-admin-toggle]');
+  if (admBtn) {
+    const on = admBtn.dataset.on === '1';
+    if (!confirm(on ? 'Снять права админа?' : 'Выдать права админа мини-аппа?')) return;
+    try {
+      await api(`/api/admin/players/${admBtn.dataset.adminToggle}`, { method: 'POST', body: JSON.stringify({ action: on ? 'unmake_admin' : 'make_admin' }) });
+      toast(on ? 'Админ снят' : 'Админ назначен');
+      renderAdminPlayers($('#admin-player-q')?.value.trim() || '');
     } catch (e) { toast(e.message); }
     return;
   }

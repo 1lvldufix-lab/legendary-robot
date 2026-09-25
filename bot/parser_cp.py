@@ -2,7 +2,7 @@
 
 Сайт за Cloudflare: отдельного API нет, весь дашборд лежит в
 window.__INITIAL_STATE__ (SSR). Честный путь — реальный браузер:
-- в проде: локальный headless-браузер (если установлен playwright);
+- по ссылке: cp_fetch (обычный HTTPS, затем headless-браузер, если установлен playwright);
 - всегда: /scan <файл.html|файл.json> со сохранённой страницей.
 
 Иерархия: stage → round → series → матчи (order 1..n, серии до 2 побед).
@@ -138,43 +138,9 @@ def import_state(state: dict, tournament_id: int) -> dict:
 
 
 def try_fetch_via_browser(url: str) -> str:
-    """Headless-браузер: открывает турнир, ждёт Cloudflare, достаёт стейт.
-    Cloudflare детектит playwright-автоматизацию (проверено 25.09: и headless-shell,
-    и headed Chrome через CDP ловят челлендж) — тогда поднимаем внятную ошибку:
-    сохранить страницу (Ctrl+S) и дать боту файл, или скан через browser-use."""
-    try:
-        from playwright.sync_api import sync_playwright
-    except ImportError:
-        raise RuntimeError(
-            "playwright не установлен: venv/bin/pip install playwright && "
-            "venv/bin/python -m playwright install chromium. Либо сохрани страницу "
-            "(Ctrl+S) и дай боту файл: /scan <путь>.")
-    html = None
-    with sync_playwright() as p:
-        for channel in (None, "chrome"):   # playwright chromium, затем установленный Chrome
-            try:
-                browser = p.chromium.launch(headless=True, channel=channel)
-            except Exception:
-                continue
-            page = browser.new_page()
-            try:
-                page.goto(url, wait_until="domcontentloaded", timeout=60000)
-                page.wait_for_timeout(10000)  # челлендж Cloudflare + гидрация SPA
-                state_json = page.evaluate(
-                    "() => { const s = window.__INITIAL_STATE__;"
-                    " return s ? JSON.stringify(s.rooms['room-challenge-dashboard'] ?? s) : null; }")
-                if state_json:
-                    browser.close()
-                    return state_json
-                html = page.content()
-            finally:
-                browser.close()
-    if html and "challenge-dashboard" not in html:
-        raise RuntimeError(
-            "Cloudflare не пропустил автоматизацию (Just a moment). Сохрани страницу "
-            "турнира в обычном браузере (Ctrl+S, «веб-страница целиком») и дай боту "
-            "файл: /scan <путь> — парсер вытащит window.__INITIAL_STATE__ из HTML.")
-    return html or ""
+    """Совместимость: загрузка по ссылке живёт в cp_fetch (plain HTTPS → Playwright)."""
+    import cp_fetch
+    return cp_fetch.fetch_page(url)
 
 
 def format_scan_report(report: dict) -> str:

@@ -110,7 +110,7 @@ HELP_TEXT = (
 
 ADMIN_HELP = (
     "👮 Админ-команды\n\n"
-    "Сезон: /season /cup /tour /pairs /editpair /final\n"
+    "Сезон: /season /cup /cupnext /bracket /tour /pairs /editpair /final\n"
     "Клубы: /club /clubs /catalog\n"
     "Судейство: /judge /disputes /resolve /manual\n"
     "Деньги: /promo /paid /scan\n"
@@ -154,14 +154,15 @@ async def cmd_myid(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 # меню «/» в Telegram: игрокам — короткое, root — полное (BotCommandScopeChat)
 PLAYER_COMMANDS = [
     ("start", "Главное меню"), ("nick", "Ник FC27 для распознавания скринов"),
-    ("tournaments", "Турниры"), ("manual", "Внести счёт вручную"), ("myid", "Мой Telegram ID"),
+    ("tournaments", "Турниры"), ("bracket", "Сетка кубка"), ("manual", "Внести счёт вручную"),
+    ("myid", "Мой Telegram ID"),
 ]
 ADMIN_COMMANDS = PLAYER_COMMANDS + [
     ("season", "Создать сезон лиги"), ("cup", "Создать кубок"), ("club", "Выдать клуб игроку"),
     ("clubs", "Список клубов"), ("catalog", "Каталог клубов FC"), ("calendar", "Сгенерировать календарь"),
     ("tour", "Открыть тур"), ("pairs", "Пары тура"), ("editpair", "Править пару"),
     ("judge", "Выдать/снять судью"), ("disputes", "Спорные матчи"), ("resolve", "Решить спор"),
-    ("final", "Итоги сезона"), ("promo", "Создать промокод"), ("paid", "Закрыть долг"),
+    ("cupnext", "Следующая стадия кубка"), ("final", "Итоги сезона"), ("promo", "Создать промокод"), ("paid", "Закрыть долг"),
     ("scan", "Импорт Challenge Place"), ("admin", "Выдать/снять админа мини-аппа"),
 ]
 
@@ -238,6 +239,8 @@ async def post_init(app: Application) -> None:
     app.job_queue.run_daily(job_daily_backup, time=dtime(4, 0, tzinfo=msk))
     # расчёт купонов → ЛС (формат как у оригинала), выключается bot_settings.notify_bets_dm=0
     app.job_queue.run_repeating(job_push_bet_results, interval=30, first=15)
+    # аукционы: закрытие просроченных + ЛС по трансферам (перебили, итог, судья)
+    app.job_queue.run_repeating(job_transfers, interval=60, first=20)
     try:
         await setup_command_menu(app.bot)
     except Exception as e:
@@ -252,6 +255,24 @@ async def post_init(app: Application) -> None:
 
 
 async def job_push_bet_results(context: ContextTypes.DEFAULT_TYPE) -> None:
+    await _push_bet_results(context)
+
+
+async def job_transfers(context: ContextTypes.DEFAULT_TYPE) -> None:
+    import transfers
+    try:
+        messages = await asyncio.to_thread(transfers.close_expired_auctions)
+    except Exception:
+        log.exception("[transfers] закрытие аукционов")
+        return
+    for tg_id, text in messages:
+        try:
+            await context.bot.send_message(tg_id, text)
+        except Exception as e:  # бот заблокирован / чата нет — очередь уже помечена
+            log.warning("[transfers] ЛС %s не доставлено: %s", tg_id, e)
+
+
+async def _push_bet_results(context: ContextTypes.DEFAULT_TYPE) -> None:
     import settings as appsettings
     c = appdb.db()
     try:

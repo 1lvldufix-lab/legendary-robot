@@ -132,6 +132,16 @@ left = c.execute("SELECT COUNT(*) n FROM notifications WHERE kind='bet' AND tg_s
 c.close()
 check("ЛС: tg_sent проставлен", left == 0)
 
+# 5b) job трансферов: очередь ЛС уходит боту
+import transfers  # noqa: E402
+
+sent.clear()
+orig_close = transfers.close_expired_auctions
+transfers.close_expired_auctions = lambda: [(9001, "🔨 Аукцион завершён"), (9002, "Ставку перебили")]
+asyncio.run(botmain.job_transfers(job_ctx))
+transfers.close_expired_auctions = orig_close
+check("job трансферов шлёт ЛС из очереди", [t for _, t in sent] == ["🔨 Аукцион завершён", "Ставку перебили"], str(sent))
+
 # 6) root из ADMIN_IDS — сразу админ мини-аппа; англ. параметры команд
 from miniapp.helpers import upsert_user  # noqa: E402
 import handlers_tournament as ht  # noqa: E402

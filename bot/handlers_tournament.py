@@ -1,6 +1,7 @@
 """Хендлеры турнирного ядра (блок 4): сезоны, клубы, календарь, туры, таблицы.
 
-Root-команды: /season /cup /club /clubs /calendar /tour /tournaments /pairs /editpair /judge.
+Root-команды: /season /cup /cupnext /club /clubs /calendar /tour /tournaments /pairs /editpair /judge.
+Всем: /bracket — сетка кубка.
 Кнопки меню flesh: 🏆 Турниры, ⚽ Мой Клуб.
 """
 import logging
@@ -130,6 +131,74 @@ async def cmd_cup(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         f"✅ Кубок «{name}» ({FORMAT_NAMES[fmt]}): участников {len(club_ids)}, "
         f"стадия {ties[0]['stage']}, серий {len(ties)}. Серии до 2 побед."
     )
+
+
+# ===== /cupnext /bracket =====
+
+def _cups(active_only: bool = True) -> list[dict]:
+    c = appdb.db()
+    sql = "SELECT * FROM tournaments WHERE format!='league'"
+    if active_only:
+        sql += " AND stage!='finished'"
+    rows = [dict(r) for r in c.execute(sql + " ORDER BY id").fetchall()]
+    c.close()
+    return rows
+
+
+async def cmd_cup_next(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """/cupnext <турнир_id> — принудительно провести следующую стадию (обычно это
+    делается само после решающей игры серии). Идемпотентно."""
+    if not _root_only(update):
+        return await deny(update)
+    args = context.args or []
+    if not args or not args[0].isdigit():
+        cups = _cups()
+        hint = "\n".join(f"#{t['id']} «{t['name']}»" for t in cups) or "Активных кубков нет."
+        await update.message.reply_text(f"Формат: /cupnext <турнир_id>\n{hint}")
+        return
+    tid = int(args[0])
+    res = league.sync_cup(tid, actor_tg=update.effective_user.id)
+    if not res.get("ok"):
+        await update.message.reply_text(f"⚠️ {res.get('error', 'не кубок')}")
+        return
+    parts = []
+    if res["created"]:
+        parts.append(f"создано серий: {len(res['created'])}")
+    if res["rebuilt"]:
+        parts.append(f"пересобрано пар: {len(res['rebuilt'])}")
+    if res["removed"]:
+        parts.append(f"снято серий: {len(res['removed'])}")
+    if res["finished"]:
+        club = league.get_club(res["finished"])
+        parts.append(f"кубок завершён, победитель — {club['name'] if club else res['finished']}")
+    if not parts:
+        c = appdb.db()
+        open_ties = c.execute(
+            "SELECT COUNT(*) n FROM ties WHERE tournament_id=? AND winner_club_id IS NULL", (tid,)).fetchone()["n"]
+        c.close()
+        parts.append(f"без изменений: не решено серий — {open_ties}" if open_ties else "без изменений")
+    core.audit(tid, update.effective_user.id, "cup_next", "; ".join(parts))
+    text = "🏆 " + "; ".join(parts)
+    if res["warnings"]:
+        text += "\n⚠️ " + "\n⚠️ ".join(res["warnings"])
+    await update.message.reply_text(text + "\n\n" + league.format_bracket(tid))
+
+
+async def cmd_bracket(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """/bracket [турнир_id] — сетка кубка текстом (без id — все активные кубки)."""
+    args = context.args or []
+    if args and args[0].isdigit():
+        ids = [int(args[0])]
+    else:
+        ids = [t["id"] for t in _cups()]
+    if not ids:
+        await update.message.reply_text("Активных кубков нет. Формат: /bracket <турнир_id>")
+        return
+    for tid in ids[:5]:
+        text = league.format_bracket(tid)
+        # лимит Telegram — 4096 символов
+        for i in range(0, len(text), 4000):
+            await update.message.reply_text(text[i:i + 4000])
 
 
 # ===== /club =====
@@ -380,6 +449,8 @@ async def menu_my_club(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 HANDLERS = [
     ("command", "season", cmd_season),
     ("command", "cup", cmd_cup),
+    ("command", "cupnext", cmd_cup_next),
+    ("command", "bracket", cmd_bracket),
     ("command", "club", cmd_club),
     ("command", "catalog", cmd_catalog),
     ("command", "clubs", cmd_clubs),

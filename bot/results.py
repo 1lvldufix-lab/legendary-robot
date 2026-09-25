@@ -217,6 +217,14 @@ def finalize_match(match_id: int, score1: int, score2: int,
             except Exception:
                 log.exception("settle_match упал на матче %s", mid)
 
+    # 7) кубок: серия решилась/переигралась → следующая стадия, пересборка пар, финал
+    if m.get("tie_id"):
+        try:
+            import league
+            league.sync_cup(tournament_id)
+        except Exception:
+            log.exception("sync_cup упал на турнире %s", tournament_id)
+
     return {
         "match_id": match_id,
         "score": f"{score1}:{score2}",

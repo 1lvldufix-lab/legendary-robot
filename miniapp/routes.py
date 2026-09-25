@@ -588,14 +588,15 @@ async def api_transfers_market(request):
 
 async def api_transfer_lot_create(request):
     u = require_active_user(request)
-    body = await request.json()
     try:
+        body = await request.json()
         club_id = _club_guard(u)
         r = transfers_engine.create_lot(club_id, int(body["card_id"]), body.get("kind", "fix"),
-                                        body.get("price"), body.get("buyout_price"), u["telegram_id"])
+                                        body.get("price"), body.get("buyout_price"), u["telegram_id"],
+                                        hours=body.get("hours"))
     except transfers_engine.TransferError as e:
         return err(str(e), 400, e.code)
-    except (KeyError, TypeError, ValueError):
+    except (KeyError, TypeError, ValueError, AttributeError):
         return err("card_id и price — целые числа", 400, "BAD_INPUT")
     return j({"status": "ok", **r})
 
@@ -632,14 +633,17 @@ async def api_free_agent_sign(request):
 
 async def api_transfer_exchange(request):
     u = require_active_user(request)
-    body = await request.json()
     try:
+        body = await request.json()
         club_id = _club_guard(u)
+        give = body.get("give_card_id")
         r = transfers_engine.propose_exchange(
-            club_id, int(body["to_club_id"]), int(body["give_card_id"]),
-            int(body["want_card_id"]), int(body.get("money", 0)), u["telegram_id"])
+            club_id, int(body["to_club_id"]), int(give) if give else None,
+            int(body["want_card_id"]), int(body.get("money") or 0), u["telegram_id"])
     except transfers_engine.TransferError as e:
         return err(str(e), 400, e.code)
+    except (KeyError, TypeError, ValueError, AttributeError):
+        return err("to_club_id, want_card_id — целые; give_card_id и/или money", 400, "BAD_INPUT")
     return j({"status": "ok", **r})
 
 
@@ -655,17 +659,18 @@ async def api_transfer_exchange_accept(request):
 async def api_transfer_decide(request):
     u = require_active_user(request)
     me = _user_row(u)
-    body = await request.json()
-    approve = bool(body.get("approve"))
-    # судья турнира или админ аппа
-    if not me["is_admin"]:
-        c = appdb.db()
-        judge = c.execute("SELECT 1 FROM tournament_admins WHERE telegram_id=?", (me["telegram_id"],)).fetchone()
-        c.close()
-        if not judge:
-            return err("Только судья или админ", 403)
     try:
-        r = transfers_engine.judge_decide(int(request.match_info["transfer_id"]), approve, me["telegram_id"])
+        body = await request.json()
+        approve = bool(body.get("approve"))
+        transfer_id = int(request.match_info["transfer_id"])
+    except (TypeError, ValueError, AttributeError):
+        return err("Нужен JSON {approve: true|false}", 400, "BAD_INPUT")
+    # судья турнира этой сделки / root / админ аппа; участник сделки не судит свою
+    ok, why = transfers_engine.judge_rights(me["telegram_id"], transfer_id)
+    if not ok:
+        return err(why, 403, "NOT_JUDGE")
+    try:
+        r = transfers_engine.judge_decide(transfer_id, approve, me["telegram_id"])
     except transfers_engine.TransferError as e:
         return err(str(e), 400, e.code)
     return j({"status": "ok", **r})
@@ -779,8 +784,8 @@ async def api_admin_players(request):
     sql = "SELECT telegram_id, username, first_name, balance, is_admin, is_frozen, freeze_reason, xp, level FROM users"
     args: list = []
     if q.get("q"):
-        sql += " WHERE username LIKE ? OR first_name LIKE ?"
-        args += [f"%{q['q']}%", f"%{q['q']}%"]
+        sql += " WHERE username LIKE ? OR first_name LIKE ? OR CAST(telegram_id AS TEXT) LIKE ?"
+        args += [f"%{q['q']}%"] * 3
     sql += " ORDER BY id LIMIT 200"
     rows = [dict(r) for r in c.execute(sql, args).fetchall()]
     c.close()
@@ -799,6 +804,8 @@ async def api_admin_player_action(request):
     # права на права — только root; себе баланс не крутим
     if action in ("make_admin", "unmake_admin") and me["telegram_id"] not in config.ADMIN_IDS:
         return err("Назначать админов может только root", 403)
+    if action == "unmake_admin" and tg in config.ADMIN_IDS:
+        return err("root из ADMIN_IDS снимается только в bot/.env", 400)
     if action == "adjust" and tg == me["telegram_id"]:
         return err("Нельзя корректировать собственный баланс", 403)
     c = appdb.db()
@@ -836,6 +843,9 @@ async def api_admin_player_action(request):
     return j({"status": "ok", **fresh})
 
 
+_TEXT_SETTINGS = {"bets_paused_reason"}
+
+
 async def api_admin_settings(request):
     u = require_active_user(request)
     try:
@@ -844,13 +854,30 @@ async def api_admin_settings(request):
         return err(str(e), 403)
     if request.method == "POST":
         body = await request.json()
+        changes, bad = {}, []
         for key, value in (body.get("settings") or {}).items():
             if key in ("bets_paused", "bets_paused_reason"):
                 continue  # только через /api/admin/pause
+            if key not in appsettings.DEFAULTS:
+                bad.append(f"{key}: неизвестная настройка")
+                continue
+            value = str(value).strip()
+            if key not in _TEXT_SETTINGS:
+                try:
+                    if float(value) < 0:
+                        raise ValueError
+                except ValueError:
+                    bad.append(f"{key}: нужно неотрицательное число")
+                    continue
+            changes[key] = value
+        if bad:
+            return err("; ".join(bad))
+        for key, value in changes.items():
             appsettings.set_setting(key, value)
-        _audit_now(me["telegram_id"], "settings", json.dumps(body.get("settings") or {}, ensure_ascii=False))
-    s = appsettings.load_settings_map()
-    return j({"settings": {**appsettings.DEFAULTS, **s}})
+        if changes:
+            _audit_now(me["telegram_id"], "settings", json.dumps(changes, ensure_ascii=False))
+    from .helpers import load_settings_map
+    return j({"settings": {**appsettings.DEFAULTS, **load_settings_map()}})
 
 
 async def api_admin_exposure(request):

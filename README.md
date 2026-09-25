@@ -11,12 +11,18 @@
 - `logovo-copy/` — разбор оригинала (фронт, скрины, API-образцы, `OVERVIEW.md`)
 
 ## Запуск
+Сервер/домашний ПК, туннель, HTTPS, автозапуск, бэкапы — пошагово в **[docs/DEPLOY.md](docs/DEPLOY.md)**
+(`deploy/`: systemd-юнит, `install.sh`, `tunnel.sh` для cloudflared, `Caddyfile`, `backup.sh`).
+
+Локально:
 ```
 cd bot && cp .env.example .env     # BOT_TOKEN, ADMIN_IDS
 cd .. && python3 -m venv venv && venv/bin/pip install -r bot/requirements.txt
 venv/bin/python bot/main.py        # бот + http://127.0.0.1:9542/app
 ```
 Только мини-апп: `venv/bin/python -m miniapp.server`.
+`/scan` по ссылке Challenge Place (необязательно): `venv/bin/pip install -r bot/requirements-optional.txt
+&& venv/bin/playwright install --with-deps chromium`.
 Тесты: `for t in tests/smoke.py tests/gate*.py; do venv/bin/python $t; done`.
 
 ## Админы

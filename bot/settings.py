@@ -34,6 +34,11 @@ DEFAULTS: dict[str, str] = {
     "bets_paused": "0",                  # 1 = глобальная пауза приёма ставок
     "bets_paused_reason": "",
     "notify_bets_dm": "1",               # 1 = расчёт купона дублируется в ЛС бота
+    "resettle_allow_negative": "0",      # 1 = пересчёт купона может увести баланс в минус; 0 = списываем до нуля
+    "auction_min_step_pct": "5",         # аукцион: минимальный шаг ставки, %
+    "auction_hours": "24",               # аукцион: длительность лота по умолчанию, ч
+    "auction_snipe_minutes": "10",       # анти-снайпинг: ставка в последние N мин продлевает на N мин
+    "training_limit_per_week": "10",     # fair-play: тренировок FC Mobile на клуб за неделю (пн–вс)
 }
 
 

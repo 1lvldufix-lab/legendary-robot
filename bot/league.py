@@ -4,9 +4,13 @@
 """
 import random
 import sqlite3
+import logging
+import threading
 from datetime import datetime, timedelta
 
 import db as appdb
+
+log = logging.getLogger("bot.league")
 
 
 # ===== вспомогательные =====
@@ -254,46 +258,96 @@ def rotate_tours() -> list[tuple[int, int, int]]:
 
 # ===== кубковые сетки =====
 
+# порядок стадий плей-офф (ранние → финал)
+CUP_STAGES = ["r64", "r32", "r16", "qf", "sf", "final"]
+CUP_STAGE_NAMES = {"r64": "1/32 финала", "r32": "1/16 финала", "r16": "1/8 финала",
+                   "qf": "1/4 финала", "sf": "1/2 финала", "final": "Финал"}
+
+# одна синхронизация сетки за раз: бот и мини-апп живут в одном процессе
+_cup_lock = threading.Lock()
+
+
 def _cup_stage_for(n: int) -> str:
-    return {2: "final", 4: "sf", 8: "qf", 16: "r16", 32: "r32"}.get(n, f"r{n}")
+    return {2: "final", 4: "sf", 8: "qf", 16: "r16", 32: "r32", 64: "r64"}.get(n, f"r{n}")
+
+
+def _stage_rank(stage: str) -> int:
+    return CUP_STAGES.index(stage) if stage in CUP_STAGES else -1
 
 
 def create_cup_bracket(tournament_id: int, club_ids: list[int], stage: str | None = None) -> list[dict]:
     """Жеребьёвка: случайные пары, серии до 2 побед (план 07). Создаёт ties +
-    первые игры. Возвращает созданные ties."""
-    ids = list(club_ids)
+    первые игры (+ рынки). Некратное степени двойки число участников — «пассы»:
+    серия с одним клубом, проход без игры (bye). Возвращает созданные ties."""
+    ids = list(dict.fromkeys(club_ids))
     random.shuffle(ids)
-    n = 1
-    while n * 2 <= len(ids):
-        n *= 2
-    if n < 2:
+    if len(ids) < 2:
         return []
-    # некратное число участников: лишние срезаются (не проходят квалификацию)
-    seeded = ids[:n]
+    size = 2
+    while size < len(ids):
+        size *= 2
     if stage is None:
-        stage = _cup_stage_for(n)
+        stage = _cup_stage_for(size)
+    n_pairs = size // 2
+    byes = size - len(ids)
+    # пассы равномерно по сетке; byes < n_pairs → в каждой паре максимум один пропуск
+    bye_pos = {i * n_pairs // byes for i in range(byes)} if byes else set()
     c = appdb.db()
+    if c.execute("SELECT 1 FROM ties WHERE tournament_id=? LIMIT 1", (tournament_id,)).fetchone():
+        c.close()
+        log.warning("кубок %s: сетка уже есть, повторная жеребьёвка пропущена", tournament_id)
+        return []
     c.execute("UPDATE tournaments SET stage='playoff' WHERE id=?", (tournament_id,))
     ties = []
-    first_games = []
-    for i in range(0, n, 2):
-        a, b = seeded[i], seeded[i + 1]
-        tie_id = c.insert_returning_id(
-            "INSERT INTO ties (tournament_id, stage, club_a_id, club_b_id) VALUES (?,?,?,?)",
-            (tournament_id, stage, a, b),
-        )
-        first_games.append((_insert_tie_game(c, tournament_id, tie_id, a, b, stage, 1), tie_id))
-        ties.append({"tie_id": tie_id, "club_a": a, "club_b": b, "stage": stage})
+    it = iter(ids)
+    for pos in range(n_pairs):
+        a = next(it)
+        b = None if pos in bye_pos else next(it)
+        tie_id, _ = _create_tie(c, tournament_id, stage, pos, a, b)
+        ties.append({"tie_id": tie_id, "club_a": a, "club_b": b, "stage": stage, "bye": b is None})
     c.commit()
     c.close()
-    # рынки серии — только после commit: generate_tie_markets читает ties своим соединением
-    import markets as markets_engine
-    for mid, tie_id in first_games:
-        try:
-            markets_engine.generate_tie_markets(mid, tie_id)
-        except Exception:
-            pass
+    # рынки — только после commit: генераторы читают ties/matches своим соединением
+    ensure_cup_markets(tournament_id)
     return ties
+
+
+def _create_tie(c, tournament_id: int, stage: str, pos: int, a: int, b: int | None) -> tuple[int, int | None]:
+    """Серия на позиции pos стадии. b=None — пасс: победитель сразу, без игр.
+    → (tie_id, id первой игры | None)."""
+    tie_id = c.insert_returning_id(
+        "INSERT INTO ties (tournament_id, stage, club_a_id, club_b_id, winner_club_id, bracket_pos) "
+        "VALUES (?,?,?,?,?,?)",
+        (tournament_id, stage, a, b, a if b is None else None, pos),
+    )
+    if b is None:
+        return tie_id, None
+    return tie_id, _insert_tie_game(c, tournament_id, tie_id, a, b, stage, 1)
+
+
+def ensure_cup_markets(tournament_id: int) -> int:
+    """Рынки на ещё не выставленные игры кубка: 1х2/тоталы на каждую pending-игру,
+    рынки серии — на первую. Уже выставленные кэфы не трогаем. → игр обработано."""
+    import markets as markets_engine
+    c = appdb.db()
+    rows = [dict(r) for r in c.execute(
+        "SELECT m.id, m.tie_id, m.game_in_tie, "
+        " (SELECT COUNT(*) FROM markets k WHERE k.match_id=m.id AND k.code NOT LIKE 'tie_%') AS n_main, "
+        " (SELECT COUNT(*) FROM markets k WHERE k.match_id=m.id AND k.code LIKE 'tie_%') AS n_tie "
+        "FROM matches m WHERE m.tournament_id=? AND m.tie_id IS NOT NULL AND m.status='pending' ORDER BY m.id",
+        (tournament_id,)).fetchall()]
+    c.close()
+    n = 0
+    for r in rows:
+        try:
+            if not r["n_main"]:
+                markets_engine.generate_markets(r["id"])
+            if r["game_in_tie"] == 1 and not r["n_tie"]:
+                markets_engine.generate_tie_markets(r["id"], r["tie_id"])
+            n += 1
+        except Exception:
+            log.exception("рынки кубковой игры %s", r["id"])
+    return n
 
 
 def _insert_tie_game(c, tournament_id: int, tie_id: int, club_a: int, club_b: int,
@@ -337,6 +391,8 @@ def recompute_tie(c, tie_id: int) -> list[int]:
     if not tie:
         return []
     a, b = tie["club_a_id"], tie["club_b_id"]
+    if b is None:
+        return []  # пасс: проход без игр
     games = c.execute(
         "SELECT * FROM matches WHERE tie_id=? ORDER BY game_in_tie, id", (tie_id,)).fetchall()
     wins = {"a": 0, "b": 0}
@@ -376,30 +432,245 @@ def cup_stage_winners(tournament_id: int, stage: str) -> list[int]:
 
 
 def next_cup_stage(stage: str) -> str | None:
-    return {"r32": "r16", "r16": "qf", "qf": "sf", "sf": "final"}.get(stage)
+    r = _stage_rank(stage)
+    return CUP_STAGES[r + 1] if 0 <= r < len(CUP_STAGES) - 1 else None
 
 
 def draw_next_cup_stage(tournament_id: int) -> int:
-    """Когда все ties стадии решены — жеребьёвка следующей стадии. → ties создано."""
+    """Следующая стадия, если текущая решена (обёртка над sync_cup). → ties создано."""
+    return len(sync_cup(tournament_id).get("created", []))
+
+
+def _tie_has_played(c, tie_id: int) -> bool:
+    return bool(c.execute(
+        "SELECT 1 FROM matches WHERE tie_id=? AND status IN ('confirmed','disputed','reported') LIMIT 1",
+        (tie_id,)).fetchone())
+
+
+def _cup_warn(c, tournament_id: int, details: str, res: dict) -> None:
+    """Предупреждение в аудит (без дублей при повторных синхронизациях)."""
+    res["warnings"].append(details)
+    if c.execute("SELECT 1 FROM tournament_audit_log WHERE tournament_id=? AND action='cup_warning' "
+                 "AND details=?", (tournament_id, details)).fetchone():
+        return
+    log.warning("кубок %s: %s", tournament_id, details)
+    c.execute("INSERT INTO tournament_audit_log (tournament_id, actor_telegram_id, action, details) "
+              "VALUES (?, NULL, 'cup_warning', ?)", (tournament_id, details))
+
+
+def _club_name(c, club_id: int | None) -> str:
+    if club_id is None:
+        return "пасс"
+    row = c.execute("SELECT name FROM clubs WHERE id=?", (club_id,)).fetchone()
+    return row["name"] if row else f"#{club_id}"
+
+
+def _stage_ties(c, tournament_id: int, stage: str) -> list[dict]:
+    return [dict(r) for r in c.execute(
+        "SELECT * FROM ties WHERE tournament_id=? AND stage=? ORDER BY bracket_pos, id",
+        (tournament_id, stage)).fetchall()]
+
+
+def sync_cup(tournament_id: int, actor_tg: int | None = None) -> dict:
+    """Автопрогресс сетки (вызывается после каждой финализации игры серии).
+
+    - все серии стадии решены → следующая стадия: победитель пары 2k против 2k+1;
+    - победитель серии сменился (спор/правка), а в следующей серии ещё никто не играл →
+      пара пересобирается (старые игры cancelled, ставки на них — void);
+      уже играют → оставляем, предупреждение в tournament_audit_log;
+    - финал решён → кубок finished + cup_results (призовые платит finalize_season).
+    Идемпотентно: повторный вызов ничего не создаёт."""
     t = get_tournament(tournament_id)
-    if not t or t["stage"] != "playoff":
-        return 0
+    if not t or t["format"] == "league":
+        return {"ok": False, "error": "кубок не найден"}
+    res = {"ok": True, "created": [], "rebuilt": [], "removed": [], "warnings": [],
+           "cancelled": [], "finished": None, "reopened": False}
+    with _cup_lock:
+        c = appdb.db()
+        try:
+            _sync_cup(c, t, res)
+            if res["created"] or res["rebuilt"] or res["removed"] or res["finished"]:
+                c.execute(
+                    "INSERT INTO tournament_audit_log (tournament_id, actor_telegram_id, action, details) "
+                    "VALUES (?,?, 'cup_sync', ?)",
+                    (tournament_id, actor_tg,
+                     f"создано={res['created']} пересобрано={res['rebuilt']} снято={res['removed']} "
+                     f"финал={res['finished']}"))
+            c.commit()
+        finally:
+            c.close()
+    # после commit: ставки на отменённые игры → void/возврат, рынки на новые игры
+    if res["cancelled"]:
+        import bets_engine
+        for mid in res["cancelled"]:
+            try:
+                bets_engine.settle_match(mid)
+            except Exception:
+                log.exception("settle_match отменённой игры %s", mid)
+    ensure_cup_markets(tournament_id)
+    return res
+
+
+def _sync_cup(c, t: dict, res: dict) -> None:
+    tid = t["id"]
+    stages = [r["stage"] for r in c.execute(
+        "SELECT DISTINCT stage FROM ties WHERE tournament_id=?", (tid,)).fetchall()]
+    stages = sorted((s for s in stages if s in CUP_STAGES), key=_stage_rank)
+    if not stages:
+        return
+    stage = stages[0]
+    while stage and stage != "final":
+        nxt = next_cup_stage(stage)
+        cur = _stage_ties(c, tid, stage)
+        existing = {x["bracket_pos"]: x for x in _stage_ties(c, tid, nxt)}
+        if not cur and not existing:
+            break
+        next_exists = bool(existing)
+        all_done = bool(cur) and all(x["winner_club_id"] for x in cur)
+        for k in range((len(cur) + 1) // 2):
+            src = cur[2 * k:2 * k + 2]
+            winners = [x["winner_club_id"] for x in src]
+            expected = None
+            if all(winners):
+                expected = (winners[0], winners[1] if len(winners) > 1 else None)
+            ex = existing.pop(k, None)
+            if ex:
+                if expected == (ex["club_a_id"], ex["club_b_id"]):
+                    continue
+                if _tie_has_played(c, ex["id"]):
+                    want = " — ".join(_club_name(c, x) for x in expected) if expected else "не решено"
+                    _cup_warn(c, tid, f"{CUP_STAGE_NAMES.get(nxt, nxt)} #{k + 1}: победитель прошлой "
+                                      f"стадии изменился (по сетке: {want}), но серия #{ex['id']} уже "
+                                      f"играется — пара оставлена", res)
+                    continue
+                for g in c.execute("SELECT id FROM matches WHERE tie_id=? AND status='pending'",
+                                   (ex["id"],)).fetchall():
+                    c.execute("UPDATE matches SET status='cancelled' WHERE id=?", (g["id"],))
+                    res["cancelled"].append(g["id"])
+                if expected is None:
+                    c.execute("DELETE FROM ties WHERE id=?", (ex["id"],))
+                    res["removed"].append(ex["id"])
+                    continue
+                a, b = expected
+                c.execute("UPDATE ties SET club_a_id=?, club_b_id=?, wins_a=0, wins_b=0, winner_club_id=? "
+                          "WHERE id=?", (a, b, a if b is None else None, ex["id"]))
+                if b is not None:
+                    _insert_tie_game(c, tid, ex["id"], a, b, nxt, 1)
+                res["rebuilt"].append(ex["id"])
+            elif expected and (all_done or next_exists):
+                tie_id, _ = _create_tie(c, tid, nxt, k, *expected)
+                res["created"].append(tie_id)
+        # позиции, которых в новой сетке нет (сетка стадии сжалась) — снять, если не играли
+        for k, ex in existing.items():
+            if _tie_has_played(c, ex["id"]):
+                _cup_warn(c, tid, f"{CUP_STAGE_NAMES.get(nxt, nxt)}: лишняя серия #{ex['id']} уже играется", res)
+                continue
+            for g in c.execute("SELECT id FROM matches WHERE tie_id=? AND status='pending'", (ex["id"],)).fetchall():
+                c.execute("UPDATE matches SET status='cancelled' WHERE id=?", (g["id"],))
+                res["cancelled"].append(g["id"])
+            c.execute("DELETE FROM ties WHERE id=?", (ex["id"],))
+            res["removed"].append(ex["id"])
+        stage = nxt
+    _sync_cup_final(c, t, res)
+
+
+def _sync_cup_final(c, t: dict, res: dict) -> None:
+    """Финал решён → кубок finished + победитель в cup_results; решение отменено → назад в playoff."""
+    tid = t["id"]
+    fin = c.execute("SELECT winner_club_id FROM ties WHERE tournament_id=? AND stage='final' "
+                    "ORDER BY bracket_pos, id LIMIT 1", (tid,)).fetchone()
+    winner = fin["winner_club_id"] if fin else None
+    row = c.execute("SELECT * FROM cup_results WHERE tournament_id=?", (tid,)).fetchone()
+    stage_now = c.execute("SELECT stage FROM tournaments WHERE id=?", (tid,)).fetchone()["stage"]
+    if winner:
+        if not row:
+            # кубок закрыт старым finalize_season без cup_results — призовые уже выплачены
+            legacy_paid = 1 if stage_now == "finished" else 0
+            c.execute("INSERT INTO cup_results (tournament_id, winner_club_id, prize_paid) VALUES (?,?,?)",
+                      (tid, winner, legacy_paid))
+        elif row["winner_club_id"] != winner:
+            if row["prize_paid"]:
+                _cup_warn(c, tid, f"победитель финала изменился ({row['winner_club_id']} → {winner}) "
+                                  f"после выплаты призовых клубу {row['prize_club_id']}", res)
+            c.execute("UPDATE cup_results SET winner_club_id=? WHERE tournament_id=?", (winner, tid))
+        if stage_now != "finished":
+            c.execute("UPDATE tournaments SET stage='finished' WHERE id=?", (tid,))
+            res["finished"] = winner
+    elif row:
+        if row["prize_paid"]:
+            _cup_warn(c, tid, "финал снова не решён, но призовые уже выплачены — кубок оставлен закрытым", res)
+            return
+        c.execute("DELETE FROM cup_results WHERE tournament_id=?", (tid,))
+        c.execute("UPDATE tournaments SET stage='playoff' WHERE id=?", (tid,))
+        res["reopened"] = True
+
+
+def cup_bracket(tournament_id: int) -> dict | None:
+    """Сетка кубка по стадиям: серии, клубы, счёт серии, игры (без отменённых)."""
+    t = get_tournament(tournament_id)
+    if not t or t["format"] == "league":
+        return None
     c = appdb.db()
-    row = c.execute(
-        "SELECT stage, COUNT(*) AS total, SUM(winner_club_id IS NOT NULL) AS done "
-        "FROM ties WHERE tournament_id=? GROUP BY stage ORDER BY CASE stage "
-        "WHEN 'r32' THEN 1 WHEN 'r16' THEN 2 WHEN 'qf' THEN 3 WHEN 'sf' THEN 4 ELSE 5 END LIMIT 1",
-        (tournament_id,),
-    ).fetchone()
+    ties = [dict(r) for r in c.execute(
+        "SELECT * FROM ties WHERE tournament_id=? ORDER BY bracket_pos, id", (tournament_id,)).fetchall()]
+    games = {}
+    for g in c.execute("SELECT * FROM matches WHERE tournament_id=? AND tie_id IS NOT NULL "
+                       "AND status!='cancelled' ORDER BY game_in_tie, id", (tournament_id,)).fetchall():
+        games.setdefault(g["tie_id"], []).append(dict(g))
+    res = c.execute("SELECT * FROM cup_results WHERE tournament_id=?", (tournament_id,)).fetchone()
     c.close()
-    if not row or row["done"] < row["total"] or row["stage"] == "final":
-        return 0
-    winners = cup_stage_winners(tournament_id, row["stage"])
-    nxt = next_cup_stage(row["stage"])
-    if not nxt or len(winners) < 2:
-        return 0
-    ties = create_cup_bracket(tournament_id, winners, stage=nxt)
-    return len(ties)
+    by_stage: dict[str, list] = {}
+    for x in ties:
+        x["games"] = games.get(x["id"], [])
+        by_stage.setdefault(x["stage"], []).append(x)
+    stages = [{"code": s, "name": CUP_STAGE_NAMES.get(s, s), "ties": by_stage[s]}
+              for s in sorted(by_stage, key=_stage_rank)]
+    return {"tournament": t, "stages": stages, "winner_club_id": res["winner_club_id"] if res else None,
+            "prize_paid": bool(res and res["prize_paid"])}
+
+
+def format_bracket(tournament_id: int) -> str:
+    """Сетка кубка текстом (для /bracket)."""
+    br = cup_bracket(tournament_id)
+    if not br:
+        return "Кубок не найден."
+    names: dict = {}
+
+    def nm(cid):
+        if cid is None:
+            return "—"
+        if cid not in names:
+            cl = get_club(cid)
+            names[cid] = cl["name"] if cl else f"#{cid}"
+        return names[cid]
+
+    t = br["tournament"]
+    lines = [f"🏆 «{t['name']}» (#{t['id']})" + (" — завершён" if t["stage"] == "finished" else "")]
+    if not br["stages"]:
+        lines.append("Сетка ещё не сгенерирована.")
+    for st in br["stages"]:
+        lines.append(f"\n{st['name']}:")
+        for x in st["ties"]:
+            if x["club_b_id"] is None:
+                lines.append(f"  {nm(x['club_a_id'])} — проход без игры")
+                continue
+            mark_a = "✅ " if x["winner_club_id"] == x["club_a_id"] else ""
+            mark_b = " ✅" if x["winner_club_id"] == x["club_b_id"] else ""
+            detail = ", ".join(
+                f"{sa}:{sb}" + (f" (пен. {pa}:{pb})" if pa is not None else "") + (" спор" if st_ == "disputed" else "")
+                for sa, sb, pa, pb, st_ in (_game_for_a(x, g) for g in x["games"] if g["score1"] is not None))
+            lines.append(f"  {mark_a}{nm(x['club_a_id'])} {x['wins_a']}:{x['wins_b']} {nm(x['club_b_id'])}{mark_b}"
+                         + (f"  [{detail}]" if detail else ""))
+    if br["winner_club_id"]:
+        lines.append(f"\n🥇 Победитель: {nm(br['winner_club_id'])}")
+    return "\n".join(lines)
+
+
+def _game_for_a(tie: dict, g: dict) -> tuple:
+    """Счёт игры с точки зрения клуба А серии: (голы А, голы Б, пен. А, пен. Б, статус)."""
+    if g["home_club_id"] == tie["club_a_id"]:
+        return g["score1"], g["score2"], g["pens1"], g["pens2"], g["status"]
+    return g["score2"], g["score1"], g["pens2"], g["pens1"], g["status"]
 
 
 # ===== таблицы =====
@@ -554,14 +825,18 @@ def finalize_season(tournament_id: int, actor_tg: int | None = None) -> dict:
             elif r["position"] > len(table) - 3 and i < len(divs) - 1:
                 c.execute("UPDATE clubs SET division_id=? WHERE id=?", (divs[i+1]["id"], r["club_id"]))
                 moves.append({"club": club["name"], "move": f"↓ {d['name']} → {divs[i+1]['name']}"})
-    # призовые за кубки сезона (победители final): только ещё не закрытые кубки,
-    # после выплаты кубок → finished, чтобы следующий сезон не заплатил повторно
+    # призовые за кубки сезона (победители final). Кубок, чей финал решён, уже finished
+    # (sync_cup), но в cup_results prize_paid=0 → платим здесь один раз. Старые кубки без
+    # cup_results: платим, пока не finished. Выплату «захватываем» атомарно через prize_paid.
     cup_prize = appsettings.setting_int("prize_cup_winner", 50_000_000)
     season_id = get_tournament(tournament_id).get("season_id")
-    cup_sql = "SELECT id, name, format FROM tournaments WHERE format!='league' AND stage!='finished'"
+    cup_sql = ("SELECT t.id, t.name, t.format FROM tournaments t "
+               "LEFT JOIN cup_results r ON r.tournament_id=t.id WHERE t.format!='league' AND "
+               "((r.tournament_id IS NULL AND t.stage!='finished') OR "
+               " (r.tournament_id IS NOT NULL AND COALESCE(r.prize_paid,0)=0))")
     cup_args: tuple = ()
     if season_id is not None:
-        cup_sql += " AND (season_id IS NULL OR season_id=?)"
+        cup_sql += " AND (t.season_id IS NULL OR t.season_id=?)"
         cup_args = (season_id,)
     cups = [dict(r) for r in c.execute(cup_sql, cup_args).fetchall()]
     cup_winners = []
@@ -569,11 +844,23 @@ def finalize_season(tournament_id: int, actor_tg: int | None = None) -> dict:
         row = c.execute(
             "SELECT winner_club_id FROM ties WHERE tournament_id=? AND stage='final' AND winner_club_id IS NOT NULL",
             (cup["id"],)).fetchone()
-        if row:
-            club = get_club(row["winner_club_id"])
-            c.execute("UPDATE clubs SET budget=budget+? WHERE id=?", (cup_prize, row["winner_club_id"]))
-            c.execute("UPDATE tournaments SET stage='finished' WHERE id=?", (cup["id"],))
-            cup_winners.append({"club": club["name"], "cup": cup["name"], "prize": cup_prize})
+        if not row:
+            continue
+        win = row["winner_club_id"]
+        c.execute("INSERT INTO cup_results (tournament_id, winner_club_id, prize_paid) VALUES (?,?,0) "
+                  "ON CONFLICT(tournament_id) DO NOTHING", (cup["id"], win))
+        claim = c.execute(
+            "UPDATE cup_results SET prize_paid=1, winner_club_id=?, prize_club_id=?, prize_amount=?, "
+            "prize_paid_at=datetime('now') WHERE tournament_id=? AND COALESCE(prize_paid,0)=0",
+            (win, win, cup_prize, cup["id"]))
+        if claim.rowcount == 0:
+            continue
+        club = get_club(win)
+        c.execute("UPDATE clubs SET budget=budget+? WHERE id=?", (cup_prize, win))
+        c.execute("INSERT INTO balance_history (user_id, delta, reason) VALUES (NULL, ?, ?)",
+                  (cup_prize, f"призовое за кубок: {club['name']} ({cup['name']})"))
+        c.execute("UPDATE tournaments SET stage='finished' WHERE id=?", (cup["id"],))
+        cup_winners.append({"club": club["name"], "cup": cup["name"], "prize": cup_prize})
     c.execute(
         "INSERT INTO tournament_audit_log (tournament_id, actor_telegram_id, action, details) "
         "VALUES (?, ?, 'season_finalized', ?)",
