@@ -54,7 +54,7 @@ def probabilities(elo_home: float, elo_away: float) -> dict[str, float]:
         "tb25": p_tb25, "tm25": 1 - p_tb25,
         "btts_yes": p_btts, "btts_no": 1 - p_btts,
         "itb_h15": p_itb_h15, "itb_a15": p_itb_a15,
-        "ah_h15": p_ah_h15, "ah_a15": 1 - p_ah_h15 - px,  # AH +1.5 гостей = не проиграть в 2+
+        "ah_h15": p_ah_h15, "ah_a15": 1 - p_ah_h15,  # AH +1.5 гостей = не проиграть в 2+ (дополнение к ah_h15)
     }
 
 

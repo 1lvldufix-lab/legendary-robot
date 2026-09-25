@@ -26,6 +26,8 @@ SMOKE_DB = "/tmp/smoke_full.db"
 if os.path.exists(SMOKE_DB):
     os.remove(SMOKE_DB)
 os.environ["DB_PATH"] = SMOKE_DB
+# пустой токен теперь блокирует авторизацию — тестовый ставим до импорта config
+os.environ.setdefault("BOT_TOKEN", "123456:TEST")
 
 RESULTS: list[tuple[str, bool, str]] = []
 

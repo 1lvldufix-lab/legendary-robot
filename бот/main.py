@@ -57,7 +57,7 @@ async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             "сопоставлять твои скрины результатов."
         )
         return
-    await update.message.reply_text(core.send_menu_text())
+    await update.message.reply_text(core.send_menu_text(), reply_markup=core.webapp_keyboard())
 
 
 # ===== запрос game_nickname (для OCR-сопоставления) =====
@@ -67,38 +67,92 @@ async def on_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     text = (update.message.text or "").strip()
     tg = update.effective_user
     player = core.get_player(tg.id)
-    if player and not player["game_nickname"] and not text.startswith("/"):
-        c = appdb.db()
-        c.execute("UPDATE players SET game_nickname=? WHERE telegram_id=?", (text, tg.id))
-        c.commit()
-        c.close()
-        core.audit(None, tg.id, "set_game_nickname", text)
-        await update.message.reply_text(
-            f"Ник «{text}» записан. Теперь скрины бьются по нему.", reply_markup=core.menu_keyboard()
-        )
-        await update.message.reply_text(core.send_menu_text())
+    # кнопка меню или команда — не ник, даже если ник ещё не задан
+    if (player and not player["game_nickname"] and not text.startswith("/")
+            and text not in core.MENU_BUTTONS):
+        await _save_nickname(update, text)
         return
 
-    stubs = {
-        "💰 Долги": "💰 Долги: напоминания и список — скоро (блок 9).",
-        "📨 Репорт": "📨 Репорт: скрин результата в бот — скоро (блок 5).",
-        "🔧 Настройки": "🔧 Настройки: ник, уведомления — скоро (блок 10).",
-        "👮 Админ": "👮 Админ: панель — скоро (блок 10).",
-        "ℹ️ Помощь": (
-            "ℹ️ Как это работает:\n"
-            "1. Root выдаёт тебе клуб командой.\n"
-            "2. Играешь матчи тура в FC27 Mobile.\n"
-            "3. Кидаешь скрин статистики в 📨 Репорт — счёт распознаётся сам.\n"
-            "4. Ставки на те же матчи — в мини-аппе."
-        ),
-    }
-    if text in stubs:
-        await update.message.reply_text(stubs[text])
+    if text == "🔧 Настройки":
+        nick = (player or {}).get("game_nickname") if player else None
+        await update.message.reply_text(
+            "🔧 Настройки\n\n"
+            f"Ник FC27: {nick or 'не задан'}\n"
+            "Сменить: /ник НовыйНик\n\n"
+            "Результаты ставок приходят сюда в ЛС и в 🔔 мини-аппа.",
+            reply_markup=core.webapp_keyboard(),
+        )
         return
-    if text == "🐞 Связь" or text.startswith("🐞"):
+    if text == "👮 Админ":
+        if not core.is_app_admin(tg.id):
+            await update.message.reply_text("⛔ Раздел только для админов.")
+            return
+        await update.message.reply_text(ADMIN_HELP, reply_markup=core.webapp_keyboard())
+        return
+    if text == "ℹ️ Помощь":
+        await update.message.reply_text(HELP_TEXT, reply_markup=core.webapp_keyboard())
+        return
+    if text.startswith("🐞"):
         return
     if not text.startswith("/"):
         await update.message.reply_text("Не понял. Используй кнопки меню внизу.")
+
+
+HELP_TEXT = (
+    "ℹ️ Как это работает:\n"
+    "1. Root выдаёт тебе клуб командой.\n"
+    "2. Играешь матчи тура в FC27 Mobile.\n"
+    "3. Кидаешь скрин статистики в 📨 Репорт — счёт распознаётся сам.\n"
+    "4. Ставки на те же матчи — в мини-аппе.\n\n"
+    "Команды: /турниры /календарь /пары /споры /ник"
+)
+
+ADMIN_HELP = (
+    "👮 Админ-команды\n\n"
+    "Сезон: /сезон /кубок /тур /пары /правкапары /финал\n"
+    "Клубы: /клуб /клубы /каталог\n"
+    "Судейство: /судья /споры /спор /вручную\n"
+    "Деньги: /промокод /оплачено /скан\n"
+    "Права: /админ\n\n"
+    "Ставки, void, пауза, игроки — в админ-панели мини-аппа (Кабинет → 👮)."
+)
+
+
+async def _save_nickname(update: Update, nick: str) -> None:
+    tg = update.effective_user
+    nick = nick.strip()[:32]
+    c = appdb.db()
+    c.execute("UPDATE players SET game_nickname=? WHERE telegram_id=?", (nick, tg.id))
+    c.commit()
+    c.close()
+    core.audit(None, tg.id, "set_game_nickname", nick)
+    await update.message.reply_text(
+        f"Ник «{nick}» записан. Теперь скрины бьются по нему.", reply_markup=core.menu_keyboard()
+    )
+    await update.message.reply_text(core.send_menu_text(), reply_markup=core.webapp_keyboard())
+
+
+async def cmd_nick(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """/ник НовыйНик — смена ника FC27."""
+    core.ensure_player(update.effective_user.id, update.effective_user.username)
+    if not context.args:
+        await update.message.reply_text("Формат: /ник НовыйНик")
+        return
+    await _save_nickname(update, " ".join(context.args))
+
+
+def command_handler(name: str, fn):
+    """PTB/Telegram принимают только [a-z0-9_] — кириллические команды ловим регэкспом
+    и сами заполняем context.args, чтобы обработчики не отличали их от CommandHandler."""
+    if re.fullmatch(r"[a-z0-9_]{1,32}", name):
+        return CommandHandler(name, fn)
+    pattern = re.compile(rf"^/{re.escape(name)}(?:@\w+)?(?:\s|$)", re.IGNORECASE)
+
+    async def wrapper(update: Update, context: ContextTypes.DEFAULT_TYPE):
+        context.args = (update.message.text or "").split()[1:]
+        return await fn(update, context)
+
+    return MessageHandler(filters.UpdateType.MESSAGE & filters.TEXT & filters.Regex(pattern), wrapper)
 
 
 # ===== 🐞 Связь (план 05 раздел 6 — единственная фича оригинала, у нас тоже будет) =====
@@ -160,7 +214,36 @@ async def post_init(app: Application) -> None:
     app.job_queue.run_repeating(job_deadline_check, interval=900, first=60)
     # daily_backup (план 05): копия БД админам — раз в сутки в 04:00 МСК
     app.job_queue.run_daily(job_daily_backup, time=dtime(4, 0, tzinfo=msk))
+    # расчёт купонов → ЛС (формат как у оригинала), выключается bot_settings.notify_bets_dm=0
+    app.job_queue.run_repeating(job_push_bet_results, interval=30, first=15)
+    url = core.webapp_url()
+    if url:
+        from telegram import MenuButtonWebApp, WebAppInfo
+        await app.bot.set_chat_menu_button(menu_button=MenuButtonWebApp("Мини-апп", WebAppInfo(url)))
     log.info("мини-апп поднят, бот готов")
+
+
+async def job_push_bet_results(context: ContextTypes.DEFAULT_TYPE) -> None:
+    import settings as appsettings
+    c = appdb.db()
+    try:
+        if appsettings.setting_int("notify_bets_dm", 1) != 1:
+            # выключено — помечаем, чтобы при включении не прилетела пачка старых
+            c.execute("UPDATE notifications SET tg_sent=1 WHERE kind='bet' AND tg_sent=0")
+            c.commit()
+            return
+        rows = c.execute(
+            "SELECT n.id, n.text, u.telegram_id FROM notifications n JOIN users u ON u.id=n.user_id "
+            "WHERE n.kind='bet' AND n.tg_sent=0 ORDER BY n.id LIMIT 30").fetchall()
+        for r in rows:
+            try:
+                await context.bot.send_message(r["telegram_id"], r["text"])
+            except Exception as e:  # бот заблокирован / нет чата — не ретраим бесконечно
+                log.warning("[bet_dm] не доставлено %s: %s", r["telegram_id"], e)
+            c.execute("UPDATE notifications SET tg_sent=1 WHERE id=?", (r["id"],))
+            c.commit()
+    finally:
+        c.close()
 
 
 async def job_tour_rotate(context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -260,11 +343,12 @@ def main() -> None:
     )
 
     app.add_handler(CommandHandler("start", cmd_start))
+    app.add_handler(command_handler("ник", cmd_nick))
 
     # турнирное ядро (блок 4) + результаты/OCR (блок 5) + долги/скан (блок 9)
     for kind, pat, fn in (*ht.HANDLERS, *hr.HANDLERS, *hd.HANDLERS, *ha.HANDLERS):
         if kind == "command":
-            app.add_handler(CommandHandler(pat, fn))
+            app.add_handler(command_handler(pat, fn))
         elif kind == "callback":
             app.add_handler(CallbackQueryHandler(fn, pattern=pat))
         elif kind == "photo":
@@ -284,7 +368,6 @@ def main() -> None:
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, on_text))
 
     app.add_error_handler(on_error)
-    # job-планировщик: напоминания о долгах (блок 9), tour_rotate, bets_settle — блоки 5–9
     log.info("[бот] polling запущен")
     app.run_polling(drop_pending_updates=True)
 

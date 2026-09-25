@@ -3,6 +3,8 @@
 const tg = window.Telegram?.WebApp;
 tg?.ready();
 tg?.expand();
+tg?.setHeaderColor?.('#0f1114');
+tg?.setBackgroundColor?.('#0f1114');
 
 const state = {
   user: null,
@@ -11,7 +13,10 @@ const state = {
   favorites: new Set(JSON.parse(localStorage.getItem('favorites') || '[]')),
   coupon: JSON.parse(localStorage.getItem('coupon') || '[]'),
   currentDivision: null,
+  currentTour: null,
   matchDetail: null,
+  placing: false,
+  idemKey: null,
 };
 
 /* ===== API ===== */
@@ -62,6 +67,27 @@ function logoHtml(club, cls = '') {
 }
 
 function fmt(n) { return Number(n ?? 0).toLocaleString('ru-RU'); }
+function odds(o) { return Number(o ?? 0).toFixed(2); }
+function haptic(kind = 'light') { try { tg?.HapticFeedback?.impactOccurred(kind); } catch (_) { /* вне Telegram */ } }
+
+function setBadge(unread) {
+  const b = $('#bell-badge');
+  b.textContent = unread > 99 ? '99+' : String(unread || 0);
+  b.hidden = !unread;
+}
+
+function formLetters(form) {
+  return (form || '').split('').map((f) => `<span class="${esc(f)}">${esc(f)}</span>`).join('');
+}
+
+const MARKET_GROUPS = [
+  ['Исход', ['1x2_p1', '1x2_x', '1x2_p2']],
+  ['Тотал', ['tb25', 'tm25']],
+  ['Обе забьют', ['btts_yes', 'btts_no']],
+  ['Индивидуальный тотал', ['itb_h15', 'itb_a15']],
+  ['Фора', ['ah_h15', 'ah_a15']],
+  ['Серия', ['tie_2_0', 'tie_2_1', 'tie_1_2', 'tie_0_2']],
+];
 
 function showLockdown(reason) {
   $('#lockdown-reason').textContent = reason || '';
@@ -119,27 +145,37 @@ function renderHeader() {
 
 function renderLine() {
   const wrap = $('#line-matches');
+  const tours = [...new Set(state.lineMatches.map((m) => m.tour_number ?? '—'))];
+  $('#line-tours').innerHTML = tours.length > 1
+    ? [null, ...tours].map((t) => `<button class="chip ${state.currentTour === t ? 'active' : ''}" data-tour="${t ?? ''}">${t === null ? 'Все' : (t === '—' ? 'Кубки' : `Тур ${esc(t)}`)}</button>`).join('')
+    : '';
   if (!state.lineMatches.length) {
     wrap.innerHTML = '<div class="empty-note">Открытых матчей нет — линия появится, когда root откроет тур.</div>';
     return;
   }
-  wrap.innerHTML = state.lineMatches.map((m) => {
+  const visible = state.lineMatches.filter((m) => state.currentTour === null || (m.tour_number ?? '—') === state.currentTour);
+  let lastGroup = null;
+  wrap.innerHTML = visible.map((m) => {
     const isFav = state.favorites.has(m.id);
     const main = m.markets.filter((k) => ['1x2_p1', '1x2_x', '1x2_p2'].includes(k.code));
     const sel = (code) => state.coupon.find((l) => l.match_id === m.id && l.market_code === code);
-    return `<div class="match-card">
+    const group = `${m.tournament_name || ''} · ${m.tour_number != null ? `Тур ${m.tour_number}` : 'Кубок'}`;
+    const dl = m.deadline ? ` · до ${fmtTime(m.deadline)}` : '';
+    const header = group !== lastGroup ? `<div class="group-title">${esc(group + dl)}</div>` : '';
+    lastGroup = group;
+    return `${header}<div class="match-card" data-open="${m.id}">
       <div class="mc-top">
-        <span>Тур ${m.tour_number ?? '—'} · ${esc(m.tournament_name || '')}</span>
+        <span class="mc-meta">${m.markets.length > 3 ? `+${m.markets.length - 3} рынков` : 'Основные рынки'}</span>
         <button class="fav-star ${isFav ? 'on' : ''}" data-fav="${m.id}">${isFav ? '★' : '☆'}</button>
       </div>
       <div class="mc-teams">
         <div class="mc-team">${logoHtml(m.home)}<span>${esc(m.home?.name || '—')}</span></div>
-        <div class="mc-score">${m.status === 'confirmed' ? `${m.score_home}:${m.score_away}` : 'VS'}</div>
+        ${m.status === 'confirmed' ? `<div class="mc-score">${m.score_home}:${m.score_away}</div>` : '<div class="mc-score vs">VS</div>'}
         <div class="mc-team right"><span>${esc(m.away?.name || '—')}</span>${logoHtml(m.away)}</div>
       </div>
       <div class="mc-markets">
         ${main.map((k) => `<button class="odd-btn ${sel(k.code) ? 'selected' : ''}" data-match="${m.id}" data-code="${k.code}">
-            <span class="lbl">${esc(k.label)}</span><span class="val">${k.odds}</span>
+            <span class="lbl">${esc(k.label)}</span><span class="val">${odds(k.odds)}</span>
           </button>`).join('')}
       </div>
     </div>`;
@@ -171,21 +207,24 @@ function renderTables() {
 
 function standingsTable(rows) {
   if (!rows?.length) return '<div class="empty-note">В дивизионе ещё нет клубов.</div>';
+  // зоны 3↑/3↓ (решение 09) показываем, только когда клубов хватает на обе
+  const zones = rows.length >= 8;
   return `<table class="standings">
-    <tr><th></th><th>Клуб</th><th>И</th><th>В</th><th>Н</th><th>П</th><th>М</th><th>О</th></tr>
-    ${rows.map((r) => `<tr class="${r.position <= 3 ? 'trpromo' : (r.position >= rows.length - 2 ? 'trreleg' : '')}">
+    <tr><th>#</th><th class="team-th">Клуб</th><th>И</th><th>В</th><th>Н</th><th>П</th><th>М</th><th>О</th></tr>
+    ${rows.map((r) => `<tr class="${zones && r.position <= 3 ? 'promo' : (zones && r.position >= rows.length - 2 ? 'releg' : '')}">
       <td class="pos">${r.position}</td>
       <td><div class="team-cell">${logoHtml(r)}<span>${esc(r.name)}</span></div></td>
       <td>${r.games}</td><td>${r.wins}</td><td>${r.draws}</td><td>${r.losses}</td>
-      <td>${r.gf}:${r.ga}</td><td class="pts">${r.points}</td>
+      <td class="gd">${r.gf}:${r.ga}</td><td class="pts">${r.points}</td>
     </tr>`).join('')}
-  </table>`;
+  </table>
+  ${zones ? '<div class="table-legend"><span><i style="background:var(--green)"></i>Повышение</span><span><i style="background:var(--red)"></i>Вылет</span></div>' : ''}`;
 }
 
 function renderCoupon() {
   const body = $('#coupon-body');
   if (!state.coupon.length) {
-    body.innerHTML = '<div class="coupon-empty">Купон пуст.<br>Выбери исход на линии 🔥</div>';
+    body.innerHTML = '<div class="coupon-empty"><div class="big">🧾</div>Купон пуст.<br>Выбери исход на линии 🔥</div>';
     return;
   }
   const limits = state.user?.bet_limits || {};
@@ -195,24 +234,46 @@ function renderCoupon() {
   body.innerHTML = `
     ${state.coupon.map((l, i) => `<div class="coupon-leg">
       <div><div class="leg-main">${esc(l.label)}</div><div class="leg-sub">${esc(l.match_label)}</div></div>
-      <div style="display:flex;align-items:center;gap:8px">
-        <span class="leg-odd">${l.odds}</span>
-        <button class="leg-remove" data-rm="${i}">✕</button>
+      <div class="leg-right">
+        <span class="leg-odd">${odds(l.odds)}</span>
+        <button class="leg-remove" data-rm="${i}" aria-label="Убрать">✕</button>
       </div>
     </div>`).join('')}
     <div class="coupon-summary">
-      <div class="coupon-row"><span>${state.coupon.length > 1 ? `Экспресс (${state.coupon.length} ног)` : 'Ординар'}</span><span>${t.odds.toFixed(2)}</span></div>
-      <input class="amount-input" id="coupon-amount" type="number" min="${min}" max="${max}" value="${amount}">
-      <div class="coupon-row"><span>Возможная выплата</span><span>${fmt(t.payout)} дыма</span></div>
-      ${t.trimmed ? `<div class="coupon-row"><span class="trim">Обрезано по лимиту выплаты (${fmt(limits.max_payout)})</span></div>` : ''}
-      <button class="place-btn" id="place-bet">Поставить</button>
+      <div class="coupon-row"><span class="k">${state.coupon.length > 1 ? `Экспресс · ${state.coupon.length} ${legsWord(state.coupon.length)}` : 'Ординар'}</span><span>кэф ${odds(t.odds)}</span></div>
+      <input class="amount-input" id="coupon-amount" type="number" inputmode="numeric" min="${min}" max="${max}" value="${amount}" placeholder="Сумма">
+      <div class="quick-amounts">
+        ${[50, 100, 500].map((v) => `<button data-quick="${v}">+${v}</button>`).join('')}
+        <button data-quick="max">Макс</button>
+      </div>
+      <div class="coupon-row"><span class="k">Лимиты</span><span class="sub">${fmt(min)}–${fmt(max)} 🚬</span></div>
+      <div class="coupon-row total"><span>Выплата</span><span id="coupon-payout">${fmt(t.payout)} 🚬</span></div>
+      <div class="coupon-row" id="coupon-trim" ${t.trimmed ? '' : 'hidden'}><span class="trim">Обрезано по лимиту выплаты (${fmt(limits.max_payout)})</span></div>
+      <button class="place-btn" id="place-bet" ${state.placing ? 'disabled' : ''}>${state.placing ? 'Ставим…' : 'Поставить'}</button>
     </div>`;
+}
+
+function legsWord(n) {
+  const d = n % 10, dd = n % 100;
+  if (d === 1 && dd !== 11) return 'событие';
+  if (d >= 2 && d <= 4 && (dd < 12 || dd > 14)) return 'события';
+  return 'событий';
 }
 
 function couponAmount() {
   const el = $('#coupon-amount');
   const limits = state.user?.bet_limits || {};
-  return el ? Number(el.value) : (limits.min_bet ?? 10);
+  if (el) return Number(el.value);
+  return Number(localStorage.getItem('coupon_amount')) || (limits.min_bet ?? 10);
+}
+
+function refreshCouponTotals() {
+  const t = couponTotals(couponAmount());
+  const p = $('#coupon-payout');
+  if (p) p.textContent = `${fmt(t.payout)} 🚬`;
+  const tr = $('#coupon-trim');
+  if (tr) tr.hidden = !t.trimmed;
+  updateBetbar();
 }
 
 function renderProfile() {
@@ -221,34 +282,34 @@ function renderProfile() {
     $('#profile-body').innerHTML = `
       <div class="profile-hero">
         <div class="ph-top">
-          <div class="avatar">${state.user?.photo_url ? `<img src="${esc(state.user.photo_url)}" width="46" style="border-radius:50%">` : '👤'}</div>
+          <div class="avatar">${state.user?.photo_url ? `<img src="${esc(state.user.photo_url)}" alt="">` : '👤'}</div>
           <div>
             <div class="ph-name">${esc(state.user?.first_name || 'Игрок')}</div>
             <div class="ph-rank">${esc(p.rank)} · уровень ${p.level}</div>
           </div>
         </div>
         <div class="xp-bar"><div class="xp-fill" style="width:${pct}%"></div></div>
-        <div class="xp-label"><span>${p.xp} XP</span><span>до уровня ${p.level + 1}: ${Math.max(0, p.xp_needed - p.xp)} XP</span></div>
+        <div class="xp-label"><span>${fmt(p.xp)} XP</span><span>до уровня ${p.level + 1}: ${fmt(Math.max(0, p.xp_needed - p.xp))} XP</span></div>
         <div class="stat-grid">
           <div class="stat-box"><div class="v">${fmt(p.balance)}</div><div class="k">дым</div></div>
-          <div class="stat-box"><div class="v">${p.bets_count}</div><div class="k">ставок</div></div>
+          <div class="stat-box"><div class="v">${fmt(p.bets_count)}</div><div class="k">ставок</div></div>
           <div class="stat-box"><div class="v">${fmt(p.total_won)}</div><div class="k">выиграно</div></div>
         </div>
       </div>
       <div class="card">
         <div class="card-title">🎁 Бонус за серию входов</div>
-        <div class="sub" style="margin-bottom:9px">Серия: ${p.streak_days} дн. (50 → +10/день, кап 150)</div>
+        <div class="sub" style="margin-bottom:10px">Серия: ${p.streak_days} дн. · каждый день бонус растёт</div>
         <button class="bonus-btn" id="streak-btn">Забрать бонус</button>
       </div>
       <div class="card">
         <div class="card-title">🎟 Промокод</div>
         <div class="promo-row">
-          <input class="amount-input" id="promo-code" placeholder="КОД" style="margin:0">
-          <button class="bonus-btn" id="promo-btn" style="width:auto;padding:12px 16px">Ввести</button>
+          <input class="amount-input" id="promo-code" placeholder="КОД" autocomplete="off" style="margin:0;font-size:15px">
+          <button class="bonus-btn" id="promo-btn" style="width:auto;padding:12px 18px">Ввести</button>
         </div>
       </div>
       <div class="card" id="bets-history-card">
-        <div class="card-title">История ставок</div>
+        <div class="card-title">📜 История ставок</div>
         <div class="empty-note">Загрузка…</div>
       </div>`;
     $('#streak-btn').onclick = () => claimStreak();
@@ -267,9 +328,9 @@ function renderProfile() {
       el.querySelector('.empty-note')?.remove();
       el.insertAdjacentHTML('beforeend', predictions.length ? predictions.map((b) => `
         <div class="bet-history-item">
-          <div><div>${b.bet_type === 'express' ? `Экспресс ×${b.legs}` : 'Ординар'} · ${fmt(b.amount)}</div>
-          <div class="sub">${b.legs_label || ''}</div></div>
-          <div class="bh-status ${b.status}">${({won: '+' + fmt(b.payout ?? 0), lost: 'проигрыш', void: 'возврат', open: 'в игре'})[b.status] || b.status}</div>
+          <div><div>#${b.id} · ${b.bet_type === 'express' ? `Экспресс ×${b.legs}` : 'Ординар'} · ${fmt(b.amount)} × ${odds(b.total_odds)}</div>
+          <div class="sub">${esc(b.legs_label || '')}</div></div>
+          <div class="bh-status ${esc(b.status)}">${({won: '+' + fmt(b.potential_win), lost: 'проигрыш', void: 'возврат', open: 'в игре'})[b.status] || esc(b.status)}</div>
         </div>`).join('') : '<div class="empty-note">Ставок ещё нет.</div>');
     }).catch(() => {});
   }).catch((e) => { $('#profile-body').innerHTML = `<div class="empty-note">${esc(e.message)}</div>`; });
@@ -298,10 +359,10 @@ function renderClub() {
         <div class="club-name">${esc(cl.name)}</div>
         <div class="club-division">${esc(cl.division || '—')} · Elo ${cl.elo}</div>
         <div class="form-letters" style="justify-content:center;margin-top:10px">
-          ${(cl.form || '').split('').map((f) => `<span class="${f}">${f}</span>`).join('') || '<span class="sub">форма не набрана</span>'}
+          ${formLetters(cl.form) || '<span class="sub">форма не набрана</span>'}
         </div>
       </div>
-      <div class="card"><div class="stat-grid">
+      <div class="card"><div class="stat-grid two">
         <div class="stat-box"><div class="v">${fmt(cl.budget)}</div><div class="k">бюджет ₼</div></div>
         <div class="stat-box"><div class="v">${cl.squad_size}</div><div class="k">карт в составе</div></div>
       </div></div>
@@ -313,50 +374,67 @@ function renderClub() {
         <div class="squad-item">
           <div><span class="squad-pos">${esc(p.position || '—')}</span>${esc(p.name)}</div>
           <div class="squad-rating">${p.rating}</div>
-        </div>`).join('') : '<div class="empty-note">Состав пуст — трансферы появятся в блоке 8.</div>');
-    });
+        </div>`).join('') : '<div class="empty-note">Состав пуст — подпиши свободных агентов во вкладке «Рынок».</div>');
+    }).catch(() => { $('#squad-card .empty-note')?.replaceChildren('Не удалось загрузить состав'); });
   }).catch((e) => { $('#club-body').innerHTML = `<div class="empty-note">${esc(e.message)}</div>`; });
 }
 
 /* ===== карточка матча ===== */
 
 async function openMatch(matchId) {
-  const data = await api(`/api/matches/${matchId}`);
+  let data;
+  try { data = await api(`/api/matches/${matchId}`); } catch (e) { toast(e.message); return; }
+  // в карточке матча API не отдаёт название турнира — берём из линии
+  data.tournament_name ??= state.lineMatches.find((m) => m.id === data.id)?.tournament_name;
   state.matchDetail = data;
+  renderMatchDetail();
+  $('#match-sheet').hidden = false;
+}
+
+function renderMatchDetail() {
+  const data = state.matchDetail;
+  if (!data) return;
   const md = $('#match-detail');
   const hist = {};
   for (const h of data.odds_history || []) {
     (hist[h.market_code] = hist[h.market_code] || []).push(h.odds);
   }
-  const oddsSpark = (code) => {
-    const arr = hist[code] || [];
-    if (arr.length < 2) return '';
-    return `<div class="sub">Кэф двигался: ${arr.map((o) => o).join(' → ')}</div>`;
-  };
+  const moves = data.markets
+    .filter((k) => (hist[k.code] || []).length >= 2)
+    .map((k) => `${esc(k.label)}: ${hist[k.code].map(odds).join(' → ')}`);
+  const sel = (code) => state.coupon.some((l) => l.match_id === data.id && l.market_code === code);
+  const byCode = Object.fromEntries(data.markets.map((k) => [k.code, k]));
+  const known = new Set(MARKET_GROUPS.flatMap(([, codes]) => codes));
+  const groups = [...MARKET_GROUPS, ['Другие', data.markets.map((k) => k.code).filter((c) => !known.has(c))]]
+    .map(([title, codes]) => [title, codes.map((c) => byCode[c]).filter(Boolean)])
+    .filter(([, list]) => list.length);
+  const pending = data.status === 'pending';
   md.innerHTML = `
-    <div class="mc-teams" style="margin-top:6px">
+    <div class="sub" style="text-align:center;margin-bottom:12px;font-weight:700">${esc([data.tournament_name, data.tour_number != null ? `Тур ${data.tour_number}` : 'Кубок'].filter(Boolean).join(' · '))}</div>
+    <div class="mc-teams">
       <div class="mc-team">${logoHtml(data.home)}<span>${esc(data.home?.name || '—')}</span></div>
-      <div class="mc-score">${data.status === 'confirmed'
-        ? `${data.score_home}:${data.score_away}${data.pens_home != null ? `<span class="pens"> (${data.pens_home}:${data.pens_away})</span>` : ''}` : 'VS'}</div>
+      ${data.status === 'confirmed'
+        ? `<div class="mc-score">${data.score_home}:${data.score_away}${data.pens_home != null ? `<span class="pens">пен. ${data.pens_home}:${data.pens_away}</span>` : ''}</div>`
+        : '<div class="mc-score vs">VS</div>'}
       <div class="mc-team right"><span>${esc(data.away?.name || '—')}</span>${logoHtml(data.away)}</div>
     </div>
-    <div class="form-letters" style="margin-top:10px">
-      <span class="sub" style="margin-right:4px">форма:</span>
-      ${(data.home?.form || '').split('').map((f) => `<span class="${f}">${f}</span>`).join('')}
-      <span style="width:10px"></span>
-      ${(data.away?.form || '').split('').map((f) => `<span class="${f}">${f}</span>`).join('')}
-    </div>
-    ${data.goals?.length ? `<div style="margin-top:12px">${data.goals.map((g) => `
+    ${(data.home?.form || data.away?.form) ? `<div class="form-row">
+      <div class="form-letters">${formLetters(data.home?.form)}</div>
+      <span class="sub">форма</span>
+      <div class="form-letters">${formLetters(data.away?.form)}</div>
+    </div>` : ''}
+    ${data.goals?.length ? `<div class="card" style="margin-top:14px">${data.goals.map((g) => `
       <div class="goal-row"><span>${g.minute != null ? g.minute + "'" : '•'} ${esc(g.raw_name)}</span>
       <span class="sub">${g.side === 'home' ? esc(data.home?.name || 'дома') : esc(data.away?.name || 'гости')}</span></div>`).join('')}</div>` : ''}
-    <div class="section-title" style="font-size:16px;margin-top:14px">Рынки</div>
-    <div class="mc-markets" style="flex-wrap:wrap">
-      ${data.markets.map((k) => `<button class="odd-btn" style="min-width:90px" data-match="${data.id}" data-code="${k.code}">
-        <span class="lbl">${esc(k.label)}</span><span class="val">${k.odds}</span></button>`).join('')}
-    </div>
-    ${data.markets.map((k) => oddsSpark(k.code)).filter(Boolean).join('')}
+    ${groups.length ? groups.map(([title, list]) => `<div class="markets-group">
+      <div class="sub">${esc(title)}</div>
+      <div class="mc-markets">
+        ${list.map((k) => `<button class="odd-btn ${sel(k.code) ? 'selected' : ''}" data-match="${data.id}" data-code="${esc(k.code)}" ${pending ? '' : 'disabled'}>
+          <span class="lbl">${esc(k.label)}</span><span class="val">${odds(k.odds)}</span></button>`).join('')}
+      </div>
+    </div>`).join('') : '<div class="empty-note">Рынков нет.</div>'}
+    ${moves.length ? `<div class="odds-move" style="margin-top:14px">📈 Движение кэфов: ${moves.join(' · ')}</div>` : ''}
   `;
-  $('#match-sheet').hidden = false;
 }
 
 /* ===== действия ===== */
@@ -391,27 +469,66 @@ async function requestClub() {
 }
 
 async function placeBet() {
+  if (state.placing) return;
   const amount = couponAmount();
   const limits = state.user?.bet_limits || {};
-  if (!amount || amount < (limits.min_bet ?? 10)) return toast(`Минимум ${limits.min_bet} дыма`);
-  if (amount > (limits.max_bet ?? 50000)) return toast(`Максимум ${limits.max_bet} дыма`);
+  if (!amount || amount < (limits.min_bet ?? 10)) return toast(`Минимум ${fmt(limits.min_bet ?? 10)} дыма`);
+  if (amount > (limits.max_bet ?? 50000)) return toast(`Максимум ${fmt(limits.max_bet ?? 50000)} дыма`);
+  if (amount > (state.user?.balance ?? 0)) return toast('Недостаточно дыма');
+  // один ключ на купон, пока он не принят: двойной тап / ретрай после сети не спишет дважды
+  const sig = JSON.stringify([amount, state.coupon.map((l) => [l.match_id, l.market_code])]);
+  if (!state.idemKey || state.idemKey.sig !== sig) {
+    state.idemKey = { sig, key: crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}` };
+  }
+  state.placing = true;
+  renderCoupon();
   try {
-    const idem = crypto.randomUUID?.() || String(Date.now());
     const r = await api('/api/predictions', {
       method: 'POST',
-      body: JSON.stringify({ amount, selections: state.coupon, idempotency_key: idem }),
+      body: JSON.stringify({ amount, selections: state.coupon, idempotency_key: state.idemKey.key }),
     });
-    state.user.balance = r.balance;
+    if (r.balance != null) state.user.balance = r.balance;
+    else refreshWallet();
     state.coupon = [];
+    state.idemKey = null;
     saveCoupon();
+    localStorage.setItem('coupon_amount', String(amount));
     renderHeader();
+    renderLine();
+    haptic('medium');
+    toast(r.duplicate ? 'Эта ставка уже принята' : `Ставка #${r.bet_id} принята! 🔥`);
+  } catch (e) {
+    if (e.code === 'ODDS_CHANGED') {
+      await refreshLine();
+      toast('Кэф изменился — купон обновлён, проверь и поставь ещё раз');
+    } else toast(e.message);
+  } finally {
+    state.placing = false;
     renderCoupon();
     updateBetbar();
-    toast('Ставка принята! 🔥');
-  } catch (e) {
-    if (e.code === 'ODDS_CHANGED') toast('Кэф изменился — обнови купон');
-    else toast(e.message);
   }
+}
+
+async function refreshWallet() {
+  try {
+    const w = await api('/api/wallet');
+    state.user.balance = w.balance;
+    renderHeader();
+  } catch (_) { /* не критично */ }
+}
+
+async function refreshLine() {
+  try {
+    const line = await api('/api/line');
+    state.lineMatches = line.matches;
+    // подтягиваем свежие кэфы в купон
+    for (const l of state.coupon) {
+      const k = state.lineMatches.find((m) => m.id === l.match_id)?.markets.find((x) => x.code === l.market_code);
+      if (k) l.odds = k.odds;
+    }
+    saveCoupon();
+    renderLine();
+  } catch (_) { /* покажем старую линию */ }
 }
 
 /* ===== избранное ===== */
@@ -435,23 +552,32 @@ async function toggleFav(matchId, btn) {
 /* ===== уведомления ===== */
 
 async function openNotifications() {
-  const data = await api('/api/notifications');
+  let data;
+  try { data = await api('/api/notifications'); } catch (e) { toast(e.message); return; }
   $('#notif-list').innerHTML = data.notifications.length
-    ? data.notifications.map((n) => `<div class="bet-history-item"><div>${esc(n.text)}</div><div class="sub">${esc((n.created_at || '').slice(5, 16))}</div></div>`).join('')
+    ? data.notifications.map((n) => `<div class="notif-item ${n.is_read ? '' : 'unread'}">
+        <div class="n-text">${esc(n.text)}</div><div class="n-time">${esc(fmtTime(n.created_at))}</div></div>`).join('')
     : '<div class="empty-note">Пока пусто.</div>';
   $('#notif-sheet').hidden = false;
-  $('#bell-badge').hidden = data.unread === 0;
-  api('/api/notifications/read', { method: 'POST' }).then(() => { $('#bell-badge').hidden = true; }).catch(() => {});
+  api('/api/notifications/read', { method: 'POST' }).then(() => setBadge(0)).catch(() => {});
+}
+
+function fmtTime(s, local = false) {
+  // сервер пишет время в UTC без зоны (datetime('now'), utcnow().isoformat())
+  const d = s ? new Date(s.replace(' ', 'T') + (local ? '' : 'Z')) : null;
+  if (!d || isNaN(d)) return s || '';
+  return d.toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
 }
 
 /* ===== betbar ===== */
 
 function updateBetbar() {
   const bar = $('#betbar');
-  if (!state.coupon.length) { bar.hidden = true; return; }
+  const view = document.querySelector('.view.active')?.id;
+  if (!state.coupon.length || view !== 'view-line') { bar.hidden = true; return; }
   const t = couponTotals(couponAmount());
   $('#betbar-count').textContent = state.coupon.length;
-  $('#betbar-odds').textContent = t.odds.toFixed(2);
+  $('#betbar-odds').textContent = odds(t.odds);
   bar.hidden = false;
 }
 
@@ -461,9 +587,10 @@ function showView(name) {
   document.querySelectorAll('.view').forEach((v) => v.classList.remove('active'));
   $(`#view-${name}`).classList.add('active');
   document.querySelectorAll('.nav-btn').forEach((b) => b.classList.toggle('active', b.dataset.view === name));
-  $('#betbar').hidden = !(name === 'coupon' && state.coupon.length) && !(name === 'line' && state.coupon.length);
+  window.scrollTo(0, 0);
+  updateBetbar();
   if (name === 'tables') renderTables();
-  if (name === 'coupon') { renderCoupon(); $('#betbar').hidden = true; }
+  if (name === 'coupon') renderCoupon();
   if (name === 'profile') renderProfile();
   if (name === 'club') renderClub();
   if (name === 'transfers') renderTransfers();
@@ -479,6 +606,7 @@ function renderAll() {
 /* ===== init ===== */
 
 async function init() {
+  $('#line-matches').innerHTML = '<div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>';
   try {
     const boot = await api('/api/bootstrap');
     state.user = boot.user;
@@ -492,12 +620,23 @@ async function init() {
     ]);
     state.lineMatches = line.matches;
     state.favorites = new Set(favs.favorites);
+    // купон из localStorage мог устареть: убираем ноги на закрытые матчи, освежаем кэфы
+    state.coupon = state.coupon.filter((l) => state.lineMatches.some((m) => m.id === l.match_id));
+    for (const l of state.coupon) {
+      const m = state.lineMatches.find((x) => x.id === l.match_id);
+      const k = m.markets.find((x) => x.code === l.market_code);
+      if (k) { l.odds = k.odds; l.label = k.label; }
+      l.match_label = `${m.home?.name || '—'} — ${m.away?.name || '—'}`;
+    }
+    saveCoupon();
     const notif = await api('/api/notifications');
-    $('#bell-badge').hidden = !notif.unread;
+    setBadge(notif.unread);
 
     renderAll();
   } catch (e) {
+    $('#line-matches').innerHTML = '';
     if (e.status !== 401) toast('Не удалось загрузиться: ' + e.message);
+    else $('#line-matches').innerHTML = '<div class="empty-note">Открой мини-апп из бота в Telegram — так мы узнаем, кто ты.</div>';
   }
 }
 
@@ -515,14 +654,32 @@ document.addEventListener('click', (ev) => {
     const m = state.lineMatches.find((x) => x.id === Number(odd.dataset.match))
       || (state.matchDetail?.id === Number(odd.dataset.match) ? state.matchDetail : null);
     const k = m?.markets.find((x) => x.code === odd.dataset.code);
-    if (m && k) { couponAdd(m, k); renderLine(); renderCoupon(); }
+    if (m && k) { haptic(); couponAdd(m, k); renderMatchDetail(); }
     return;
   }
 
-  const card = ev.target.closest('.match-card');
+  const card = ev.target.closest('[data-open]');
   if (card && !ev.target.closest('button')) {
-    const favBtn = card.querySelector('[data-fav]');
-    if (favBtn) openMatch(Number(favBtn.dataset.fav));
+    openMatch(Number(card.dataset.open));
+    return;
+  }
+
+  const tourChip = ev.target.closest('[data-tour]');
+  if (tourChip) {
+    const v = tourChip.dataset.tour;
+    state.currentTour = v === '' ? null : (Number.isNaN(Number(v)) ? v : Number(v));
+    renderLine();
+    return;
+  }
+
+  const quick = ev.target.closest('[data-quick]');
+  if (quick) {
+    const input = $('#coupon-amount');
+    const limits = state.user?.bet_limits || {};
+    const cap = Math.min(limits.max_bet ?? 50000, state.user?.balance ?? 0);
+    input.value = quick.dataset.quick === 'max' ? cap : Math.min(cap, (Number(input.value) || 0) + Number(quick.dataset.quick));
+    localStorage.setItem('coupon_amount', input.value);
+    refreshCouponTotals();
     return;
   }
 
@@ -553,10 +710,8 @@ document.addEventListener('click', (ev) => {
 });
 document.addEventListener('input', (ev) => {
   if (ev.target.id === 'coupon-amount') {
-    const t = couponTotals(couponAmount());
-    const rows = document.querySelectorAll('.coupon-row');
-    if (rows[1]) rows[1].children[1].textContent = fmt(t.payout) + ' дыма';
-    updateBetbar();
+    localStorage.setItem('coupon_amount', ev.target.value);
+    refreshCouponTotals();
   }
 });
 
@@ -572,15 +727,15 @@ $('#tabs-tables')?.addEventListener('click', (ev) => {
   if (!isStandings) {
     api(`/api/results?division_id=${state.currentDivision}`).then(({ results }) => {
       $('#results-wrap').innerHTML = results.length ? results.map((m) => `
-        <div class="match-card" style="margin-bottom:8px">
-          <div class="mc-top"><span>Тур ${m.tour_number ?? '—'}</span><span class="mc-status">${({confirmed: 'сыгран', disputed: 'спор'})[m.status] || m.status}</span></div>
+        <div class="match-card" data-open="${m.id}" style="margin-bottom:8px">
+          <div class="mc-top"><span>${m.tour_number != null ? `Тур ${m.tour_number}` : 'Кубок'}</span><span class="mc-status">${({confirmed: 'сыгран', disputed: 'спор'})[m.status] || m.status}</span></div>
           <div class="mc-teams">
             <div class="mc-team">${logoHtml(m.home)}<span>${esc(m.home?.name || '')}</span></div>
-            <div class="mc-score">${m.score_home}:${m.score_away}${m.pens_home != null ? `<span class="pens"> (${m.pens_home}:${m.pens_away})</span>` : ''}</div>
+            <div class="mc-score">${m.score_home}:${m.score_away}${m.pens_home != null ? `<span class="pens">пен. ${m.pens_home}:${m.pens_away}</span>` : ''}</div>
             <div class="mc-team right"><span>${esc(m.away?.name || '')}</span>${logoHtml(m.away)}</div>
           </div>
         </div>`).join('') : '<div class="empty-note">Сыгранных матчей ещё нет.</div>';
-    });
+    }).catch((e) => { $('#results-wrap').innerHTML = `<div class="empty-note">${esc(e.message)}</div>`; });
   }
 });
 

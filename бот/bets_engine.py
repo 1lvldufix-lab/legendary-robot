@@ -14,6 +14,7 @@ import logging
 from datetime import date, timedelta
 
 import db as appdb
+import bet_notify
 import markets as markets_engine
 import settings as appsettings
 
@@ -40,8 +41,9 @@ def _limits() -> dict:
     }
 
 
-def _notify(c, user_id: int, text: str) -> None:
-    c.execute("INSERT INTO notifications (user_id, text, kind) VALUES (?,?,'app')", (user_id, text))
+def _notify(c, user_id: int, text: str, kind: str = "app") -> None:
+    """kind='bet' — расчёт купона: дублируется в ЛС бота (job_push_bet_results)."""
+    c.execute("INSERT INTO notifications (user_id, text, kind) VALUES (?,?,?)", (user_id, text, kind))
 
 
 def _check_restrictions(c, user_row: dict, match: dict) -> None:
@@ -190,20 +192,100 @@ def place_bet(user_row: dict, amount: int, selections: list[dict],
         c.close()
 
 
+def _leg_result_now(c, leg: dict) -> str:
+    """Исход ноги по текущему состоянию БД: tie_* — по серии, остальное — по счёту."""
+    m = c.execute("SELECT * FROM matches WHERE id=?", (leg["match_id"],)).fetchone()
+    if leg["market_code"] in TIE_CODES:
+        return _resolve_tie_leg(c, leg, dict(m)) if m else "void"
+    if not m or m["status"] == "cancelled":
+        return "void"
+    if m["status"] == "confirmed" and m["score1"] is not None:
+        return markets_engine.resolve_leg(leg["match_id"], leg["market_code"], m["score1"], m["score2"])
+    return "pending"
+
+
+def _scope_leg_filter(c, match_id: int) -> tuple[str, list]:
+    """Ноги, зависящие от матча: сам матч + tie_* на любой игре той же серии."""
+    m = c.execute("SELECT tie_id FROM matches WHERE id=?", (match_id,)).fetchone()
+    if m and m["tie_id"]:
+        codes = ",".join("?" * len(TIE_CODES))
+        return (f"(l.match_id=? OR (l.market_code IN ({codes}) AND l.match_id IN "
+                f"(SELECT id FROM matches WHERE tie_id=?)))",
+                [match_id, *sorted(TIE_CODES), m["tie_id"]])
+    return "l.match_id=?", [match_id]
+
+
+def _paid_for_bet(c, b: dict) -> int:
+    """Сколько по купону реально выплачено (выплаты минус прошлые откаты)."""
+    row = c.execute(
+        "SELECT COUNT(*) n, COALESCE(SUM(delta),0) s FROM balance_history WHERE user_id=? AND reason IN (?,?)",
+        (b["user_id"], f"выплата по купону #{b['id']}", f"пересчёт купона #{b['id']}")).fetchone()
+    if row["n"]:
+        return int(row["s"])
+    return int(b["potential_win"] or 0) if b["status"] in ("won", "void") else 0
+
+
+def unsettle_for_match(c, match_id: int) -> list[int]:
+    """Результат матча изменён: откатить расчёт купонов, чей исход по этому матчу
+    (или по его серии) поменялся. Работает в транзакции вызывающего, без commit.
+    Идемпотентно: при том же счёте ничего не трогает. → id переоткрытых купонов."""
+    where, args = _scope_leg_filter(c, match_id)
+    legs = [dict(r) for r in c.execute(
+        f"SELECT l.*, b.status AS bet_status FROM bet_legs l JOIN bets b ON b.id=l.bet_id WHERE {where}",
+        args).fetchall()]
+    lim = _limits()
+    xp_win = appsettings.setting_int("xp_per_win", 100)
+    reopened: list[int] = []
+    for leg in legs:
+        new = _leg_result_now(c, leg)
+        old = leg["result"]
+        if new == old:
+            continue
+        if leg["bet_status"] == "open" or leg["bet_id"] in reopened:
+            c.execute("UPDATE bet_legs SET result='pending', settled_at=NULL WHERE id=?", (leg["id"],))
+            continue
+        # void (админом/все ноги) — окончательный; pending-нога в проигранном
+        # купоне на исход не влияла (его решила другая нога)
+        if leg["bet_status"] not in ("won", "lost") or old == "pending":
+            continue
+        b = dict(c.execute("SELECT * FROM bets WHERE id=?", (leg["bet_id"],)).fetchone())
+        paid = _paid_for_bet(c, b)
+        if paid:
+            c.execute("UPDATE users SET balance=balance-?, total_won=total_won-? WHERE id=?",
+                      (paid, paid if b["status"] == "won" else 0, b["user_id"]))
+            c.execute("INSERT INTO balance_history (user_id, delta, reason) VALUES (?,?,?)",
+                      (b["user_id"], -paid, f"пересчёт купона #{b['id']}"))
+        if b["status"] == "won":
+            c.execute("UPDATE users SET bets_won=CASE WHEN bets_won>0 THEN bets_won-1 ELSE 0 END, "
+                      "xp=CASE WHEN xp>? THEN xp-? ELSE 0 END WHERE id=?",
+                      (xp_win, xp_win, b["user_id"]))
+        odds = 1.0
+        for r in c.execute("SELECT odds FROM bet_legs WHERE bet_id=? ORDER BY id", (b["id"],)).fetchall():
+            odds *= r["odds"]
+        potential = min(int(b["amount"] * odds), lim["max_payout"])
+        c.execute("UPDATE bets SET status='open', potential_win=? WHERE id=?", (potential, b["id"]))
+        c.execute("UPDATE bet_legs SET result='pending', settled_at=NULL WHERE id=?", (leg["id"],))
+        _notify(c, b["user_id"], f"♻️ Результат матча исправлен — купон #{b['id']} пересчитывается"
+                                 + (f" (списано {paid} дыма прошлой выплаты)" if paid else ""))
+        reopened.append(b["id"])
+    return reopened
+
+
 def settle_match(match_id: int) -> dict:
-    """Расчёт всех open-купонов с ногами на матч. Спорные матчи пропускаются."""
+    """Расчёт всех open-купонов с ногами на матч (и tie_* на его серии).
+    Спорные матчи пропускаются."""
     c = appdb.db()
     m = c.execute("SELECT * FROM matches WHERE id=?", (match_id,)).fetchone()
-    if not m or m["score1"] is None:
+    if not m or (m["score1"] is None and m["status"] != "cancelled"):
         c.close()
         return {"settled": 0}
     if m["status"] == "disputed":
         c.close()
         return {"settled": 0, "frozen": True}
-    m = dict(m)
+    where, args = _scope_leg_filter(c, match_id)
     bet_rows = [dict(r) for r in c.execute(
-        "SELECT DISTINCT b.* FROM bets b JOIN bet_legs l ON l.bet_id=b.id "
-        "WHERE l.match_id=? AND b.status='open' AND b.is_frozen=0", (match_id,)).fetchall()]
+        f"SELECT DISTINCT b.* FROM bets b JOIN bet_legs l ON l.bet_id=b.id "
+        f"WHERE {where} AND b.status='open' AND b.is_frozen=0", args).fetchall()]
     settled = 0
     lim = _limits()
     xp_win = appsettings.setting_int("xp_per_win", 100)
@@ -213,27 +295,14 @@ def settle_match(match_id: int) -> dict:
         all_resolved, any_lost, any_void = True, False, False
         eff_odds = 1.0
         for leg in legs:
-            need_resolve = leg["match_id"] == match_id or leg["result"] == "pending"
-            if need_resolve and leg["result"] == "pending":
-                if leg["match_id"] == match_id:
-                    if leg["market_code"] in TIE_CODES:
-                        res = _resolve_tie_leg(c, leg, m)
-                    else:
-                        res = markets_engine.resolve_leg(match_id, leg["market_code"], m["score1"], m["score2"])
-                    c.execute("UPDATE bet_legs SET result=?, settled_at=datetime('now') WHERE id=?",
-                              (res, leg["id"]))
-                else:
-                    # другая нога экспресса: сыграна ли она?
-                    om = c.execute("SELECT status, score1, score2 FROM matches WHERE id=?",
-                                   (leg["match_id"],)).fetchone()
-                    if om and om["status"] == "confirmed":
-                        res = markets_engine.resolve_leg(leg["match_id"], leg["market_code"],
-                                                         om["score1"], om["score2"])
-                        c.execute("UPDATE bet_legs SET result=?, settled_at=datetime('now') WHERE id=?",
-                                  (res, leg["id"]))
-                    else:
-                        all_resolved = False
-                        continue
+            if leg["result"] == "pending":
+                # tie_* и ноги на других матчах экспресса — через общий резолвер
+                res = _leg_result_now(c, leg)
+                if res == "pending":
+                    all_resolved = False
+                    continue
+                c.execute("UPDATE bet_legs SET result=?, settled_at=datetime('now') WHERE id=?",
+                          (res, leg["id"]))
                 leg["result"] = res
             if leg["result"] == "lost":
                 any_lost = True
@@ -243,7 +312,8 @@ def settle_match(match_id: int) -> dict:
                 eff_odds *= leg["odds"]
             else:
                 all_resolved = False
-        if not all_resolved:
+        # проигранная нога решает экспресс сразу, не дожидаясь остальных матчей
+        if not all_resolved and not any_lost:
             continue
         if any_lost:
             status, payout = "lost", 0
@@ -261,11 +331,7 @@ def settle_match(match_id: int) -> dict:
         if status == "won":
             c.execute("UPDATE users SET bets_won=bets_won+1 WHERE id=?", (b["user_id"],))
             _apply_xp(c, b["user_id"], xp_win)
-        _notify(c, b["user_id"], {
-            "won": f"🎉 Купон #{b['id']} рассчитан: выигрыш {payout} дыма!",
-            "lost": f"Купон #{b['id']} не зашёл. Дым сгорел.",
-            "void": f"Купон #{b['id']} возвращён ({payout} дыма).",
-        }[status])
+        _notify(c, b["user_id"], bet_notify.settlement_text(c, b, legs, status, payout), kind="bet")
         settled += 1
     c.commit()
     c.close()
@@ -277,9 +343,8 @@ def _resolve_tie_leg(c, leg: dict, game: dict) -> str:
     tie = c.execute("SELECT * FROM ties WHERE id=?", (game.get("tie_id"),)).fetchone()
     if not tie or not tie["winner_club_id"]:
         return "pending"  # серия не завершена — купон ждёт
-    if tie["winner_club_id"] == tie["club_a_id"]:
-        return "won" if leg["market_code"] in ("tie_2_0", "tie_2_1") else "lost"
-    return "won" if leg["market_code"] in ("tie_0_2", "tie_1_2") else "lost"
+    # точный счёт серии относительно клуба А (как в generate_tie_markets)
+    return "won" if leg["market_code"] == f"tie_{tie['wins_a']}_{tie['wins_b']}" else "lost"
 
 
 def _apply_xp(c, user_id: int, xp_gain: int) -> None:

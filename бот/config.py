@@ -34,6 +34,14 @@ GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
 NIM_API_KEY = os.environ.get("NIM_API_KEY", "")
 OCRSPACE_API_KEY = os.environ.get("OCRSPACE_API_KEY", "")
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
+# gemini-2.0-flash выключен Google 01.06.2026 — модель вынесена в env, чтобы менять без правки кода
+GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-3.5-flash")
+# список free VL-моделей OpenRouter через запятую (пусто = дефолт из ocr.py); free-модели часто снимают
+OPENROUTER_MODELS = [m.strip() for m in os.environ.get("OPENROUTER_MODELS", "").split(",") if m.strip()]
+# локальная vision-модель через Ollama (http://127.0.0.1:11434); пусто = не используется
+OLLAMA_URL = os.environ.get("OLLAMA_URL", "").rstrip("/")
+OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "qwen2.5vl:3b")   # ~3.2 ГБ
+OLLAMA_FIRST = os.environ.get("OLLAMA_FIRST", "0") == "1"     # 1 = локальная модель раньше облака
 
 # ===== Личные деньги юзера («дым») и лимиты ставок (как у оригинала) =====
 START_BALANCE = int(os.environ.get("START_BALANCE", "422"))   # per план 09 (не 677)

@@ -56,19 +56,32 @@ def _club_name(c, club_id: int | None) -> str:
 
 
 def _goal_events_from_text(text: str) -> list[dict]:
-    """«Antony 2, Wirtz» или «Antony, Antony, Wirtz» → список событий (без минут)."""
+    """«Antony x2, Wirtz», «Antony 2, Wirtz» или «Antony, Antony, Wirtz» → события (без минут)."""
     events = []
     for part in (text or "").split(","):
         part = part.strip()
         if not part:
             continue
-        m = re.match(r"^(.*?)\s*[x×]\s*(\d+)$", part)
+        m = re.match(r"^(.*?)(?:\s*[x×]\s*|\s+)(\d{1,2})$", part)
         if m:
             events += [{"side": "home", "name": m.group(1).strip(), "minute": None}
                        for _ in range(int(m.group(2)))]
         else:
             events.append({"side": "home", "name": part, "minute": None})
     return events
+
+
+def _parse_extras(args: list[str]) -> tuple[int | None, int | None, list[dict]]:
+    """Хвост команды «пен=5:4 голы=Имя x2, Имя Фамилия» → (пен1, пен2, голы).
+    context.args режет по пробелам, поэтому голы собираем из всего хвоста и делим по запятым."""
+    text = " ".join(args)
+    p1 = p2 = None
+    pm = re.search(r"пен=\s*(\d{1,2}\s*[:\-–]\s*\d{1,2})", text)
+    if pm:
+        p1, p2 = _parse_score(pm.group(1))
+    gm = re.search(r"голы=(.*?)(?=\s+пен=|$)", text)
+    goals = _goal_events_from_text(gm.group(1)) if gm else []
+    return p1, p2, goals
 
 
 async def _notify_player(bot, telegram_id: int | None, text: str, kb=None) -> None:
@@ -158,16 +171,11 @@ async def on_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         "SELECT 1 FROM processed_screenshots WHERE sha256=? AND tournament_id=?",
         (sha, m["tournament_id"]),
     ).fetchone()
+    c.close()
     if dup:
-        c.close()
         await update.message.reply_text("Этот скрин уже обрабатывался (дедуп). Пришли следующий.")
         return
-    c.execute(
-        "INSERT INTO processed_screenshots (sha256, tournament_id, match_id, reporter_id) VALUES (?,?,?,?)",
-        (sha, m["tournament_id"], match_id, tg.id),
-    )
-    c.commit()
-    c.close()
+    # хэш пишем только после финализации — иначе «🔄 Другой моделью» упрётся в дедуп
 
     await update.message.reply_text("⏳ Распознаю скрин (OCR-каскад)…")
     skip = context.user_data.get("ocr_skip", 0)
@@ -205,6 +213,12 @@ async def on_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         merged_goals, actor="ocr",
     )
     c = appdb.db()
+    c.execute(
+        "INSERT INTO processed_screenshots (sha256, tournament_id, match_id, reporter_id) VALUES (?,?,?,?) "
+        "ON CONFLICT DO NOTHING",
+        (sha, m["tournament_id"], match_id, tg.id),
+    )
+    c.commit()
     home = _club_name(c, summary["home_club"])
     away = _club_name(c, summary["away_club"])
     # соперник — тот, кто не репортер
@@ -267,14 +281,15 @@ async def cb_dispute(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
 async def cmd_disputes(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     c = appdb.db()
     rows = c.execute("SELECT * FROM matches WHERE status='disputed' ORDER BY id").fetchall()
-    c.close()
     if not rows:
+        c.close()
         await update.message.reply_text("Спорных матчей нет.")
         return
     lines = []
     for m in rows:
         lines.append(f"#{m['id']} {_club_name(c, m['home_club_id'])} — {_club_name(c, m['away_club_id'])} "
                      f"({m['score1']}:{m['score2']})")
+    c.close()
     await update.message.reply_text("\n".join(lines))
 
 
@@ -294,6 +309,9 @@ async def cmd_resolve_dispute(update: Update, context: ContextTypes.DEFAULT_TYPE
     if len(context.args or []) < 2:
         await update.message.reply_text("Формат: /спор <матч> <счёт> [пен=5:4] [голы=Имя x2, Имя]")
         return
+    if not context.args[0].isdigit():
+        await update.message.reply_text("id матча — число.")
+        return
     mid = int(context.args[0])
     c = appdb.db()
     m = c.execute("SELECT * FROM matches WHERE id=?", (mid,)).fetchone()
@@ -304,15 +322,12 @@ async def cmd_resolve_dispute(update: Update, context: ContextTypes.DEFAULT_TYPE
     if not _is_judge_of(update, m["tournament_id"]):
         await update.message.reply_text("⛔ Только судья турнира.")
         return
-    s1, s2 = _parse_score(context.args[1])
-    p1 = p2 = None
-    goals: list[dict] = []
-    for a in context.args[2:]:
-        if a.startswith("пен="):
-            p1, p2 = _parse_score(a[4:])
-        elif a.startswith("голы="):
-            for g in _goal_events_from_text(a[5:]):
-                goals.append(g)
+    try:
+        s1, s2 = _parse_score(context.args[1])
+        p1, p2, goals = _parse_extras(context.args[2:])
+    except ValueError as e:
+        await update.message.reply_text(f"Не разобрал: {e}")
+        return
     summary = results.resolve_dispute(mid, s1, s2, p1, p2, goals, update.effective_user.id)
     c = appdb.db()
     await update.message.reply_text(
@@ -330,6 +345,9 @@ async def cmd_manual(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
             "Формат: /вручную <матч> <счёт> [пен=5:4] [голы=Имя x2, Имя]\n"
             "Голы — авторы из состава твоего клуба и соперника, через запятую.")
         return
+    if not context.args[0].isdigit():
+        await update.message.reply_text("id матча — число.")
+        return
     mid = int(context.args[0])
     c = appdb.db()
     m = c.execute("SELECT * FROM matches WHERE id=?", (mid,)).fetchone()
@@ -341,17 +359,24 @@ async def cmd_manual(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
     player = core.get_player(update.effective_user.id)
     club = core.club_of_player(player["id"]) if player else None
     is_owner = club and club["id"] in (m["home_club_id"], m["away_club_id"])
-    if not (is_owner or _is_judge_of(update, m["tournament_id"])):
+    is_judge = _is_judge_of(update, m["tournament_id"])
+    if not (is_owner or is_judge):
         await update.message.reply_text("⛔ Ты не участник матча и не судья.")
         return
-    s1, s2 = _parse_score(context.args[1])
-    p1 = p2 = None
-    goals: list[dict] = []
-    for a in context.args[2:]:
-        if a.startswith("пен="):
-            p1, p2 = _parse_score(a[4:])
-        elif a.startswith("голы="):
-            goals = _goal_events_from_text(a[5:])
+    if m["status"] == "cancelled":
+        await update.message.reply_text("Матч отменён — вносить нечего.")
+        return
+    # владелец вносит только несыгранный матч; правка итога — судья/root (с пересчётом ставок)
+    if m["status"] not in ("pending", "reported") and not is_judge:
+        await update.message.reply_text(
+            "⛔ Матч уже финализирован. Не согласен — «⚔️ Оспорить», исправит судья.")
+        return
+    try:
+        s1, s2 = _parse_score(context.args[1])
+        p1, p2, goals = _parse_extras(context.args[2:])
+    except ValueError as e:
+        await update.message.reply_text(f"Не разобрал: {e}")
+        return
     # имена без стороны: раскладываем по составам клубов
     c = appdb.db()
 

@@ -79,19 +79,21 @@ def match_clubs(c, competitors: dict[str, dict], match: dict) -> tuple[int | Non
     """competitor → наш club: по имени (каталог лого), иначе по акрониму. Возвращает (home, away, проблемы)."""
     problems = []
     out = []
+    # SQLite LOWER() не понимает кириллицу — сравниваем в Python
+    by_name = {" ".join((r["name"] or "").casefold().split()): r["id"]
+               for r in c.execute("SELECT id, name FROM clubs").fetchall()}
     for side in ("home", "away"):
         comp = competitors.get(match[f"{side}_external_id"])
         if not comp:
             out.append(None)
             continue
-        row = c.execute("SELECT id FROM clubs WHERE LOWER(name)=LOWER(?)", (comp["name"],)).fetchone()
-        if not row and comp.get("acronym"):
-            row = c.execute("SELECT id FROM clubs WHERE LOWER(name)=LOWER(?)", (comp["acronym"],)).fetchone()
-        if not row:
+        cid = None
+        for key in (comp.get("name"), comp.get("acronym")):
+            if key and cid is None:
+                cid = by_name.get(" ".join(key.casefold().split()))
+        if cid is None:
             problems.append(f"нет клуба «{comp['name']}»")
-            out.append(None)
-        else:
-            out.append(row["id"])
+        out.append(cid)
     return out[0], out[1], problems
 
 

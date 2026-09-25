@@ -392,7 +392,7 @@ async def api_club_request(request):
         name = u.get("username") or u.get("first_name") or str(u["telegram_id"])
         await bot.send_message(
             next(iter(config.ADMIN_IDS)),
-            f"⚽ Заявка на клуб от {name} (id {u['telegram_id']}). Выдать: /клуб {u['id']} <клуб>",
+            f"⚽ Заявка на клуб от {name} (tg {u['telegram_id']}). Выдать: /клуб {u['telegram_id']} <клуб>",
         )
     except Exception:
         pass
@@ -591,9 +591,11 @@ async def api_transfer_lot_create(request):
     try:
         club_id = _club_guard(u)
         r = transfers_engine.create_lot(club_id, int(body["card_id"]), body.get("kind", "fix"),
-                                        int(body["price"]), body.get("buyout_price"), u["telegram_id"])
+                                        body.get("price"), body.get("buyout_price"), u["telegram_id"])
     except transfers_engine.TransferError as e:
         return err(str(e), 400, e.code)
+    except (KeyError, TypeError, ValueError):
+        return err("card_id и price — целые числа", 400, "BAD_INPUT")
     return j({"status": "ok", **r})
 
 
@@ -684,6 +686,16 @@ def _audit(c, actor_tg: int, action: str, details: str) -> None:
               "VALUES (NULL, ?, ?, ?)", (actor_tg, action, details))
 
 
+def _audit_now(actor_tg: int, action: str, details: str) -> None:
+    """Аудит отдельной транзакцией (без общего соединения) — с commit."""
+    c = appdb.db()
+    try:
+        _audit(c, actor_tg, action, details)
+        c.commit()
+    finally:
+        c.close()
+
+
 async def api_admin_dashboard(request):
     u = require_active_user(request)
     try:
@@ -751,7 +763,7 @@ async def api_admin_pause(request):
         appsettings.set_setting("bets_paused_matches", json.dumps(paused))
     else:
         return err("scope = global|match")
-    _audit(appdb.db(), me["telegram_id"], "pause" if on else "unpause", f"{scope} {reason}")
+    _audit_now(me["telegram_id"], "pause" if on else "unpause", f"{scope} {reason}")
     return j({"status": "ok"})
 
 
@@ -783,13 +795,22 @@ async def api_admin_player_action(request):
     body = await request.json()
     tg = int(request.match_info["tg"])
     action = body.get("action")
+    # права на права — только root; себе баланс не крутим
+    if action in ("make_admin", "unmake_admin") and me["telegram_id"] not in config.ADMIN_IDS:
+        return err("Назначать админов может только root", 403)
+    if action == "adjust" and tg == me["telegram_id"]:
+        return err("Нельзя корректировать собственный баланс", 403)
     c = appdb.db()
     row = c.execute("SELECT * FROM users WHERE telegram_id=?", (tg,)).fetchone()
     if not row:
         c.close()
         return err("Юзер не найден", 404)
     if action == "adjust":
-        delta = int(body.get("delta", 0))
+        try:
+            delta = int(body.get("delta", 0))
+        except (TypeError, ValueError):
+            c.close()
+            return err("delta — целое число")
         reason = body.get("reason", "корректировка админа")
         if delta:
             c.execute("UPDATE users SET balance=balance+? WHERE telegram_id=?", (delta, tg))
@@ -802,9 +823,11 @@ async def api_admin_player_action(request):
         c.execute("UPDATE users SET is_frozen=0, freeze_reason=NULL WHERE telegram_id=?", (tg,))
     elif action == "make_admin":
         c.execute("UPDATE users SET is_admin=1 WHERE telegram_id=?", (tg,))
+    elif action == "unmake_admin":
+        c.execute("UPDATE users SET is_admin=0 WHERE telegram_id=?", (tg,))
     else:
         c.close()
-        return err("action = adjust|ban|unban|make_admin")
+        return err("action = adjust|ban|unban|make_admin|unmake_admin")
     _audit(c, me["telegram_id"], f"player_{action}", f"tg={tg} {body.get('reason', '')}")
     c.commit()
     fresh = dict(c.execute("SELECT balance, is_frozen, freeze_reason FROM users WHERE telegram_id=?", (tg,)).fetchone())
@@ -824,7 +847,7 @@ async def api_admin_settings(request):
             if key in ("bets_paused", "bets_paused_reason"):
                 continue  # только через /api/admin/pause
             appsettings.set_setting(key, value)
-        _audit(appdb.db(), me["telegram_id"], "settings", json.dumps(body.get("settings") or {}, ensure_ascii=False))
+        _audit_now(me["telegram_id"], "settings", json.dumps(body.get("settings") or {}, ensure_ascii=False))
     s = appsettings.load_settings_map()
     return j({"settings": {**appsettings.DEFAULTS, **s}})
 
@@ -874,7 +897,7 @@ async def api_admin_recalc(request):
     if not m or m["score1"] is None:
         return err("Матч не финализирован")
     r = bets_engine.settle_match(mid)
-    _audit(appdb.db(), me["telegram_id"], "recalc", f"match={mid} settled={r.get('settled')}")
+    _audit_now(me["telegram_id"], "recalc", f"match={mid} settled={r.get('settled')}")
     return j({"status": "ok", **r})
 
 
@@ -894,7 +917,7 @@ async def api_admin_markets_refresh(request):
         n = markets_engine.refresh_tour(int(tid), body.get("tour"))
     else:
         return err("match_id или tournament_id")
-    _audit(appdb.db(), me["telegram_id"], "markets_refresh", f"match={mid} tournament={tid} markets={n}")
+    _audit_now(me["telegram_id"], "markets_refresh", f"match={mid} tournament={tid} markets={n}")
     return j({"status": "ok", "markets": n})
 
 

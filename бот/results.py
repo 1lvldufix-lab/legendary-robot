@@ -4,11 +4,13 @@
 парсером Challenge Place (блок 9). Ставки рассчитываются хуком
 bets_engine.settle_match (появляется в блоке 7; тут вызов под try/except).
 
-Повторная финализация (спор решён судий иначе) — безопасна: снапшот elo_before
-откатывает рейтинги/форму/статы перед применением новых значений.
+Повторная финализация (спор решён судьёй иначе / правка) — безопасна: снапшот
+elo_before откатывает рейтинги/форму/статы, серия кубка пересчитывается с нуля,
+расчёт купонов с изменившимся исходом откатывается и делается заново.
 """
 import json
 import logging
+from datetime import datetime, timedelta
 
 import db as appdb
 import elo
@@ -44,9 +46,18 @@ def _get_tournament_elo(c, tournament_id: int, tg_id: int) -> tuple[int, int]:
 
 
 def _confirmed_games(c, tg_id: int) -> int:
+    """Сыгранные матчи игрока (players.id; в кубках player_id пуст — по клубу)."""
+    p = c.execute("SELECT id FROM players WHERE telegram_id=?", (tg_id,)).fetchone()
+    if not p:
+        return 0
+    cl = c.execute("SELECT club_id FROM club_players WHERE player_id=?", (p["id"],)).fetchone()
+    club_id = cl["club_id"] if cl else -1
     row = c.execute(
-        "SELECT COUNT(*) n FROM matches WHERE (home_player_id=? OR away_player_id=?) "
-        "AND status='confirmed'", (tg_id, tg_id),
+        "SELECT COUNT(*) n FROM matches WHERE status='confirmed' AND ("
+        " home_player_id=? OR away_player_id=?"
+        " OR (home_player_id IS NULL AND home_club_id=?)"
+        " OR (away_player_id IS NULL AND away_club_id=?))",
+        (p["id"], p["id"], club_id, club_id),
     ).fetchone()
     return row["n"]
 
@@ -115,7 +126,8 @@ def finalize_match(match_id: int, score1: int, score2: int,
     home, away = m["home_club_id"], m["away_club_id"]
 
     # 0) повторная финализация: откатить прошлые эффекты
-    if m["status"] in ("confirmed", "disputed"):
+    refinalize = m["status"] in ("confirmed", "disputed")
+    if refinalize:
         _revert(c, m)
     snap = _snapshot(c, m)
 
@@ -179,22 +191,31 @@ def finalize_match(match_id: int, score1: int, score2: int,
             (w, d, l, gs, sa, tg),
         )
 
-    # 5) кубковая серия (ties)
+    # 5) кубковая серия (ties): пересчёт с нуля, повторная финализация не удваивает победу
+    cancelled_games: list[int] = []
     if m.get("tie_id"):
         import league
-        league.advance_tie(c, m, score1, score2, pens1, pens2)
+        cancelled_games = league.advance_tie(c, m, score1, score2, pens1, pens2) or []
 
+    # 6) ставки: при правке результата — откат расчёта купонов с изменившимся
+    # исходом и разморозка (в той же транзакции), затем расчёт заново
+    try:
+        import bets_engine
+    except ImportError:
+        bets_engine = None
+    if bets_engine and refinalize:
+        bets_engine.unsettle_for_match(c, match_id)
+    if bets_engine:
+        _unfreeze_bets(c, match_id)
     c.commit()
     c.close()
 
-    # 6) ставки: расчёт при финализации (блок 7 добавит bets_engine)
-    try:
-        import bets_engine
-        bets_engine.settle_match(match_id)
-    except ImportError:
-        pass
-    except Exception:
-        log.exception("settle_match упал на матче %s", match_id)
+    if bets_engine:
+        for mid in [match_id, *cancelled_games]:
+            try:
+                bets_engine.settle_match(mid)
+            except Exception:
+                log.exception("settle_match упал на матче %s", mid)
 
     return {
         "match_id": match_id,
@@ -205,16 +226,53 @@ def finalize_match(match_id: int, score1: int, score2: int,
     }
 
 
+def _unfreeze_bets(c, match_id: int) -> None:
+    """Снять заморозку с купонов матча, если у них нет ног на других спорных матчах."""
+    c.execute(
+        "UPDATE bets SET is_frozen=0 WHERE is_frozen=1 AND id IN "
+        "(SELECT bet_id FROM bet_legs WHERE match_id=?) AND id NOT IN "
+        "(SELECT l.bet_id FROM bet_legs l JOIN matches m ON m.id=l.match_id "
+        " WHERE m.status='disputed' AND m.id!=?)",
+        (match_id, match_id),
+    )
+
+
+def _is_participant(c, match: dict, tg_id: int) -> bool:
+    p = c.execute("SELECT id FROM players WHERE telegram_id=?", (tg_id,)).fetchone()
+    if not p:
+        return False
+    if p["id"] in (match.get("home_player_id"), match.get("away_player_id")):
+        return True
+    cl = c.execute("SELECT club_id FROM club_players WHERE player_id=?", (p["id"],)).fetchone()
+    return bool(cl and cl["club_id"] in (match["home_club_id"], match["away_club_id"]))
+
+
 def dispute_match(match_id: int, by_telegram_id: int) -> str:
-    """Оспаривание в окне 24 ч → статус «спорный», ставки заморожены (решение 09)."""
+    """Оспаривание в окне dispute_window_hours → «спорный», ставки заморожены (решение 09).
+    Оспорить может только участник матча."""
     c = appdb.db()
     m = c.execute("SELECT * FROM matches WHERE id=?", (match_id,)).fetchone()
     if not m:
         c.close()
         return "Матч не найден."
+    m = dict(m)
     if m["status"] != "confirmed":
         c.close()
         return "Оспорить можно только подтверждённый матч."
+    if not _is_participant(c, m, by_telegram_id):
+        c.close()
+        return "⛔ Оспорить может только участник матча."
+    window = appsettings.setting_int("dispute_window_hours", 24)
+    try:
+        played = datetime.fromisoformat(str(m["played_at"])) if m["played_at"] else None
+    except ValueError:
+        played = None
+    if played and played.tzinfo:
+        played = played.replace(tzinfo=None)
+    # played_at пишется datetime('now') — это UTC
+    if played and datetime.utcnow() - played > timedelta(hours=window):
+        c.close()
+        return f"⌛ Окно оспаривания ({window} ч) закрыто. Обратись к судье."
     c.execute("UPDATE matches SET status='disputed' WHERE id=?", (match_id,))
     # заморозка купонов на этот матч
     c.execute(
@@ -230,19 +288,17 @@ def dispute_match(match_id: int, by_telegram_id: int) -> str:
 def resolve_dispute(match_id: int, score1: int, score2: int,
                     pens1: int | None = None, pens2: int | None = None,
                     goals: list[dict] | None = None, decided_by: int | None = None) -> dict:
-    """Судья решает спор: снапшот-откат + новая финализация + разморозка купонов."""
+    """Судья решает спор: откат + новая финализация (там же пересчёт и разморозка купонов)."""
     summary = finalize_match(match_id, score1, score2, pens1, pens2, goals, actor="dispute")
-    c = appdb.db()
-    c.execute("UPDATE bets SET is_frozen=0 WHERE id IN "
-              "(SELECT DISTINCT bet_id FROM bet_legs WHERE match_id=?)", (match_id,))
     if decided_by:
+        c = appdb.db()
         c.execute(
             "INSERT INTO tournament_audit_log (tournament_id, actor_telegram_id, action, details) "
             "VALUES ((SELECT tournament_id FROM matches WHERE id=?), ?, 'resolve_dispute', ?)",
             (match_id, decided_by, f"{score1}:{score2}"),
         )
-    c.commit()
-    c.close()
+        c.commit()
+        c.close()
     return summary
 
 

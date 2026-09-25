@@ -1,7 +1,7 @@
 """Общие хелперы бота: права, аудит, меню, игроки."""
 import logging
 
-from telegram import ReplyKeyboardMarkup
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, WebAppInfo
 
 import config
 import db as appdb
@@ -97,8 +97,26 @@ def menu_keyboard() -> ReplyKeyboardMarkup:
     return ReplyKeyboardMarkup(MENU_ROWS, resize_keyboard=True)
 
 
+MENU_BUTTONS = {b for row in MENU_ROWS for b in row}
+
+
+def webapp_url() -> str | None:
+    """Telegram открывает WebApp только по https — локальный адрес кнопкой не отдать."""
+    url = config.WEBAPP_PUBLIC_URL.strip()
+    return url if url.startswith("https://") else None
+
+
+def webapp_keyboard() -> InlineKeyboardMarkup | None:
+    url = webapp_url()
+    if not url:
+        return None
+    return InlineKeyboardMarkup([[InlineKeyboardButton("🔥 Открыть мини-апп", web_app=WebAppInfo(url))]])
+
+
 def send_menu_text() -> str:
+    if webapp_url():
+        return "Главное меню. Выбирай кнопку внизу, ставки и таблицы — в мини-аппе 👇"
     return (
         "Главное меню. Выбирай кнопку внизу.\n"
-        "Мини-апп: " + (config.WEBAPP_PUBLIC_URL or f"http://127.0.0.1:{config.WEBAPP_PORT}/app")
+        f"Мини-апп (локально): http://127.0.0.1:{config.WEBAPP_PORT}/app"
     )

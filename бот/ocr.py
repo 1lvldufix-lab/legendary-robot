@@ -9,6 +9,7 @@ JSON-схема ответа и правила — план 06. Финализа
 """
 import base64
 import json
+import logging
 import re
 import shutil
 import subprocess
@@ -16,6 +17,8 @@ import tempfile
 import urllib.request
 
 import config
+
+log = logging.getLogger("bot.ocr")
 
 # ===== промпт (план 06, переработка елобота под FC27 Mobile) =====
 
@@ -52,8 +55,8 @@ A) карточки игроков (ник + лига) слева/справа, 
 goal_events — из ленты голов (одна запись на гол). players — из таблицы статистики.
 Если поле не распознано — null. Не выдумывай данные."""
 
-# free VL-модели OpenRouter (ротация каскадом, план 06: 7 моделей)
-OPENROUTER_MODELS = [
+# free VL-модели OpenRouter (ротация каскадом, план 06); переопределяется env OPENROUTER_MODELS
+_DEFAULT_OPENROUTER_MODELS = [
     "qwen/qwen2.5-vl-72b-instruct:free",
     "meta-llama/llama-3.2-11b-vision-instruct:free",
     "google/gemma-3-27b-it:free",
@@ -64,21 +67,23 @@ OPENROUTER_MODELS = [
 ]
 GROQ_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct"
 NIM_MODEL = "meta/llama-3.2-90b-vision-instruct"
-GEMINI_MODEL = "gemini-2.0-flash"
+OPENROUTER_MODELS = config.OPENROUTER_MODELS or _DEFAULT_OPENROUTER_MODELS
+GEMINI_MODEL = config.GEMINI_MODEL
 
 _TIMEOUT = 90
+_LOCAL_TIMEOUT = 240  # CPU-инференс 3–4B модели на один скрин — десятки секунд
 
 
 def _data_uri(image_bytes: bytes, mime: str = "image/jpeg") -> str:
     return f"data:{mime};base64,{base64.b64encode(image_bytes).decode()}"
 
 
-def _post_json(url: str, payload: dict, headers: dict) -> dict:
+def _post_json(url: str, payload: dict, headers: dict, timeout: int = _TIMEOUT) -> dict:
     req = urllib.request.Request(
         url, data=json.dumps(payload).encode(),
         headers={"Content-Type": "application/json", **headers},
     )
-    with urllib.request.urlopen(req, timeout=_TIMEOUT) as r:
+    with urllib.request.urlopen(req, timeout=timeout) as r:
         return json.loads(r.read().decode())
 
 
@@ -119,6 +124,20 @@ def _gemini_call(image_bytes: bytes) -> str:
     }
     data = _post_json(url, payload, {})
     return data["candidates"][0]["content"]["parts"][0]["text"]
+
+
+def _ollama_call(image_bytes: bytes) -> str:
+    """Локальная vision-модель (Ollama /api/chat, format=json — ответ сразу JSON)."""
+    payload = {
+        "model": config.OLLAMA_MODEL,
+        "messages": [{"role": "user", "content": SYSTEM_PROMPT,
+                      "images": [base64.b64encode(image_bytes).decode()]}],
+        "stream": False,
+        "format": "json",
+        "options": {"temperature": 0},
+    }
+    data = _post_json(f"{config.OLLAMA_URL}/api/chat", payload, {}, timeout=_LOCAL_TIMEOUT)
+    return data["message"]["content"]
 
 
 def _ocrspace_call(image_bytes: bytes) -> str:
@@ -168,6 +187,9 @@ def _openrouter_provider(model: str):
 def build_cascade() -> list[tuple[str, callable]]:
     """Список (имя, callable(image_bytes)->str) доступных провайдеров по порядку."""
     cascade: list[tuple[str, callable]] = []
+    local = [(f"ollama:{config.OLLAMA_MODEL}", _ollama_call)] if config.OLLAMA_URL else []
+    if config.OLLAMA_FIRST:
+        cascade += local
     for model in OPENROUTER_MODELS:
         p = _openrouter_provider(model.strip())
         if p:
@@ -182,6 +204,8 @@ def build_cascade() -> list[tuple[str, callable]]:
         cascade.append(("nim", _openai_style_vl(
             "https://integrate.api.nvidia.com/v1/chat/completions",
             config.NIM_API_KEY, NIM_MODEL)))
+    if not config.OLLAMA_FIRST:
+        cascade += local
     if config.OCRSPACE_API_KEY:
         cascade.append(("ocrspace", _ocrspace_call))
     if shutil.which("tesseract"):
@@ -337,9 +361,11 @@ def parse_screenshots(images: list[bytes], cascade: list[tuple[str, callable]] |
         for name, call in cascade:
             try:
                 raw = call(image)
-            except Exception:
+            except Exception as e:
+                log.warning("[ocr] %s: %s", name, e)
                 continue
-            data = extract_json(raw) if raw and raw.lstrip().startswith(("{", "```")) else None
+            # модели часто пишут текст перед JSON — extract_json терпит мусор вокруг
+            data = extract_json(raw) if raw else None
             if data is None:
                 data = heuristic_parse(raw or "")
             if data and (data.get("score_home") is not None):

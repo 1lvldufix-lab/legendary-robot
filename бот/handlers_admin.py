@@ -35,15 +35,21 @@ async def cmd_promo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await update.message.reply_text("Формат: /промокод <КОД> <сумма> [активаций] [дедлайн YYYY-MM-DD]")
         return
     code = context.args[0].upper()
-    amount = int(context.args[1])
-    max_act = int(context.args[2]) if len(context.args) > 2 else 0
-    deadline = context.args[3] if len(context.args) > 3 else None
-    if deadline:
-        date.fromisoformat(deadline)
+    try:
+        amount = int(context.args[1])
+        max_act = int(context.args[2]) if len(context.args) > 2 else 0
+        deadline = context.args[3] if len(context.args) > 3 else None
+        if deadline:
+            date.fromisoformat(deadline)
+    except ValueError:
+        await update.message.reply_text("Сумма/активации — числа, дедлайн — YYYY-MM-DD.")
+        return
     c = appdb.db()
+    # upsert с сохранением id: активации привязаны к code_id, повторно не активировать
     c.execute(
-        "INSERT OR REPLACE INTO promo_codes (code, amount, max_activations, deadline, is_active, created_by) "
-        "VALUES (?,?,?,?,1,?)",
+        "INSERT INTO promo_codes (code, amount, max_activations, deadline, is_active, created_by) "
+        "VALUES (?,?,?,?,1,?) ON CONFLICT(code) DO UPDATE SET amount=excluded.amount, "
+        "max_activations=excluded.max_activations, deadline=excluded.deadline, is_active=1",
         (code, amount, max_act, deadline, update.effective_user.id),
     )
     c.commit()

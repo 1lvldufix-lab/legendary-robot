@@ -59,6 +59,17 @@ def _money(c, club_id: int, delta: int, reason: str) -> None:
     c.execute("UPDATE clubs SET budget=budget+? WHERE id=?", (delta, club_id))
 
 
+def _positive_int(value, field: str) -> int:
+    """Цена из запроса → int > 0, иначе внятная TransferError (не 500)."""
+    try:
+        v = int(value)
+    except (TypeError, ValueError):
+        raise TransferError("BAD_PRICE", f"{field}: нужно целое число")
+    if v <= 0:
+        raise TransferError("BAD_PRICE", f"{field}: должна быть больше нуля")
+    return v
+
+
 def sign_free_agent(club_id: int, card_id: int, actor_tg: int | None = None) -> dict:
     """Купля свободного агента: цена = рейтинг² × K, авто при деньгах."""
     c = appdb.db()
@@ -97,6 +108,13 @@ def create_lot(club_id: int, card_id: int, kind: str, price: int,
     """Выставить карточку на маркетплейс (фикс или аукцион с выкупом)."""
     if kind not in ("fix", "auction"):
         raise TransferError("BAD_KIND", "kind = fix|auction")
+    price = _positive_int(price, "Цена")
+    if buyout_price in (None, "", 0, "0"):
+        buyout_price = None
+    else:
+        buyout_price = _positive_int(buyout_price, "Цена выкупа")
+        if buyout_price < price:
+            raise TransferError("BAD_PRICE", "Цена выкупа не может быть ниже стартовой")
     c = appdb.db()
     card = c.execute("SELECT * FROM club_cards WHERE id=?", (card_id,)).fetchone()
     if not card or card["club_id"] != club_id:
@@ -228,14 +246,8 @@ def accept_exchange(transfer_id: int, by_telegram_id: int) -> dict:
         c.close()
         raise TransferError("NO_DATA", "Предложение повреждено")
     want = c.execute("SELECT * FROM club_cards WHERE id=?", (want_card_id,)).fetchone()
-
+    _check_exchange(c, t, give, want)
     money = int(t["amount"] or 0)
-    buyer = c.execute("SELECT * FROM clubs WHERE id=?", (t["from_club_id"],)).fetchone()
-    seller = c.execute("SELECT * FROM clubs WHERE id=?", (t["to_club_id"],)).fetchone()
-    payer = buyer if money > 0 else seller
-    if payer and payer["budget"] < abs(money):
-        c.close()
-        raise TransferError("NO_FUNDS", "Не хватает бюджета на обмен")
 
     if abs(money) > threshold():
         c.execute("UPDATE transfers SET status='needs_judge' WHERE id=?", (transfer_id,))
@@ -243,17 +255,41 @@ def accept_exchange(transfer_id: int, by_telegram_id: int) -> dict:
         c.close()
         return {"status": "needs_judge"}
 
-    # исполнение обмена: give → to_club, want → from_club, деньги по знаку
+    return _execute_exchange(c, t, give, want, by_telegram_id)
+
+
+def _check_exchange(c, t, give, want) -> None:
+    """Владение карточками и бюджет — на момент исполнения, не предложения."""
+    if not give or give["club_id"] != t["from_club_id"]:
+        c.close()
+        raise TransferError("MOVED", "Отдаваемая карточка уже не в клубе-инициаторе")
+    if not want or want["club_id"] != t["to_club_id"]:
+        c.close()
+        raise TransferError("MOVED", "Запрашиваемая карточка уже не в клубе-получателе")
+    money = int(t["amount"] or 0)
+    payer_id = t["from_club_id"] if money > 0 else t["to_club_id"]
+    payer = c.execute("SELECT budget FROM clubs WHERE id=?", (payer_id,)).fetchone()
+    if money and (not payer or payer["budget"] < abs(money)):
+        c.close()
+        raise TransferError("NO_FUNDS", "Не хватает бюджета на обмен")
+
+
+def _execute_exchange(c, t, give, want, actor_tg: int | None) -> dict:
+    """Исполнение обмена: give → to_club, want → from_club; деньги >0 платит инициатор."""
+    money = int(t["amount"] or 0)
     _move_card(c, give["id"], t["to_club_id"])
     _move_card(c, want["id"], t["from_club_id"])
-    if money > 0:
+    if money:
+        # знак money: + инициатор доплачивает, − доплачивает получатель
         _money(c, t["from_club_id"], -money, f"обмен: {give['name']}↔{want['name']}")
         _money(c, t["to_club_id"], money, f"обмен: {give['name']}↔{want['name']}")
-    elif money < 0:
-        _money(c, t["to_club_id"], money, f"обмен: {give['name']}↔{want['name']}")
-        _money(c, t["from_club_id"], -money, f"обмен: {give['name']}↔{want['name']}")
-    c.execute("UPDATE transfers SET status='approved', decided_by=? WHERE id=?", (by_telegram_id, transfer_id))
-    _notify(c, club_owner_tg(c, t["from_club_id"]), f"✅ Обмен состоялся: {give['name']} ↔ {want['name']}")
+    c.execute("UPDATE transfers SET status='approved', decided_by=? WHERE id=?", (actor_tg, t["id"]))
+    c.execute(
+        "INSERT INTO tournament_audit_log (actor_telegram_id, action, details) VALUES (?, 'transfer_exchange', ?)",
+        (actor_tg, f"{give['name']}↔{want['name']} {t['from_club_id']}↔{t['to_club_id']} доплата {money}"),
+    )
+    for cid in (t["from_club_id"], t["to_club_id"]):
+        _notify(c, club_owner_tg(c, cid), f"✅ Обмен состоялся: {give['name']} ↔ {want['name']}")
     c.commit()
     c.close()
     return {"status": "approved"}
@@ -274,6 +310,16 @@ def judge_decide(transfer_id: int, approve: bool, judge_tg: int) -> dict:
         c.commit()
         c.close()
         return {"status": "rejected"}
+
+    if t["want_card_id"]:
+        # обмен: судья решает только после согласия второй стороны
+        if t["status"] != "needs_judge":
+            c.close()
+            raise TransferError("NOT_PENDING", "Обмен ещё не подтверждён второй стороной")
+        give = c.execute("SELECT * FROM club_cards WHERE id=?", (t["card_id"],)).fetchone()
+        want = c.execute("SELECT * FROM club_cards WHERE id=?", (t["want_card_id"],)).fetchone()
+        _check_exchange(c, t, give, want)
+        return _execute_exchange(c, t, give, want, judge_tg)
 
     card = c.execute("SELECT * FROM club_cards WHERE id=?", (t["card_id"],)).fetchone()
     money = int(t["amount"] or 0)

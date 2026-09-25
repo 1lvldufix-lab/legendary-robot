@@ -33,6 +33,7 @@ DEFAULTS: dict[str, str] = {
     "streak_bonus_cap": str(config.STREAK_BONUS_CAP),
     "bets_paused": "0",                  # 1 = глобальная пауза приёма ставок
     "bets_paused_reason": "",
+    "notify_bets_dm": "1",               # 1 = расчёт купона дублируется в ЛС бота
 }
 
 

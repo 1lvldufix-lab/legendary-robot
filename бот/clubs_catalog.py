@@ -58,11 +58,21 @@ FORMAT_BY_INPUT = {'лига': 'league', 'league': 'league',
 
 
 def normalize_club_name(name: str) -> str:
-    return ' '.join(name.lower().replace('ё', 'ё').split())
+    return ' '.join(name.lower().split())
+
+
+_DISPLAY_SPECIAL = {'псв': 'ПСВ', 'псж': 'ПСЖ'}
+
+
+def display_name(canon: str) -> str:
+    """Ключи каталога строчные (для поиска); в БД и интерфейсе — «Аль-Хиляль», «Будё Глимт»."""
+    if canon in _DISPLAY_SPECIAL:
+        return _DISPLAY_SPECIAL[canon]
+    return ' '.join('-'.join(p[:1].upper() + p[1:] for p in word.split('-')) for word in canon.split())
 
 
 def find_club(name: str) -> tuple[str, str] | None:
-    """Каноническое имя + файл лого по свободному вводу, либо None."""
+    """Отображаемое имя + файл лого по свободному вводу, либо None."""
     key = normalize_club_name(name)
     if key in _ALIASES:
         canon = _ALIASES[key]
@@ -71,11 +81,11 @@ def find_club(name: str) -> tuple[str, str] | None:
         key = canon
     for canon, file in TEAM_LOGO_MAP.items():
         if normalize_club_name(canon) == key:
-            return canon, file
+            return display_name(canon), file
     # подстрочный фолбэк («манчестер» → первый манчестер)
     for canon, file in TEAM_LOGO_MAP.items():
         if key and key in normalize_club_name(canon):
-            return canon, file
+            return display_name(canon), file
     return None
 
 

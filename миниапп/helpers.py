@@ -13,6 +13,9 @@ import db as appdb
 def validate_init_data(init_data: str) -> dict | None:
     """dict пользователя, если подпись валидна и auth_date в окне 24 ч, иначе None."""
     from urllib.parse import parse_qsl
+    # без токена HMAC-ключ публичен → подпись подделывается; авторизацию не пускаем
+    if not (config.BOT_TOKEN or "").strip():
+        return None
     try:
         pairs = dict(parse_qsl(init_data, keep_blank_values=True))
     except Exception:

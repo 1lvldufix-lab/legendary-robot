@@ -101,6 +101,14 @@ async def cmd_scan(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         return
     source = context.args[0]
     tournament_id = int(context.args[1]) if len(context.args) > 1 else None
+    if not source.startswith("http"):
+        # локальный файл читает сервер — только root и только сохранённая страница/фикстура
+        if not core.is_root(update.effective_user.id):
+            await update.message.reply_text("⛔ Скан из файла — только root. Дай ссылку на турнир.")
+            return
+        if not source.lower().endswith((".html", ".htm", ".json")):
+            await update.message.reply_text("Файл должен быть .html/.htm/.json (сохранённая страница).")
+            return
     await update.message.reply_text("⏳ Сканирую…")
     try:
         if source.startswith("http"):
@@ -144,7 +152,64 @@ async def parse_cp_async(url: str) -> str:
     return await asyncio.to_thread(parser_cp.try_fetch_via_browser, url)
 
 
+# ===== /оплачено — закрыть долг =====
+
+def _is_judge_anywhere(telegram_id: int) -> bool:
+    c = appdb.db()
+    row = c.execute("SELECT 1 FROM tournament_admins WHERE telegram_id=?", (telegram_id,)).fetchone()
+    c.close()
+    return bool(row)
+
+
+def mark_debt(debt_id: int, status: str = "paid") -> dict | None:
+    """open → paid/cancelled. None — долга нет или он уже закрыт."""
+    c = appdb.db()
+    row = c.execute(
+        "SELECT d.*, cl.name AS club_name FROM debts d LEFT JOIN clubs cl ON cl.id=d.club_id "
+        "WHERE d.id=? AND d.status='open'", (debt_id,)).fetchone()
+    if not row:
+        c.close()
+        return None
+    c.execute("UPDATE debts SET status=? WHERE id=?", (status, debt_id))
+    owner = c.execute(
+        "SELECT p.telegram_id FROM club_players cp JOIN players p ON p.id=cp.player_id WHERE cp.club_id=?",
+        (row["club_id"],)).fetchone()
+    c.commit()
+    c.close()
+    return {**dict(row), "owner_tg": owner["telegram_id"] if owner else None}
+
+
+async def cmd_debt_paid(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """/оплачено <id долга> [списать] — root или судья."""
+    uid = update.effective_user.id
+    if not (core.is_root(uid) or _is_judge_anywhere(uid)):
+        await update.message.reply_text("⛔ Только root или судья.")
+        return
+    args = list(context.args or [])
+    if not args or not args[0].lstrip("#").isdigit():
+        await update.message.reply_text(
+            "Формат: /оплачено <id долга> [списать]\nid видно в «💰 Долги» (#12).")
+        return
+    debt_id = int(args[0].lstrip("#"))
+    status = "cancelled" if len(args) > 1 and args[1].lower() in ("списать", "отмена") else "paid"
+    d = mark_debt(debt_id, status)
+    if not d:
+        await update.message.reply_text("Открытого долга с таким id нет.")
+        return
+    verb = "списан" if status == "cancelled" else "оплачен"
+    amount = f"{d['amount']:,}".replace(",", " ")
+    core.audit(None, uid, f"debt_{status}", f"debt={debt_id} club={d['club_id']} amount={d['amount']}")
+    await update.message.reply_text(f"✅ Долг #{debt_id} ({d['club_name']}, {amount} ₼) {verb}.")
+    if d["owner_tg"]:
+        try:
+            await context.bot.send_message(
+                d["owner_tg"], f"💰 Долг #{debt_id} на {amount} ₼ ({d['reason']}) {verb}.")
+        except Exception:
+            pass
+
+
 HANDLERS = [
     ("text", "💰 Долги", menu_debts),
     ("command", "скан", cmd_scan),
+    ("command", "оплачено", cmd_debt_paid),
 ]

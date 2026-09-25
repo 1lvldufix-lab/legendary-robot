@@ -273,8 +273,8 @@ def init_db() -> None:
     );
     CREATE TABLE IF NOT EXISTS notifications (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER, text TEXT, kind TEXT DEFAULT 'app',  -- app = центр уведомлений
-        is_read INTEGER DEFAULT 0,
+        user_id INTEGER, text TEXT, kind TEXT DEFAULT 'app',  -- app = центр уведомлений, bet = расчёт купона
+        is_read INTEGER DEFAULT 0, tg_sent INTEGER DEFAULT 0,  -- tg_sent: продублировано в ЛС
         created_at TEXT DEFAULT (datetime('now'))
     );
     CREATE TABLE IF NOT EXISTS balance_history (
@@ -323,8 +323,17 @@ def _migrate(c) -> None:
         "reminder_log": [("date", "TEXT")],
         "challenge_links": [("tournament_id", "INTEGER")],
         "bet_legs": [("settled_at", "TEXT")],
+        "notifications": [("tg_sent", "INTEGER DEFAULT 0")],
     }
     for table, cols in additions.items():
         for col, coltype in cols:
             if table_exists(c, table) and not column_exists(c, table, col):
                 c.execute(f"ALTER TABLE {table} ADD COLUMN {col} {coltype}")
+
+    # старые базы хранили названия клубов строчными («аякс») — приводим к виду каталога
+    if table_exists(c, "clubs"):
+        from clubs_catalog import TEAM_LOGO_MAP, display_name
+        for canon in TEAM_LOGO_MAP:
+            pretty = display_name(canon)
+            if pretty != canon:
+                c.execute("UPDATE clubs SET name=? WHERE name=?", (pretty, canon))
