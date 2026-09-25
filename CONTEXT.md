@@ -52,6 +52,10 @@
   бейджа/таблицы/истории ставок. Названия клубов с заглавной (миграция в `db._migrate`).
 - OCR: `gemini-2.0-flash` выключен Google 01.06.2026 → `GEMINI_MODEL` (деф. gemini-3.5-flash),
   `OPENROUTER_MODELS` из env, локальная модель через Ollama (`OLLAMA_URL`, `qwen2.5vl:3b`).
+- OCR только бесплатный (25.09): Groq убран (vision-модель снята с продакшена, тарифы платные);
+  все 7 старых OpenRouter-моделей были удалены с площадки → новые `:free` (Gemma 4, Qwen 3.8,
+  `openrouter/free`) + фильтр по живому каталогу (`ocr._openrouter_alive`), платные слаги не пускаются.
+  Порядок: Gemini → OpenRouter free → NIM → Ollama → OCR.space → tesseract.
 - Тесты: `gate11_fixes.py`, `gate12_bot.py` (+ все прежние) — зелёные.
 
 ## Английские имена (25.09)

@@ -30,13 +30,12 @@ WEBAPP_PUBLIC_URL = os.environ.get("WEBAPP_PUBLIC_URL", "")  # https://... дл�
 
 # Внешние сервисы (ключи ротировать! у елобота ключи утекли в репо)
 OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY", "")
-GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
 NIM_API_KEY = os.environ.get("NIM_API_KEY", "")
 OCRSPACE_API_KEY = os.environ.get("OCRSPACE_API_KEY", "")
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
 # gemini-2.0-flash выключен Google 01.06.2026 — модель вынесена в env, чтобы менять без правки кода
 GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-3.5-flash")
-# список free VL-моделей OpenRouter через запятую (пусто = дефолт из ocr.py); free-модели часто снимают
+# free VL-модели OpenRouter через запятую (пусто = дефолт из ocr.py); платные (без «:free») игнорируются
 OPENROUTER_MODELS = [m.strip() for m in os.environ.get("OPENROUTER_MODELS", "").split(",") if m.strip()]
 # локальная vision-модель через Ollama (http://127.0.0.1:11434); пусто = не используется
 OLLAMA_URL = os.environ.get("OLLAMA_URL", "").rstrip("/")

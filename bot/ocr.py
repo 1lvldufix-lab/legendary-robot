@@ -1,7 +1,8 @@
 """OCR-каскад результатов FC27 Mobile (план 06).
 
-Каскад провайдеров: OpenRouter VL (несколько free-моделей) → Groq → Gemini →
-NIM → OCR.space → tesseract. Провайдер без ключа в .env пропускается.
+Каскад только из бесплатных провайдеров: Gemini (free tier) → OpenRouter (только
+«:free»-модели с картинками) → NVIDIA NIM (free endpoint) → Ollama (локально) →
+OCR.space (free) → tesseract. Провайдер без ключа в .env пропускается.
 Счёт берём ТОЛЬКО из шапки; голы — дедупом по (имя, минута) со всех скринов;
 пенальти — в скобках у счёта, отдельным полем (кейс 120:00 обязателен).
 
@@ -58,19 +59,17 @@ A) карточки игроков (ник + лига) слева/справа, 
 goal_events — из ленты голов (одна запись на гол). players — из таблицы статистики.
 Если поле не распознано — null. Не выдумывай данные."""
 
-# free VL-модели OpenRouter (ротация каскадом, план 06); переопределяется env OPENROUTER_MODELS
+# free VL-модели OpenRouter (сверено с каталогом 25.09.2026); переопределяется env OPENROUTER_MODELS.
+# Free-модели там часто снимают, поэтому список ещё и фильтруется по живому каталогу (_openrouter_alive).
 _DEFAULT_OPENROUTER_MODELS = [
-    "qwen/qwen2.5-vl-72b-instruct:free",
-    "meta-llama/llama-3.2-11b-vision-instruct:free",
-    "google/gemma-3-27b-it:free",
-    "mistralai/mistral-small-3.1-24b-instruct:free",
-    "google/gemini-2.0-flash-exp:free",
-    "moonshotai/kimi-vl-a3b-thinking:free",
-    "agentica-org/deepseek-vl2-small:free",
+    "google/gemma-4-31b-it:free",
+    "qwen/qwen3.8-27b:free",
+    "google/gemma-4-26b-a4b-it:free",
+    "openrouter/free",  # роутер OpenRouter: сам выберет бесплатную модель с поддержкой картинок
 ]
-GROQ_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct"
 NIM_MODEL = "meta/llama-3.2-90b-vision-instruct"
-OPENROUTER_MODELS = config.OPENROUTER_MODELS or _DEFAULT_OPENROUTER_MODELS
+OPENROUTER_MODELS = [m for m in (config.OPENROUTER_MODELS or _DEFAULT_OPENROUTER_MODELS)
+                     if m.endswith(":free") or m == "openrouter/free"]  # платные слаги не пускаем
 GEMINI_MODEL = config.GEMINI_MODEL
 
 _TIMEOUT = 90
@@ -187,22 +186,48 @@ def _openrouter_provider(model: str):
                             config.OPENROUTER_API_KEY, model)
 
 
+_OR_CACHE: dict = {"at": 0.0, "ids": None}
+_OR_TTL = 6 * 3600
+
+
+def _openrouter_alive(models: list[str]) -> list[str]:
+    """Оставить модели, которые сейчас есть в каталоге OpenRouter как бесплатные с картинками.
+    Каталог публичный (без ключа), кэш 6 ч. Каталог недоступен → список как есть."""
+    import time
+    now = time.time()
+    if _OR_CACHE["ids"] is None or now - _OR_CACHE["at"] > _OR_TTL:
+        try:
+            with urllib.request.urlopen("https://openrouter.ai/api/v1/models", timeout=10) as r:
+                data = json.loads(r.read().decode())["data"]
+            _OR_CACHE["ids"] = {
+                m["id"] for m in data
+                if "image" in (m.get("architecture", {}).get("input_modalities") or [])
+                and str(m.get("pricing", {}).get("prompt")) in ("0", "0.0")
+                and str(m.get("pricing", {}).get("completion")) in ("0", "0.0")
+            }
+            _OR_CACHE["at"] = now
+        except Exception as e:
+            log.warning("[ocr] каталог OpenRouter недоступен: %s", e)
+            return models
+    alive = [m for m in models if m in _OR_CACHE["ids"]]
+    dead = [m for m in models if m not in _OR_CACHE["ids"]]
+    if dead:
+        log.warning("[ocr] OpenRouter: сняты с бесплатного доступа %s", ", ".join(dead))
+    return alive
+
+
 def build_cascade() -> list[tuple[str, callable]]:
     """Список (имя, callable(image_bytes)->str) доступных провайдеров по порядку."""
     cascade: list[tuple[str, callable]] = []
     local = [(f"ollama:{config.OLLAMA_MODEL}", _ollama_call)] if config.OLLAMA_URL else []
     if config.OLLAMA_FIRST:
         cascade += local
-    for model in OPENROUTER_MODELS:
-        p = _openrouter_provider(model.strip())
-        if p:
-            cascade.append((f"openrouter:{model.strip()}", p))
-    if config.GROQ_API_KEY:
-        cascade.append(("groq", _openai_style_vl(
-            "https://api.groq.com/openai/v1/chat/completions",
-            config.GROQ_API_KEY, GROQ_MODEL)))
+    # Gemini первым: на бесплатном тарифе самый точный на скринах FC27
     if config.GEMINI_API_KEY:
         cascade.append(("gemini", _gemini_call))
+    if config.OPENROUTER_API_KEY:
+        for model in _openrouter_alive(OPENROUTER_MODELS):
+            cascade.append((f"openrouter:{model}", _openrouter_provider(model)))
     if config.NIM_API_KEY:
         cascade.append(("nim", _openai_style_vl(
             "https://integrate.api.nvidia.com/v1/chat/completions",

@@ -143,5 +143,22 @@ ctx.user_data = {"report_images": [b"shot-1"]}
 asyncio.run(hr._process_batch(ctx, 801, 801, reuse_images=True))
 check("повторный скрин не принимается", any("уже засчитаны" in t for _, t in sent), str(sent))
 
+# ===== OCR-каскад: только бесплатное (без сети — подставляем каталог) =====
+import importlib  # noqa: E402
+import time  # noqa: E402
+
+import config  # noqa: E402
+
+config.OPENROUTER_MODELS = ["google/gemma-4-31b-it:free", "openai/gpt-5.6-luna", "old/dead-vl:free", "openrouter/free"]
+config.OPENROUTER_API_KEY, config.GEMINI_API_KEY, config.NIM_API_KEY = "k", "", ""
+config.OLLAMA_URL, config.OCRSPACE_API_KEY = "", ""
+ocr_fresh = importlib.reload(ocr)
+ocr_fresh._OR_CACHE.update(at=time.time(), ids={"google/gemma-4-31b-it:free", "openrouter/free", "openai/gpt-5.6-luna"})
+names = [n for n, _ in ocr_fresh.build_cascade() if n.startswith("openrouter")]
+check("платная модель OpenRouter не попадает в каскад", not any("gpt-5.6" in n for n in names), str(names))
+check("снятая с free модель отфильтрована", not any("dead-vl" in n for n in names), str(names))
+check("живые free-модели остались", names == ["openrouter:google/gemma-4-31b-it:free", "openrouter:openrouter/free"], str(names))
+check("Groq убран", not hasattr(config, "GROQ_API_KEY") and "groq" not in [n for n, _ in ocr_fresh.build_cascade()])
+
 print("\nGATE 13:", "OK" if not fails else f"FAIL {fails}")
 sys.exit(1 if fails else 0)
