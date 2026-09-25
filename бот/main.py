@@ -102,7 +102,8 @@ HELP_TEXT = (
     "ℹ️ Как это работает:\n"
     "1. Root выдаёт тебе клуб командой.\n"
     "2. Играешь матчи тура в FC27 Mobile.\n"
-    "3. Кидаешь скрин статистики в 📨 Репорт — счёт распознаётся сам.\n"
+    "3. Кидаешь 1–3 скрина «Статистика матча» прямо в чат — бот сам найдёт матч\n"
+    "   по никам FC27 и засчитает счёт (подробнее — кнопка 📨 Репорт).\n"
     "4. Ставки на те же матчи — в мини-аппе.\n\n"
     "Команды: /турниры /календарь /пары /споры /ник"
 )
@@ -352,7 +353,8 @@ def main() -> None:
         elif kind == "callback":
             app.add_handler(CallbackQueryHandler(fn, pattern=pat))
         elif kind == "photo":
-            app.add_handler(MessageHandler(filters.PHOTO, fn))
+            # скрин фото или файлом (без сжатия — OCR читает лучше)
+            app.add_handler(MessageHandler(filters.PHOTO | filters.Document.IMAGE, fn))
         else:
             app.add_handler(MessageHandler(filters.Regex(f"^{re.escape(pat)}$"), fn))
 

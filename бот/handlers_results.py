@@ -14,6 +14,7 @@ import core
 import db as appdb
 import league
 import ocr
+import report_match
 import results
 import settings as appsettings
 
@@ -21,32 +22,6 @@ log = logging.getLogger("bot.results")
 
 
 # ===== helpers =====
-
-def _my_pending_matches(telegram_id: int) -> list[dict]:
-    player = core.get_player(telegram_id)
-    if not player:
-        return []
-    club = core.club_of_player(player["id"])
-    if not club:
-        return []
-    c = appdb.db()
-    rows = c.execute(
-        # лига: pending в открытом туре моего дивизиона
-        "SELECT m.* FROM matches m JOIN tours t ON t.tournament_id=m.tournament_id "
-        " AND t.tour_number=m.tour_number "
-        "WHERE t.status='open' AND m.status='pending' "
-        "AND (m.home_club_id=? OR m.away_club_id=?) "
-        "UNION "
-        # кубок: pending без тура (сетка)
-        "SELECT m.* FROM matches m JOIN tournaments tr ON tr.id=m.tournament_id "
-        "WHERE tr.format!='league' AND m.status='pending' "
-        "AND (m.home_club_id=? OR m.away_club_id=?) "
-        "ORDER BY id",
-        (club["id"], club["id"], club["id"], club["id"]),
-    ).fetchall()
-    c.close()
-    return [dict(r) for r in rows]
-
 
 def _club_name(c, club_id: int | None) -> str:
     if not club_id:
@@ -109,149 +84,292 @@ async def _notify_judges(bot, tournament_id: int, text: str) -> None:
 
 
 # ===== 📨 Репорт =====
+# Поток: игрок кидает 1–3 скрина (альбомом или подряд) → копим пачку REPORT_WAIT_SEC →
+# один прогон OCR → матч и сторона по никам FC27 (report_match) → финализация сразу
+# (решение 09) или уточнение кнопками, если ники не узнаны.
+
+REPORT_MAX_SHOTS = 3
+REPORT_WAIT_SEC = 4
+
+REPORT_HOWTO = (
+    "📨 Как прислать результат:\n"
+    "1. После матча открой экран «Статистика матча» — шапка с никами и счётом должна быть видна целиком.\n"
+    "2. Если нужны бомбардиры — добавь экран с лентой голов (до 3 скринов).\n"
+    "3. Кинь скрины сюда одним альбомом. Обрезать и выбирать матч не нужно: "
+    "бот сам найдёт матч по никам FC27 и поймёт, кто хозяин.\n\n"
+    "Важно: ник в боте (/ник) должен совпадать с ником в игре."
+)
+
+_STAGE_RU = {"group": "группа", "r16": "1/8", "qf": "1/4", "sf": "1/2", "final": "финал"}
+
+
+def _my_pending_matches(telegram_id: int) -> list[dict]:
+    player = core.get_player(telegram_id)
+    club = core.club_of_player(player["id"]) if player else None
+    if not club:
+        return []
+    c = appdb.db()
+    rows = report_match.reportable_matches(c, club["id"])
+    c.close()
+    return rows
+
+
+def _match_button_text(c, m: dict) -> str:
+    where = f"тур {m['tour_number']}" if m.get("tour_number") is not None else _STAGE_RU.get(m.get("stage"), "кубок")
+    return f"{_club_name(c, m['home_club_id'])} — {_club_name(c, m['away_club_id'])} · {where}"
+
 
 async def menu_report(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     matches = _my_pending_matches(update.effective_user.id)
+    player = core.get_player(update.effective_user.id)
+    nick = player["game_nickname"] if player else None
+    text = REPORT_HOWTO + f"\n\nТвой ник: {nick or '❗ не задан — /ник ТвойНик'}"
     if not matches:
-        await update.message.reply_text(
-            "ТвоихPending-матчей в открытом туре нет.\n"
-            "Если матч должен быть — попроси root проверить календарь."
-        )
+        await update.message.reply_text(text + "\n\nНесыгранных матчей у тебя сейчас нет.")
         return
     c = appdb.db()
-    kb = [[InlineKeyboardButton(
-        f"#{m['id']} {_club_name(c, m['home_club_id'])} — {_club_name(c, m['away_club_id'])}",
-        callback_data=f"report:{m['id']}")] for m in matches]
+    lines = [f"• {_match_button_text(c, m)}" for m in matches[:8]]
     c.close()
-    await update.message.reply_text(
-        "Выбери матч, потом кидай 1–3 скрина FC27 (статистика и/или лента голов).",
-        reply_markup=InlineKeyboardMarkup(kb),
-    )
+    await update.message.reply_text(text + "\n\nТвои несыгранные матчи:\n" + "\n".join(lines))
 
 
 async def cb_pick_report_match(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    await update.callback_query.answer()
-    _, mid = update.callback_query.data.split(":")
-    context.user_data["report_match"] = int(mid)
-    context.user_data["report_goals"] = []
-    context.user_data["ocr_skip"] = 0
-    await update.callback_query.edit_message_text(
-        f"Матч #{mid} выбран. Кидай скрины — счёт возьму из шапки, финализирую сразу.")
+    """Выбор матча после скринов, если по никам не определился."""
+    q = update.callback_query
+    await q.answer()
+    mid = int(q.data.split(":")[1])
+    pending = context.user_data.get("report_parsed")
+    if not pending:
+        await q.edit_message_text("Скрины устарели — пришли их ещё раз.")
+        return
+    side = report_match.side_for_match(pending, mid)
+    if side is None:
+        await _ask_side(q.message.chat_id, context, mid, edit=q)
+        return
+    await q.edit_message_text("Матч выбран, финализирую…")
+    await _finalize_report(context, q.message.chat_id, update.effective_user.id, mid, side)
 
 
-# ===== фото → OCR → финализация =====
+async def cb_pick_side(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    q = update.callback_query
+    await q.answer()
+    _, mid, sw = q.data.split(":")
+    if not context.user_data.get("report_parsed"):
+        await q.edit_message_text("Скрины устарели — пришли их ещё раз.")
+        return
+    await q.edit_message_text("Принято, финализирую…")
+    await _finalize_report(context, q.message.chat_id, update.effective_user.id, int(mid), sw == "1")
+
+
+async def _ask_side(chat_id: int, context, mid: int, edit=None) -> None:
+    parsed = context.user_data["report_parsed"]
+    c = appdb.db()
+    m = dict(c.execute("SELECT * FROM matches WHERE id=?", (mid,)).fetchone())
+    home, away = _club_name(c, m["home_club_id"]), _club_name(c, m["away_club_id"])
+    c.close()
+    left = parsed.get("player_home") or "слева"
+    right = parsed.get("player_away") or "справа"
+    score = f"{parsed['score_home']}:{parsed['score_away']}"
+    kb = InlineKeyboardMarkup([
+        [InlineKeyboardButton(f"{left} = {home}", callback_data=f"repside:{mid}:0")],
+        [InlineKeyboardButton(f"{left} = {away}", callback_data=f"repside:{mid}:1")],
+    ])
+    text = (f"На скрине: {left} {score} {right}.\n"
+            f"Матч: {home} — {away}. Кто слева на скрине?\n"
+            "(Чтобы не спрашивал — поставь ник как в игре: /ник)")
+    if edit:
+        await edit.edit_message_text(text, reply_markup=kb)
+    else:
+        await context.bot.send_message(chat_id, text, reply_markup=kb)
+
 
 async def on_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    tg = update.effective_user
-    match_id = context.user_data.get("report_match")
-    if not match_id:
-        pend = _my_pending_matches(tg.id)
-        if len(pend) == 1:
-            match_id = pend[0]["id"]
-            context.user_data["report_match"] = match_id
-            context.user_data["report_goals"] = []
-        else:
-            await update.message.reply_text("Сначала выбери матч: 📨 Репорт.")
-            return
+    """Копим пачку скринов; обработка — через REPORT_WAIT_SEC после последнего."""
+    msg = update.message
+    if msg.photo:
+        file_id = msg.photo[-1].file_id
+    elif msg.document and (msg.document.mime_type or "").startswith("image/"):
+        file_id = msg.document.file_id
+    else:
+        return
+    batch = context.user_data.setdefault("report_batch", [])
+    if len(batch) >= REPORT_MAX_SHOTS:
+        if not context.user_data.get("report_overflow_warned"):
+            context.user_data["report_overflow_warned"] = True
+            await msg.reply_text(f"Беру первые {REPORT_MAX_SHOTS} скрина, остальные пропускаю.")
+        return
+    batch.append(file_id)
+    context.user_data["report_chat"] = msg.chat_id
 
+    ack = context.user_data.get("report_ack")
+    if ack is None:
+        sent = await msg.reply_text("📥 Скрин принят, жду остальные…")
+        context.user_data["report_ack"] = sent.message_id
+    else:
+        try:
+            await context.bot.edit_message_text(f"📥 Принято скринов: {len(batch)}",
+                                                chat_id=msg.chat_id, message_id=ack)
+        except Exception:
+            pass
+
+    jq = context.job_queue
+    if jq is None:  # без job-queue (тесты) — сразу
+        await _process_batch(context, msg.chat_id, update.effective_user.id)
+        return
+    name = f"report:{update.effective_user.id}"
+    for job in jq.get_jobs_by_name(name):
+        job.schedule_removal()
+    jq.run_once(_job_process_batch, REPORT_WAIT_SEC, name=name,
+                chat_id=msg.chat_id, user_id=update.effective_user.id)
+
+
+async def _job_process_batch(context: ContextTypes.DEFAULT_TYPE) -> None:
+    await _process_batch(context, context.job.chat_id, context.job.user_id)
+
+
+async def _process_batch(context, chat_id: int, user_id: int, reuse_images: bool = False) -> None:
+    ud = context.user_data
+    if reuse_images:
+        images = ud.get("report_images") or []
+    else:
+        file_ids = ud.pop("report_batch", [])
+        ud.pop("report_overflow_warned", None)
+        ud["ocr_skip"] = 0
+        images = []
+        for fid in file_ids:
+            f = await context.bot.get_file(fid)
+            images.append(bytes(await f.download_as_bytearray()))
+    ack = ud.pop("report_ack", None)
+    if not images:
+        return
+
+    # дедуп: уже засчитанные скрины (любого матча) повторно не принимаем
+    shas = [hashlib.sha256(b).hexdigest() for b in images]
+    c = appdb.db()
+    seen = {r["sha256"] for r in c.execute(
+        f"SELECT sha256 FROM processed_screenshots WHERE sha256 IN ({','.join('?' * len(shas))})",
+        shas).fetchall()}
+    c.close()
+    fresh = [(s, b) for s, b in zip(shas, images) if s not in seen]
+    if not fresh:
+        await context.bot.send_message(chat_id, "Эти скрины уже засчитаны раньше. Если это новый матч — пришли свежие.")
+        return
+    ud["report_images"] = [b for _, b in fresh]
+    ud["report_shas"] = [s for s, _ in fresh]
+
+    status_text = f"⏳ Распознаю {len(fresh)} скрин(а)…"
+    if ack:
+        try:
+            await context.bot.edit_message_text(status_text, chat_id=chat_id, message_id=ack)
+        except Exception:
+            await context.bot.send_message(chat_id, status_text)
+    else:
+        await context.bot.send_message(chat_id, status_text)
+
+    skip = ud.get("ocr_skip", 0)
+    cascade = ocr.build_cascade()
+    total = len(cascade)
+    cascade = cascade[skip:] if skip < total else []
+    parsed = await asyncio.to_thread(ocr.parse_screenshots, ud["report_images"], cascade) if cascade else None
+    if not parsed:
+        if skip + 1 < total:
+            kb = InlineKeyboardMarkup([[InlineKeyboardButton("🔄 Другой моделью", callback_data="ocralt")]])
+            await context.bot.send_message(chat_id, "⚠️ Не распознал. Попробовать следующей моделью?", reply_markup=kb)
+        else:
+            await context.bot.send_message(
+                chat_id,
+                "⚠️ Распознать не вышло (или не настроены OCR-ключи). Введи вручную:\n"
+                "/вручную <id матча> <счёт> [голы=Имя x2, Имя]\nНапример: /вручную 41 2:1 голы=Антони x2, Виртц\n"
+                "id матча — в /календарь.")
+        return
+    ud["report_parsed"] = parsed
+
+    res = report_match.resolve(parsed, user_id)
+    if res["status"] == "error":
+        await context.bot.send_message(chat_id, "⛔ " + res["message"])
+        return
+    if res["status"] == "auto":
+        await _finalize_report(context, chat_id, user_id, res["match_id"], res["swapped"])
+        return
+    if res["status"] == "ask_side":
+        await context.bot.send_message(chat_id, "🤔 " + res["message"])
+        await _ask_side(chat_id, context, res["match_id"])
+        return
+    c = appdb.db()
+    rows = [dict(c.execute("SELECT * FROM matches WHERE id=?", (mid,)).fetchone()) for mid in res["candidates"]]
+    kb = InlineKeyboardMarkup([[InlineKeyboardButton(_match_button_text(c, m), callback_data=f"report:{m['id']}")]
+                               for m in rows])
+    c.close()
+    await context.bot.send_message(
+        chat_id,
+        f"🤔 {res['message']}\nСчёт на скрине: {parsed.get('player_home') or '?'} "
+        f"{parsed['score_home']}:{parsed['score_away']} {parsed.get('player_away') or '?'}.\nКакой это матч?",
+        reply_markup=kb)
+
+
+async def _finalize_report(context, chat_id: int, reporter_tg: int, match_id: int, swapped: bool) -> None:
+    ud = context.user_data
+    parsed = ud.get("report_parsed")
+    if not parsed:
+        await context.bot.send_message(chat_id, "Скрины устарели — пришли их ещё раз.")
+        return
     c = appdb.db()
     m = c.execute("SELECT * FROM matches WHERE id=?", (match_id,)).fetchone()
+    c.close()
     if not m or m["status"] not in ("pending", "reported"):
-        c.close()
-        await update.message.reply_text("Матч уже финализирован или не найден.")
+        await context.bot.send_message(chat_id, "Матч уже финализирован. Не согласен — «⚔️ Оспорить» у сообщения о результате.")
         return
     m = dict(m)
-
-    photo = update.message.photo[-1]
-    file = await update.message.effective_attachment[-1].get_file()
-    data = await file.download_as_bytearray()
-    data = bytes(data)
-    sha = hashlib.sha256(data).hexdigest()
-    dup = c.execute(
-        "SELECT 1 FROM processed_screenshots WHERE sha256=? AND tournament_id=?",
-        (sha, m["tournament_id"]),
-    ).fetchone()
-    c.close()
-    if dup:
-        await update.message.reply_text("Этот скрин уже обрабатывался (дедуп). Пришли следующий.")
+    player = core.get_player(reporter_tg)
+    club = core.club_of_player(player["id"]) if player else None
+    if not (club and club["id"] in (m["home_club_id"], m["away_club_id"])) \
+            and not core.is_tournament_admin(m["tournament_id"], reporter_tg):
+        await context.bot.send_message(chat_id, "⛔ Это не твой матч. Репорт шлёт участник или судья.")
         return
-    # хэш пишем только после финализации — иначе «🔄 Другой моделью» упрётся в дедуп
 
-    await update.message.reply_text("⏳ Распознаю скрин (OCR-каскад)…")
-    skip = context.user_data.get("ocr_skip", 0)
-    cascade = ocr.build_cascade()
-    if skip and skip < len(cascade):
-        cascade = cascade[skip:]
-    parsed = await asyncio.to_thread(ocr.parse_screenshots, [data], cascade or None)
-    if not parsed:
-        remaining = len(ocr.build_cascade()) - skip - 1 if cascade else 0
-        from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-        if remaining > 0:
-            kb = InlineKeyboardMarkup([[InlineKeyboardButton(
-                "🔄 Другой моделью", callback_data="ocralt")]])
-            await update.message.reply_text(
-                "⚠️ Не удалось распознать этим провайдером. Попробовать следующим?",
-                reply_markup=kb)
-        else:
-            await update.message.reply_text(
-                "⚠️ Провайдеры кончились. Введи вручную: /вручную <id матча> <счёт> "
-                "[голы=Имя x2, Имя]\nНапример: /вручную 41 2:1 голы=Антоний x2, Виртц"
-            )
-        return
-    context.user_data["ocr_skip"] = 0
-
-    merged_goals = list(context.user_data.get("report_goals") or [])
-    for g in parsed.get("goal_events") or []:
-        g.setdefault("minute", None)
-        merged_goals.append(g)
-    context.user_data["report_goals"] = merged_goals
-
+    o = report_match.orient(parsed, swapped)
+    pens = o.get("penalties") or {}
     summary = results.finalize_match(
-        match_id, parsed["score_home"], parsed["score_away"],
-        (parsed.get("penalties") or {}).get("home") if parsed.get("penalties") else None,
-        (parsed.get("penalties") or {}).get("away") if parsed.get("penalties") else None,
-        merged_goals, actor="ocr",
+        match_id, o["score_home"], o["score_away"], pens.get("home"), pens.get("away"),
+        o.get("goal_events") or [], actor="ocr",
     )
     c = appdb.db()
-    c.execute(
-        "INSERT INTO processed_screenshots (sha256, tournament_id, match_id, reporter_id) VALUES (?,?,?,?) "
-        "ON CONFLICT DO NOTHING",
-        (sha, m["tournament_id"], match_id, tg.id),
-    )
+    for sha in ud.get("report_shas") or []:
+        c.execute(
+            "INSERT INTO processed_screenshots (sha256, tournament_id, match_id, reporter_id) VALUES (?,?,?,?) "
+            "ON CONFLICT DO NOTHING", (sha, m["tournament_id"], match_id, reporter_tg))
     c.commit()
     home = _club_name(c, summary["home_club"])
     away = _club_name(c, summary["away_club"])
-    # соперник — тот, кто не репортер
-    player = core.get_player(tg.id)
-    club = core.club_of_player(player["id"]) if player else None
+    where = report_match.match_context(c, m)
     opp_club = summary["away_club"] if club and club["id"] == summary["home_club"] else summary["home_club"]
     row = c.execute(
         "SELECT p.telegram_id FROM club_players cp JOIN players p ON p.id=cp.player_id WHERE cp.club_id=?",
-        (opp_club,),
-    ).fetchone()
+        (opp_club,)).fetchone()
     opp_tg = row["telegram_id"] if row else None
     judges = [r["telegram_id"] for r in c.execute(
-        "SELECT telegram_id FROM tournament_admins WHERE tournament_id=?",
-        (summary["tournament_id"],)).fetchall()]
+        "SELECT telegram_id FROM tournament_admins WHERE tournament_id=?", (summary["tournament_id"],)).fetchall()]
     c.close()
+    for k in ("report_parsed", "report_images", "report_shas", "ocr_skip"):
+        ud.pop(k, None)
 
-    text = (f"✅ Матч #{match_id} финализирован: {home} {summary['score']}{summary['pens']} {away}\n"
-            f"Голов распознано: {len(merged_goals)}. Провайдер: "
-            f"{', '.join(w.split('провайдеры: ')[-1] for w in parsed['warnings'] if 'провайдеры' in w) or '—'}")
-    if parsed.get("warnings"):
-        extra = [w for w in parsed["warnings"] if "провайдеры" not in w]
-        if extra:
-            text += "\n⚠️ " + "; ".join(extra)
-    kb = InlineKeyboardMarkup([[InlineKeyboardButton("⚔️ Оспорить", callback_data=f"disp:{match_id}")]])
-    await update.message.reply_text(text)
-    context.user_data.pop("report_match", None)
-    context.user_data.pop("report_goals", None)
+    providers = ", ".join(w.split("провайдеры: ")[-1] for w in o.get("warnings", []) if "провайдеры" in w) or "—"
+    nicks = f"{o.get('player_home') or '?'} vs {o.get('player_away') or '?'}"
+    text = (f"✅ Матч #{match_id} засчитан\n{where}\n"
+            f"⚽ {home} {summary['score']}{summary['pens']} {away}\n"
+            f"👤 {nicks}\n"
+            f"Голов распознано: {len(o.get('goal_events') or [])} · OCR: {providers}")
+    extra = [w for w in o.get("warnings", []) if "провайдеры" not in w]
+    if extra:
+        text += "\n⚠️ " + "; ".join(extra)
+    await context.bot.send_message(chat_id, text)
 
     window = appsettings.setting_int("dispute_window_hours", 24)
-    await _notify_player(context.bot, opp_tg,
-                         f"Соперник прислал результат {home} {summary['score']}{summary['pens']} {away}.\n"
-                         f"Не согласен? Оспорь в течение {window} ч:",
-                         kb)
+    kb = InlineKeyboardMarkup([[InlineKeyboardButton("⚔️ Оспорить", callback_data=f"disp:{match_id}")]])
+    if opp_tg and opp_tg != reporter_tg:
+        await _notify_player(context.bot, opp_tg,
+                             f"Соперник прислал результат:\n{where}\n⚽ {home} {summary['score']}{summary['pens']} {away}\n"
+                             f"Не согласен? Оспорь в течение {window} ч:", kb)
     for j in judges:
         await _notify_player(context.bot, j, f"Матч #{match_id}: {home} {summary['score']}{summary['pens']} {away} (OCR).")
 
@@ -403,17 +521,22 @@ async def cmd_manual(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
 
 
 async def cb_ocr_alternate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Кнопка «🔄 Другой моделью» (план 06): следующая попытка — со следующего провайдера."""
-    await update.callback_query.answer()
+    """«🔄 Другой моделью» (план 06): те же скрины — со следующего провайдера, пересылать не нужно."""
+    q = update.callback_query
+    await q.answer()
+    if not context.user_data.get("report_images"):
+        await q.edit_message_text("Скрины устарели — пришли их ещё раз.")
+        return
     context.user_data["ocr_skip"] = context.user_data.get("ocr_skip", 0) + 1
-    await update.callback_query.edit_message_text(
-        "Ок, кидай тот же скрин — возьму следующий провайдер каскада.")
+    await q.edit_message_text("🔄 Пробую следующей моделью…")
+    await _process_batch(context, q.message.chat_id, update.effective_user.id, reuse_images=True)
 
 
 HANDLERS = [
     ("text", "📨 Репорт", menu_report),
     ("callback", r"^ocralt$", cb_ocr_alternate),
     ("callback", r"^report:\d+$", cb_pick_report_match),
+    ("callback", r"^repside:\d+:[01]$", cb_pick_side),
     ("photo", None, on_photo),
     ("callback", r"^disp:\d+$", cb_dispute),
     ("command", "споры", cmd_disputes),
