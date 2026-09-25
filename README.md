@@ -32,7 +32,7 @@ venv/bin/python bot/main.py        # бот + http://127.0.0.1:9542/app
 - **судья турнира** — root выдаёт `/judge <турнир_id> @user` (споры, ручной ввод).
 
 ## Команды (root)
-`/season` `/cup` `/club` `/clubs` `/catalog` `/calendar` `/tour` `/pairs` `/editpair` `/judge`
+`/season` (можно `divisions=Ла Лига, Серия А, Лига 1`) `/setnick` `/cup` `/club` `/clubs` `/catalog` `/calendar` `/tour` `/pairs` `/editpair` `/judge`
 `/disputes` `/resolve` `/final` `/promo` `/paid` `/scan` `/admin`.
 Игрокам: `/start` `/nick` `/tournaments` `/manual` `/myid`. Результат матча — просто скрины в чат.
 

@@ -50,7 +50,7 @@ try:
 except Exception as e:  # noqa: BLE001
     ok, err = False, e
 check("все команды регистрируются", ok, repr(err))
-known = set(names) | {"start", "nick", "myid"}
+known = set(names) | {"start", "nick", "myid", "setnick"}
 menu_missing = [n for n, _ in botmain.ADMIN_COMMANDS if n not in known]
 check("меню команд ссылается на существующие", not menu_missing, str(menu_missing))
 

@@ -58,6 +58,13 @@ def ensure_player(telegram_id: int, username: str | None = None) -> int:
         "INSERT OR IGNORE INTO players (username, telegram_id) VALUES (?,?)",
         (username, telegram_id),
     )
+    # игрока мог заранее завести админ по ID (без username) — дописываем при /start
+    if username:
+        try:
+            c.execute("UPDATE players SET username=? WHERE telegram_id=? AND (username IS NULL OR username!=?)",
+                      (username, telegram_id, username))
+        except Exception:  # username занят другой строкой (сменили ник в Telegram) — не критично
+            log.warning("username @%s занят, у %s не обновлён", username, telegram_id)
     c.commit()
     row = c.execute("SELECT id FROM players WHERE telegram_id=?", (telegram_id,)).fetchone()
     c.close()

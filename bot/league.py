@@ -57,19 +57,25 @@ def all_active_tournaments() -> list[dict]:
 
 # ===== сезоны / дивизионы =====
 
-def create_league_season(name: str, n_divisions: int = 1, tour_mode: str = "manual",
-                         rounds: int = 2, tour_days: int = 3) -> int:
-    """Лига = контейнер, внутри 1..N дивизионов (решение 09)."""
+def create_league_season(name: str, divisions: int | list[str] = 1, tour_mode: str = "manual",
+                         rounds: int = 2, tour_days: int = 3, n_divisions: int | None = None) -> int:
+    """Лига = контейнер, внутри 1..N дивизионов (решение 09). divisions — число
+    («Дивизион 1…N») или список имён («Ла Лига», «Серия А»); порядок = иерархия.
+    n_divisions — старое имя параметра (совместимость)."""
+    if n_divisions is not None:
+        divisions = n_divisions
+    names = ([f"Дивизион {i}" for i in range(1, int(divisions) + 1)]
+             if isinstance(divisions, int) else list(divisions))
     c = appdb.db()
     tid = c.insert_returning_id(
         "INSERT INTO tournaments (name, format, tour_mode, rounds, tour_days, total_tours, current_tour, stage) "
         "VALUES (?, 'league', ?, ?, ?, 0, 0, 'groups')",
         (name, tour_mode, int(rounds), int(tour_days)),
     )
-    for i in range(1, n_divisions + 1):
+    for i, dname in enumerate(names, start=1):
         c.execute(
             "INSERT INTO divisions (tournament_id, name, code, sort_order) VALUES (?,?,?,?)",
-            (tid, f"Дивизион {i}", f"D{i}", i),
+            (tid, dname, f"D{i}", i),
         )
     c.commit()
     c.close()
@@ -156,8 +162,8 @@ def generate_league_calendar(tournament_id: int, division_id: int) -> int:
         " away_club_id IN (SELECT id FROM clubs WHERE division_id=?))",
         (tournament_id, division_id, division_id),
     )
-    c.execute("DELETE FROM tours WHERE tournament_id=?", (tournament_id,))
-
+    # туры общие на все дивизионы лиги: не удаляем, а дополняем (иначе второй дивизион
+    # стирал туры первого, и матчи длинного календаря оставались без тура)
     schedule = round_robin(ids)
     total = 0
     now = datetime.utcnow()
@@ -167,7 +173,8 @@ def generate_league_calendar(tournament_id: int, division_id: int) -> int:
         if leg % 2 == 1:
             pairs = [(b, a) for a, b in pairs]  # ответка: гости дома
         c.execute(
-            "INSERT INTO tours (tournament_id, tour_number, status, deadline) VALUES (?,?,?,?)",
+            "INSERT INTO tours (tournament_id, tour_number, status, deadline) VALUES (?,?,?,?) "
+            "ON CONFLICT(tournament_id, tour_number) DO NOTHING",
             (tournament_id, tour_no,
              "open" if tour_no == 1 else "locked",
              (now + timedelta(days=tour_days)).isoformat() if tour_no == 1 else None),
@@ -180,7 +187,7 @@ def generate_league_calendar(tournament_id: int, division_id: int) -> int:
             )
             total += 1
     c.execute(
-        "UPDATE tournaments SET total_tours=?, current_tour=1 WHERE id=?",
+        "UPDATE tournaments SET total_tours=MAX(COALESCE(total_tours,0), ?), current_tour=1 WHERE id=?",
         (len(schedule) * rounds_needed, tournament_id),
     )
     c.commit()
@@ -765,6 +772,7 @@ def season_final_preview(tournament_id: int) -> dict:
     }
     c.close()
     rows = []
+    pc = _promote_count(t)
     for i, d in enumerate(divs):
         table = division_standings(d["id"])
         for r in table:
@@ -776,12 +784,18 @@ def season_final_preview(tournament_id: int) -> dict:
                 row["prize"] = prizes["second"]
             elif (i == 0 and r["position"] == 3) or (i > 0 and r["position"] == 1):
                 row["prize"] = prizes["third"]
-            if r["position"] <= 3 and i > 0:
+            if pc and r["position"] <= pc and i > 0:
                 row["move"] = f"↑ в {divs[i-1]['name']}"
-            if r["position"] > len(table) - 3 and i < len(divs) - 1:
+            if pc and r["position"] > len(table) - pc and i < len(divs) - 1:
                 row["move"] = f"↓ в {divs[i+1]['name']}"
             rows.append(row)
-    return {"tournament": t["name"], "prizes": prizes, "rows": rows}
+    return {"tournament": t["name"], "prizes": prizes, "rows": rows, "promote_count": pc}
+
+
+def _promote_count(t: dict) -> int:
+    """Сколько клубов меняются между соседними дивизионами (0 — независимые лиги)."""
+    v = t.get("promote_count")
+    return 3 if v is None else int(v)
 
 
 def finalize_season(tournament_id: int, actor_tg: int | None = None) -> dict:
@@ -802,6 +816,7 @@ def finalize_season(tournament_id: int, actor_tg: int | None = None) -> dict:
         c.close()
         return {"error": "сезон уже финализирован — призовые повторно не выплачиваются"}
     paid, moves = [], []
+    pc = _promote_count(get_tournament(tournament_id))
     for i, d in enumerate(divs):
         table = division_standings(d["id"])
         for r in table:
@@ -818,11 +833,11 @@ def finalize_season(tournament_id: int, actor_tg: int | None = None) -> dict:
                 c.execute("INSERT INTO balance_history (user_id, delta, reason) VALUES (NULL, ?, ?)",
                           (prize, f"призовое за сезон: {club['name']} ({d['name']}, {r['position']} место)"))
                 paid.append({"club": club["name"], "prize": prize, "note": f"{d['name']} {r['position']} место"})
-            # 3 вверх / 3 вниз (только между существующими дивизионами)
-            if r["position"] <= 3 and i > 0:
+            # pc вверх / pc вниз (только между существующими дивизионами; 0 — без движений)
+            if pc and r["position"] <= pc and i > 0:
                 c.execute("UPDATE clubs SET division_id=? WHERE id=?", (divs[i-1]["id"], r["club_id"]))
                 moves.append({"club": club["name"], "move": f"↑ {d['name']} → {divs[i-1]['name']}"})
-            elif r["position"] > len(table) - 3 and i < len(divs) - 1:
+            elif pc and r["position"] > len(table) - pc and i < len(divs) - 1:
                 c.execute("UPDATE clubs SET division_id=? WHERE id=?", (divs[i+1]["id"], r["club_id"]))
                 moves.append({"club": club["name"], "move": f"↓ {d['name']} → {divs[i+1]['name']}"})
     # призовые за кубки сезона (победители final). Кубок, чей финал решён, уже finished

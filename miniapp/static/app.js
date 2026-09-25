@@ -101,8 +101,9 @@ function renderLine() {
 function renderTables() {
   // чипы дивизионов
   const chips = $('#division-chips');
+  const many = new Set(state.divisions.map((d) => d.tournament_id)).size > 1;
   chips.innerHTML = state.divisions.map((d) =>
-    `<button class="chip ${state.currentDivision == d.id ? 'active' : ''}" data-div="${d.id}">${esc(d.name)}</button>`).join('')
+    `<button class="chip ${state.currentDivision == d.id ? 'active' : ''}" data-div="${d.id}">${esc(many && d.tournament_name ? `${d.tournament_name} · ${d.name}` : d.name)}</button>`).join('')
     || '<span class="sub">Дивизионов пока нет.</span>';
 
   const sw = $('#standings-wrap');
@@ -111,30 +112,31 @@ function renderTables() {
     sw._currentDiv = state.currentDivision;
     sw.innerHTML = '<div class="empty-note">Загружаю таблицу…</div>';
     api(`/api/standings?division_id=${state.currentDivision}`)
-      .then(({ standings }) => {
-        sw._data[state.currentDivision] = standings;
-        sw.innerHTML = standingsTable(standings);
+      .then(({ standings, zones }) => {
+        sw._data[state.currentDivision] = { standings, zones };
+        sw.innerHTML = standingsTable(standings, zones);
       })
       .catch((e) => { sw.innerHTML = `<div class="empty-note">${esc(e.message)}</div>`; });
   } else if (sw._data[state.currentDivision]) {
-    sw.innerHTML = standingsTable(sw._data[state.currentDivision]);
+    const cached = sw._data[state.currentDivision];
+    sw.innerHTML = standingsTable(cached.standings, cached.zones);
   }
 }
 
-function standingsTable(rows) {
+function standingsTable(rows, zones = { up: 0, down: 0 }) {
   if (!rows?.length) return '<div class="empty-note">В дивизионе ещё нет клубов.</div>';
-  // зоны 3↑/3↓ (решение 09) показываем, только когда клубов хватает на обе
-  const zones = rows.length >= 8;
+  // зоны приходят с сервера: у высшего дивизиона нет повышения, у низшего — вылета
+  const up = zones?.up || 0, down = zones?.down || 0;
   return `<table class="standings">
     <tr><th>#</th><th class="team-th">Клуб</th><th>И</th><th>В</th><th>Н</th><th>П</th><th>М</th><th>О</th></tr>
-    ${rows.map((r) => `<tr class="${zones && r.position <= 3 ? 'promo' : (zones && r.position >= rows.length - 2 ? 'releg' : '')}">
+    ${rows.map((r) => `<tr class="${r.position <= up ? 'promo' : (down && r.position > rows.length - down ? 'releg' : '')}">
       <td class="pos">${r.position}</td>
       <td><div class="team-cell">${logoHtml(r)}<span>${esc(r.name)}</span></div></td>
       <td>${r.games}</td><td>${r.wins}</td><td>${r.draws}</td><td>${r.losses}</td>
       <td class="gd">${r.gf}:${r.ga}</td><td class="pts">${r.points}</td>
     </tr>`).join('')}
   </table>
-  ${zones ? '<div class="table-legend"><span><i style="background:var(--green)"></i>Повышение</span><span><i style="background:var(--red)"></i>Вылет</span></div>' : ''}`;
+  ${up || down ? `<div class="table-legend">${up ? '<span><i style="background:var(--green)"></i>Повышение</span>' : ''}${down ? '<span><i style="background:var(--red)"></i>Вылет</span>' : ''}</div>` : ''}`;
 }
 
 function renderCoupon() {

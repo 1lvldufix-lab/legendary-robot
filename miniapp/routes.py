@@ -139,8 +139,19 @@ async def api_standings(request):
         cl = _club_row(c, row["club_id"])
         enriched.append({**row, **(_club_public(cl) or {})})
     div = dict(c.execute("SELECT * FROM divisions WHERE id=?", (division_id,)).fetchone() or {})
+    # зоны повышения/вылета: только если есть дивизион выше/ниже и лига их включила
+    zones = {"up": 0, "down": 0}
+    if div:
+        t = c.execute("SELECT promote_count FROM tournaments WHERE id=?", (div["tournament_id"],)).fetchone()
+        pc = 3 if not t or t["promote_count"] is None else int(t["promote_count"])
+        sibs = [r["id"] for r in c.execute(
+            "SELECT id FROM divisions WHERE tournament_id=? AND is_active=1 ORDER BY sort_order, id",
+            (div["tournament_id"],)).fetchall()]
+        if div["id"] in sibs and len(enriched) > 2 * pc:
+            i = sibs.index(div["id"])
+            zones = {"up": pc if i > 0 else 0, "down": pc if i < len(sibs) - 1 else 0}
     c.close()
-    return j({"standings": enriched, "division": div})
+    return j({"standings": enriched, "division": div, "zones": zones})
 
 
 def _player_by_tg(telegram_id):

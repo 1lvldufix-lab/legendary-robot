@@ -63,29 +63,42 @@ async def deny(update: Update):
 
 # ===== /season =====
 
+_DIVS_RE = re.compile(r"(?:divs|divisions|дивизионы)=(.+?)(?=\s+[\wа-яё]+=|$)", re.IGNORECASE)
+
+
 async def cmd_season(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    import league_admin as la
     if not _root_only(update):
         return await deny(update)
-    name, opts = _parse_args(context.args and " ".join(context.args) or "")
+    text = context.args and " ".join(context.args) or ""
+    # дивизионы с пробелами в названиях («Ла Лига, Серия А») вырезаем до разбора key=value
+    m = _DIVS_RE.search(text)
+    divs_raw = m.group(1).strip() if m else ""
+    name, opts = _parse_args(_DIVS_RE.sub(" ", text))
     if not name:
         await update.message.reply_text(
-            "Формат: /season <название> [divisions=N] [mode=manual|challenge_place] "
-            "[rounds=1|2] [days=N]\nПример: /season Сезон-1 divisions=2 rounds=2 days=3"
+            "Формат: /season <название> [divisions=N | divisions=Имя, Имя…] [rounds=1|2] [days=N] [promote=N]\n"
+            "Примеры:\n/season Сезон-1 divisions=2\n"
+            "/season Сезон-1 divisions=Ла Лига, Серия А, Лига 1, Лига 2, Серия С promote=3\n"
+            "promote — сколько клубов меняются между дивизионами (0 — независимые лиги).\n"
+            "Удобнее — в мини-аппе: Кабинет → 👮 → 🏆 Лиги и участники."
         )
         return
-    n_div = int(opts.get("дивизионы", 1))
-    tour_mode = opts.get("режим", "manual")
-    if tour_mode not in ("manual", "challenge_place"):
-        tour_mode = "manual"  # per план 09: дефолт
-    rounds = int(opts.get("круги", 2))
-    if rounds not in (1, 2):
-        rounds = 2
-    days = int(opts.get("дней", config.DEFAULT_TOUR_DAYS))
-    tid = league.create_league_season(name, n_div, tour_mode, rounds, days)
-    core.audit(tid, update.effective_user.id, "create_season", f"{name} div={n_div} mode={tour_mode} rounds={rounds} days={days}")
+    names = ([f"Дивизион {i}" for i in range(1, int(divs_raw) + 1)] if divs_raw.isdigit()
+             else la.parse_division_names(divs_raw)) or ["Дивизион 1"]
+    rounds = int(opts.get("круги", 2)) if str(opts.get("круги", 2)).isdigit() else 2
+    days = int(opts["дней"]) if str(opts.get("дней", "")).isdigit() else config.DEFAULT_TOUR_DAYS
+    promote = opts.get("promote", opts.get("вылет", "3"))
+    try:
+        tid = la.create_league(name, names, rounds, days, int(promote) if str(promote).isdigit() else 3)
+    except la.LeagueError as e:
+        await update.message.reply_text(f"⛔ {e}")
+        return
+    core.audit(tid, update.effective_user.id, "create_season", f"{name} div={names} rounds={rounds} days={days}")
+    div_lines = "\n".join(f"{i}. {n}" for i, n in enumerate(names, 1))
     await update.message.reply_text(
-        f"✅ Сезон «{name}» создан: дивизионов {n_div}, режим {tour_mode}, "
-        f"кругов {rounds}, тур {days} дн. Теперь выдай клубы: /club <игрок> <клуб> [division=N], "
+        f"✅ Сезон «{name}» (#{tid}) создан, кругов {rounds}, тур {days} дн.\n{div_lines}\n\n"
+        f"Клубы: /club <игрок> <клуб> division=N (N — номер из списка), "
         f"затем календарь: /calendar {tid}"
     )
 

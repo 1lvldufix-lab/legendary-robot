@@ -111,17 +111,23 @@ HELP_TEXT = (
 ADMIN_HELP = (
     "👮 Админ-команды\n\n"
     "Сезон: /season /cup /cupnext /bracket /tour /pairs /editpair /final\n"
-    "Клубы: /club /clubs /catalog\n"
+    "Клубы: /club /clubs /catalog · ники: /setnick\n"
     "Судейство: /judge /disputes /resolve /manual\n"
     "Деньги: /promo /paid /scan\n"
     "Права: /admin /judge · свой ID: /myid\n\n"
-    "Ставки, void, пауза, игроки — в админ-панели мини-аппа (Кабинет → 👮)."
+    "Лиги с дивизионами, клубы, ники, ставки, игроки — в админ-панели мини-аппа (Кабинет → 👮)."
 )
 
 
 async def _save_nickname(update: Update, nick: str) -> None:
+    import league_admin as la
     tg = update.effective_user
-    nick = nick.strip()[:32]
+    nick = " ".join(nick.split())[:32]
+    other = la.nick_taken_by(nick, tg.id)
+    if other:
+        await update.message.reply_text(
+            f"⛔ Ник «{nick}» уже занят другим игроком. Если это твой ник — напиши админу (🐞 Связь).")
+        return
     c = appdb.db()
     c.execute("UPDATE players SET game_nickname=? WHERE telegram_id=?", (nick, tg.id))
     c.commit()
@@ -142,6 +148,25 @@ async def cmd_nick(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await _save_nickname(update, " ".join(context.args))
 
 
+async def cmd_setnick(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """/setnick <@user|ID> <ник> — админ ставит игроку ник FC27 (игрока без /start заводит по ID)."""
+    import league_admin as la
+    if not core.is_app_admin(update.effective_user.id):
+        await update.message.reply_text("⛔ Только админ.")
+        return
+    if len(context.args or []) < 2:
+        await update.message.reply_text("Формат: /setnick <@user|ID> <ник FC27>\nПример: /setnick @vasya temiyy")
+        return
+    try:
+        p = la.set_nick(context.args[0], " ".join(context.args[1:]))
+    except la.LeagueError as e:
+        await update.message.reply_text(f"⛔ {e}")
+        return
+    core.audit(None, update.effective_user.id, "admin_set_nick", f"tg={p['telegram_id']} nick={p['game_nickname']}")
+    who = f"@{p['username']}" if p["username"] else f"ID {p['telegram_id']}"
+    await update.message.reply_text(f"✅ {who}: ник FC27 «{p['game_nickname']}».")
+
+
 async def cmd_myid(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """/myid — свой Telegram ID (его вписывают в ADMIN_IDS, чтобы стать root)."""
     tg = update.effective_user
@@ -159,7 +184,7 @@ PLAYER_COMMANDS = [
 ]
 ADMIN_COMMANDS = PLAYER_COMMANDS + [
     ("season", "Создать сезон лиги"), ("cup", "Создать кубок"), ("club", "Выдать клуб игроку"),
-    ("clubs", "Список клубов"), ("catalog", "Каталог клубов FC"), ("calendar", "Сгенерировать календарь"),
+    ("setnick", "Поставить игроку ник FC27"), ("clubs", "Список клубов"), ("catalog", "Каталог клубов FC"), ("calendar", "Сгенерировать календарь"),
     ("tour", "Открыть тур"), ("pairs", "Пары тура"), ("editpair", "Править пару"),
     ("judge", "Выдать/снять судью"), ("disputes", "Спорные матчи"), ("resolve", "Решить спор"),
     ("cupnext", "Следующая стадия кубка"), ("final", "Итоги сезона"), ("promo", "Создать промокод"), ("paid", "Закрыть долг"),
@@ -394,6 +419,7 @@ def main() -> None:
     app.add_handler(CommandHandler("start", cmd_start))
     app.add_handler(CommandHandler("nick", cmd_nick))
     app.add_handler(CommandHandler("myid", cmd_myid))
+    app.add_handler(CommandHandler("setnick", cmd_setnick))
 
     # турнирное ядро (блок 4) + результаты/OCR (блок 5) + долги/скан (блок 9)
     for kind, pat, fn in (*ht.HANDLERS, *hr.HANDLERS, *hd.HANDLERS, *ha.HANDLERS):

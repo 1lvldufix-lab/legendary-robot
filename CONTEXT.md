@@ -58,6 +58,16 @@
   Порядок: Gemini → OpenRouter free → NIM → Ollama → OCR.space → tesseract.
 - Тесты: `gate11_fixes.py`, `gate12_bot.py` (+ все прежние) — зелёные.
 
+## Лиги с названиями дивизионов и участники (25.09)
+`bot/league_admin.py` + `miniapp/routes_leagues.py` + `static/features/leagues.js`.
+Админка → «🏆 Лиги и участники»: сезон с дивизионами по названиям (Ла Лига, Серия А, Лига 1, Лига 2,
+Серия С…), порядок ↑↓ = иерархия, `tournaments.promote_count` (0 — независимые лиги, без ↑↓),
+клубы из каталога или свои (без лого), владелец по @нику/ID, календарь по всем дивизионам.
+«👥 Ники и клубы»: ник FC27 (уникальный с нормализацией, как в report_match), клуб, судья (только root),
+предрегистрация игрока по Telegram ID до /start. Бот: `/season … divisions=Ла Лига, Серия А promote=3`,
+`/setnick <@user|ID> <ник>`. Исправлено: календарь второго дивизиона стирал туры первого.
+Тест: `tests/gate19_leagues.py`.
+
 ## Доделки «делай всё» (25.09)
 Каркас: схема фич — `bot/schema_*.py` (SCHEMA + migrate, автоподключение в `db.init_db`), API фич —
 `miniapp/routes_*.py` с `setup(app)` (автоподключение в `server.build_app`), фронт — `static/lib.js`

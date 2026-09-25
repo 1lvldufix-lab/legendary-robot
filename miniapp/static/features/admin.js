@@ -1,4 +1,5 @@
 import { $, api, esc, fmt, hooks, state, toast } from '../lib.js';
+import { openPersonSheet } from './leagues.js';
 
 /* ===== админ-панель (блок 10) ===== */
 
@@ -94,6 +95,7 @@ async function renderAdminPlayers(q = '') {
       <div><div>${esc(p.username ? '@' + p.username : (p.first_name || p.telegram_id))} ${p.is_frozen ? '🧊' : ''} ${p.is_admin ? '👑' : ''}</div>
       <div class="sub">${fmt(p.balance)} дыма · ур. ${p.level} · ID ${p.telegram_id}</div></div>
       <div class="adm-actions">
+        <button class="lot-btn secondary" data-person-edit="${p.telegram_id}">✎ Ник/клуб</button>
         <button class="lot-btn secondary" data-ban="${p.telegram_id}">${p.is_frozen ? 'Разбан' : 'Бан'}</button>
         ${p.telegram_id !== me ? `<button class="lot-btn secondary" data-adjust="${p.telegram_id}">±дым</button>` : ''}
         ${state.user?.is_root && p.telegram_id !== me ? `<button class="lot-btn secondary" data-admin-toggle="${p.telegram_id}" data-on="${p.is_admin ? 1 : 0}">${p.is_admin ? 'Снять админа' : 'Сделать админом'}</button>` : ''}
@@ -194,6 +196,8 @@ document.addEventListener('click', async (ev) => {
     } catch (e) { toast(e.message); }
     return;
   }
+  const personBtn = ev.target.closest('[data-person-edit]');
+  if (personBtn) { openPersonSheet(personBtn.dataset.personEdit); return; }
   const admBtn = ev.target.closest('[data-admin-toggle]');
   if (admBtn) {
     const on = admBtn.dataset.on === '1';

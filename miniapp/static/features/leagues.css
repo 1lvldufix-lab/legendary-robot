@@ -1,0 +1,34 @@
+/* ===== админка: лиги и участники ===== */
+.lg-btns { display: grid; gap: 8px; }
+.lg-create { border: 1px dashed var(--line2); border-radius: 12px; padding: 0 12px; margin: 10px 0 12px; background: var(--bg3); }
+.lg-create summary { cursor: pointer; padding: 11px 0; font-weight: 800; list-style: none; }
+.lg-create summary::-webkit-details-marker { display: none; }
+.lg-create[open] { padding-bottom: 12px; }
+.lg-create .amount-input, .lg-add-club .amount-input, .lg-add-div .amount-input { margin: 0 0 7px; font-size: 14px; font-weight: 600; padding: 10px 12px; }
+.lg-textarea { resize: vertical; font-family: inherit; line-height: 1.45; }
+.lg-row3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.lg-row3 label, .lg-label { display: block; color: var(--muted); font-size: 11.5px; font-weight: 700; }
+.lg-label { margin-bottom: 4px; }
+.lg-label .amount-input { margin: 4px 0 8px; font-size: 14px; }
+.lg-league { border: 1px solid var(--line2); border-radius: var(--radius); padding: 12px; margin-bottom: 12px; background: var(--bg2); }
+.lg-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.lg-title { font-family: var(--font-display); font-weight: 700; font-size: 16px; }
+.lg-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin: 10px 0; }
+.lg-mini { background: var(--bg3); color: var(--text); border: 1px solid var(--line2); border-radius: 8px; padding: 4px 6px; font: inherit; font-weight: 700; }
+.lg-icon { width: 28px; height: 28px; border-radius: 8px; background: var(--bg3); border: 1px solid var(--line2); color: var(--muted); font-size: 13px; display: inline-grid; place-items: center; }
+.lg-icon:disabled { opacity: .35; }
+.lg-title .lg-icon { width: 24px; height: 24px; font-size: 12px; vertical-align: 2px; }
+.lg-div { border-top: 1px solid var(--line); padding: 10px 0 4px; }
+.lg-div-head { display: flex; align-items: center; gap: 7px; margin-bottom: 8px; flex-wrap: wrap; }
+.lg-div-head b { font-size: 14.5px; }
+.lg-rank { width: 22px; height: 22px; border-radius: 7px; background: color-mix(in srgb, var(--accent) 18%, transparent); color: var(--accent); display: grid; place-items: center; font-weight: 800; font-size: 12px; }
+.lg-div-actions { margin-left: auto; display: flex; gap: 4px; }
+.lg-club { display: flex; align-items: center; gap: 9px; padding: 7px 0; border-bottom: 1px dashed var(--line); }
+.lg-club img, .lg-club .mc-fallback { width: 26px; height: 26px; object-fit: contain; }
+.lg-club .lot-btn { padding: 6px 9px; }
+.lg-add-club { margin-top: 8px; }
+.lg-add-club .lot-btn { width: 100%; padding: 9px; }
+.lg-custom { display: flex; align-items: center; gap: 6px; margin: -2px 0 8px; }
+.lg-add-div { display: flex; gap: 6px; margin-top: 10px; }
+.lg-add-div .amount-input { margin: 0; }
+.lg-warn { color: var(--red); font-weight: 700; }

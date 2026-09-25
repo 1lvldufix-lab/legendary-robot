@@ -24,8 +24,10 @@ STATIC_DIR = Path(__file__).resolve().parent / "static"
 async def api_bootstrap(request):
     u = require_active_user(request)
     c = appdb.db()
+    # только текущие лиги: дивизионы завершённых сезонов не мешают в чипах таблиц
     divisions = [dict(r) for r in c.execute(
-        "SELECT * FROM divisions WHERE is_active=1 ORDER BY sort_order").fetchall()]
+        "SELECT d.*, t.name AS tournament_name FROM divisions d JOIN tournaments t ON t.id=d.tournament_id "
+        "WHERE d.is_active=1 AND t.stage!='finished' ORDER BY t.id, d.sort_order").fetchall()]
     c.close()
     from .helpers import user_payload
     return web.json_response({
